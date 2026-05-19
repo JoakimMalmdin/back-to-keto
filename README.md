@@ -36,7 +36,6 @@ export const supabaseConfig = {
 
 ```text
 https://joakimmalmdin.github.io/back-to-keto/app/
-https://joakimmalmdin.github.io/back-to-keto/app/?v=35
 ```
 
 Efter detta kan anvandaren logga in med e-postlank i appens Synk-ruta. Varje inloggad anvandare far egen rad i databasen via Supabase Row Level Security.

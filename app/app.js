@@ -1,6 +1,6 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
-const appVersion = "35";
+const appVersion = "36";
 let activeDate = "";
 let supabaseClient = null;
 let syncUser = null;
@@ -65,6 +65,10 @@ const signInButton = document.querySelector("#signInButton");
 const signOutButton = document.querySelector("#signOutButton");
 const syncNowButton = document.querySelector("#syncNowButton");
 let autosaveTimer = null;
+
+function stableAppUrl() {
+  return `${window.location.origin}${window.location.pathname}`;
+}
 
 function decimal(value) {
   return Number(value).toLocaleString("sv-SE", { maximumFractionDigits: 1 });
@@ -402,7 +406,7 @@ if (goalInput) {
 }
 
 document.querySelector("#blankLinkButton").addEventListener("click", async () => {
-  const appUrl = `${window.location.origin}${window.location.pathname}?v=${appVersion}`;
+  const appUrl = `${stableAppUrl()}?v=${appVersion}`;
   await navigator.clipboard.writeText(appUrl);
   document.querySelector("#toolsNote").textContent = "App-länk kopierad. Lokala loggar och inställningar följer inte med länken.";
 });
@@ -530,7 +534,7 @@ signInButton?.addEventListener("click", async () => {
   }
   const { error } = await supabaseClient.auth.signInWithOtp({
     email,
-    options: { emailRedirectTo: `${window.location.origin}${window.location.pathname}?v=${appVersion}` },
+    options: { emailRedirectTo: stableAppUrl() },
   });
   if (error) {
     setSyncStatus(`Inloggningsfel: ${error.message}`, true);
