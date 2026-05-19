@@ -1,7 +1,7 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
-const appVersion = "47";
+const appVersion = "48";
 let activeDate = "";
 let supabaseClient = null;
 let cloudSyncTimer = null;
@@ -535,9 +535,9 @@ if (goalInput) {
 }
 
 document.querySelector("#blankLinkButton").addEventListener("click", async () => {
-  const appUrl = `${stableAppUrl()}?v=${appVersion}`;
+  const appUrl = stableAppUrl();
   await navigator.clipboard.writeText(appUrl);
-  document.querySelector("#toolsNote").textContent = "App-länk kopierad. Lokala loggar och inställningar följer inte med länken.";
+  document.querySelector("#toolsNote").textContent = "App-länk kopierad. Den öppnar senaste publicerade versionen; lokala loggar och inställningar följer inte med länken.";
 });
 
 function setSyncStatus(message, isError = false) {

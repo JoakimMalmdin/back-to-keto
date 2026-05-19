@@ -1,11 +1,24 @@
 {
   "name": "Back to Keto",
   "short_name": "BTK",
-  "start_url": "./",
+  "start_url": "/back-to-keto/app/",
+  "scope": "/back-to-keto/app/",
   "display": "standalone",
   "background_color": "#fbf7ef",
   "theme_color": "#f7f2e8",
   "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
     {
       "src": "icon.svg",
       "sizes": "any",

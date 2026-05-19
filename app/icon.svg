@@ -1,7 +1,29 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="96" fill="#274a3c"/>
-  <circle cx="174" cy="238" r="86" fill="#fbf7ef"/>
-  <circle cx="338" cy="274" r="86" fill="#c9953d"/>
-  <path d="M155 239c26-38 60-60 101-66 40-6 75 6 105 35" fill="none" stroke="#fbf7ef" stroke-width="32" stroke-linecap="round"/>
-  <text x="256" y="404" text-anchor="middle" font-family="Arial, sans-serif" font-size="76" font-weight="800" fill="#fbf7ef">BTK</text>
+  <defs>
+    <linearGradient id="bg" x1="68" x2="444" y1="42" y2="470" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2f7a5f"/>
+      <stop offset="0.52" stop-color="#f0bd57"/>
+      <stop offset="1" stop-color="#9d3550"/>
+    </linearGradient>
+    <linearGradient id="steak" x1="128" x2="386" y1="142" y2="332" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f6a06d"/>
+      <stop offset="0.48" stop-color="#b84646"/>
+      <stop offset="1" stop-color="#74283d"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="14" flood-color="#1f2523" flood-opacity="0.28"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="110" fill="url(#bg)"/>
+  <circle cx="104" cy="106" r="54" fill="#fff7df" opacity="0.85"/>
+  <circle cx="425" cy="395" r="70" fill="#274a3c" opacity="0.22"/>
+  <g filter="url(#shadow)">
+    <path d="M113 264c-8-86 54-151 145-161 86-9 153 38 161 109 10 92-67 156-175 166-72 7-124-34-131-114Z" fill="#6b243b"/>
+    <path d="M131 252c-7-70 45-122 121-130 72-8 127 30 134 87 8 75-56 126-146 135-59 6-103-28-109-92Z" fill="url(#steak)"/>
+    <path d="M204 184c34-27 91-31 120 2 29 33 12 87-35 111-45 23-103 15-119-25-12-29 4-65 34-88Z" fill="#f6d9c4"/>
+    <path d="M224 203c24-18 63-20 82 2 19 22 8 58-25 74-31 15-71 9-82-18-8-19 4-42 25-58Z" fill="#a93d49"/>
+    <path d="M168 237c37 11 69 11 96 0 30-12 50-35 73-50" fill="none" stroke="#fff2da" stroke-width="18" stroke-linecap="round" opacity="0.78"/>
+    <path d="M162 289c48 28 119 23 170-16" fill="none" stroke="#7a253f" stroke-width="16" stroke-linecap="round" opacity="0.45"/>
+  </g>
+  <text x="256" y="438" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="70" font-weight="900" letter-spacing="2" fill="#fff8e8">BTK</text>
 </svg>
