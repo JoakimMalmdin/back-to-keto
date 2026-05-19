@@ -7,6 +7,9 @@ create table if not exists public.keto_profiles (
 
 alter table public.keto_profiles enable row level security;
 
+grant usage on schema public to authenticated;
+grant select, insert, update on public.keto_profiles to authenticated;
+
 drop policy if exists "Users can read own keto profile" on public.keto_profiles;
 create policy "Users can read own keto profile"
 on public.keto_profiles

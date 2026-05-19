@@ -21,7 +21,7 @@ Datan sparas lokalt i varje browser. Anvand export/import i appen for att flytta
 Appen har valfri molnsynk via Supabase. Lokal lagring fungerar fortfarande om Supabase inte ar konfigurerat.
 
 1. Skapa ett Supabase-projekt.
-2. Oppna SQL Editor i Supabase och kor `supabase_setup.sql`.
+2. Oppna SQL Editor i Supabase och kor hela `supabase_setup.sql`, inklusive grants och RLS-policyer.
 3. Ga till Project Settings > API och kopiera Project URL samt anon public key.
 4. Fyll i `app/supabase-config.js`:
 
