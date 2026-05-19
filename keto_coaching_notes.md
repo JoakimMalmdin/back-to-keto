@@ -46,6 +46,7 @@ Kalla: anvandarens fotograferade boksidor, 2026-05-19.
 
 - Bra fettkallor: avocado, mandelolja, grasbetat smor/talg, kokosmjolk, olivolja, ghee, ister, macadamianotter, macadamiaolja, ekologisk olivolja, kallpressad kokosolja samt oljor/fetter av hog kvalitet.
 - Animaliska fetter, smor och olivolja framhalls som stabila fettkallor.
+- Undvik vaxtbaserade oljor, med undantag av kallpressad olivolja.
 - Fron- och notbaserade fetter kan anvandas men bor inte bli huvudbas om de triggar overskottsatande.
 
 ## Protein och kott
@@ -60,7 +61,7 @@ Kalla: anvandarens fotograferade boksidor, 2026-05-19.
 ## Praktisk regellista
 
 - Kolhydrater: under 20 g per dag.
-- Fett: cirka 70 E% eller mer, helst stabilt hogt; 80-90 E% ar en mer strikt ketogen niva. 200 g fett per dag anvands som praktiskt riktmarke.
+- Fett: cirka 70 E% eller mer, helst stabilt hogt; 80-90 E% ar en mer strikt ketogen niva. 200 g fett per dag anvands som praktiskt riktmarke. Undvik vaxtbaserade oljor, med undantag av kallpressad olivolja.
 - Rotera proteiner och fokusera pa feta styckdetaljer.
 - At gronsaker men undvik att de blir kolhydratbasen i maltiden.
 - Spetskal forst. Prioritera aven bladgront, broccoli, blomkal, vitkal, gurka, zucchini, sparris, svamp och avokado.
