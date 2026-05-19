@@ -1,4 +1,4 @@
-const cacheName = "btk-keto-v3";
+const cacheName = "btk-keto-v4";
 const assets = ["./", "index.html", "styles.css", "app.js", "manifest.webmanifest", "icon.svg"];
 
 self.addEventListener("install", (event) => {

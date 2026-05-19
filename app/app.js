@@ -230,6 +230,7 @@ function render() {
 
 function fillForm(entry) {
   for (const [key, input] of Object.entries(fields)) {
+    if (!input) continue;
     input.value = entry[key] ?? "";
   }
 }
@@ -238,12 +239,21 @@ form.addEventListener("submit", (event) => {
   event.preventDefault();
   const entry = {};
   for (const [key, input] of Object.entries(fields)) {
-    entry[key] = ["weight", "fat", "protein", "carbs"].includes(key) && input.value ? Number(input.value) : input.value.trim();
+    if (!input) continue;
+    const value = input.value.trim();
+    entry[key] = ["weight", "fat", "protein", "carbs"].includes(key) && value ? Number(value) : value;
   }
+  entry.date ||= todayIso();
   const entries = getEntries().filter((item) => item.date !== entry.date);
   entries.push(entry);
   saveEntries(entries);
   render();
+  fillForm(entry);
+  const status = document.querySelector("#saveStatus");
+  status.textContent = `Sparat ${entry.date} kl. ${new Date().toLocaleTimeString("sv-SE", {
+    hour: "2-digit",
+    minute: "2-digit",
+  })}`;
 });
 
 document.querySelector("#todayButton").addEventListener("click", () => fillForm(emptyEntry()));
@@ -286,7 +296,7 @@ document.querySelector("#exportButton").addEventListener("click", async () => {
 });
 
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("service-worker.js");
+  navigator.serviceWorker.register("service-worker.js").catch(() => {});
 }
 
 fillForm(getEntries().at(-1) || emptyEntry());
