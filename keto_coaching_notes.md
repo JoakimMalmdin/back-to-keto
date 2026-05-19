@@ -12,6 +12,7 @@ Kalla: anvandarens fotograferade boksidor, 2026-05-19.
 
 ## Makroprinciper
 
+- E% betyder energiprocent, alltsa andelen av dagens kalorier som kommer fran fett, protein respektive kolhydrater.
 - Fett ar huvudbranslet och bor vara den dominerande energikallan.
 - Protein behovs for mnad, muskler, immunforsvar och hormoner, men overskott kan enligt boken minska keto-effekten.
 - Kolhydrater ska begransas hart, sarskilt i borjan.
@@ -59,7 +60,7 @@ Kalla: anvandarens fotograferade boksidor, 2026-05-19.
 ## Praktisk regellista
 
 - Kolhydrater: under 20 g per dag.
-- Fett: cirka 70 E% eller mer, helst stabilt hogt. Bokens sammanfattning anger ocksa 200 g fett per dag som praktiskt riktmarke.
+- Fett: cirka 70 E% eller mer, helst stabilt hogt; materialet lyfter 80-90 E% som mer strikt ketogen niva. Bokens sammanfattning anger ocksa 200 g fett per dag som praktiskt riktmarke.
 - Rotera proteiner och fokusera pa feta styckdetaljer.
 - At gronsaker men undvik att de blir kolhydratbasen i maltiden.
 - Var vaksam pa kroppens reaktioner, hunger, mattnad, blodtryck och energi.
