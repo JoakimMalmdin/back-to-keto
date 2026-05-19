@@ -1,6 +1,6 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
-const appVersion = "34";
+const appVersion = "35";
 let activeDate = "";
 let supabaseClient = null;
 let syncUser = null;
