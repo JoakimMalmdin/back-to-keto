@@ -63,6 +63,8 @@ Kalla: anvandarens fotograferade boksidor, 2026-05-19.
 - Fett: cirka 70 E% eller mer, helst stabilt hogt; 80-90 E% ar en mer strikt ketogen niva. 200 g fett per dag anvands som praktiskt riktmarke.
 - Rotera proteiner och fokusera pa feta styckdetaljer.
 - At gronsaker men undvik att de blir kolhydratbasen i maltiden.
+- Prioritera bladgront, broccoli, blomkal, vitkal, gurka, zucchini, sparris, svamp och avokado.
+- Var mer forsiktig med tomat, bar och lok/purjolok eftersom kolhydraterna lattare kan dra ivag.
 - Var vaksam pa kroppens reaktioner, hunger, mattnad, blodtryck och energi.
 - Efterstrava mat som ar mattande, blodsockerstabil och enkel att upprepa.
 
