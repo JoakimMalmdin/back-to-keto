@@ -300,6 +300,16 @@ fields.date.addEventListener("change", () => {
   setSaveStatus(existing ? `Visar sparad rad för ${date}` : `Ny tom rad för ${date}`);
 });
 
+goalInput.addEventListener("change", () => {
+  const goal = saveGoalWeight(goalInput.value.trim());
+  render(activeDate);
+  setSaveStatus(goal ? `Målvikt sparad: ${decimal(goal)} kg` : "Målvikt rensad");
+});
+
+goalInput.addEventListener("input", () => {
+  saveGoalWeight(goalInput.value.trim());
+});
+
 document.querySelector("#blankLinkButton").addEventListener("click", async () => {
   const appUrl = `${window.location.origin}${window.location.pathname}`;
   await navigator.clipboard.writeText(appUrl);
