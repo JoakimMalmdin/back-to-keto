@@ -1,5 +1,6 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
+const appVersion = "33";
 let activeDate = "";
 
 const foodSignals = [
@@ -384,11 +385,12 @@ if (goalInput) {
 
   goalInput.addEventListener("input", () => {
     saveGoalWeight(goalInput.value.trim());
+    render(activeDate);
   });
 }
 
 document.querySelector("#blankLinkButton").addEventListener("click", async () => {
-  const appUrl = `${window.location.origin}${window.location.pathname}`;
+  const appUrl = `${window.location.origin}${window.location.pathname}?v=${appVersion}`;
   await navigator.clipboard.writeText(appUrl);
   document.querySelector("#toolsNote").textContent = "App-länk kopierad. Lokala loggar och inställningar följer inte med länken.";
 });
