@@ -2,6 +2,7 @@ const startWeight = 91.4;
 const upperGoal = 83;
 const isBlankTemplate = new URLSearchParams(window.location.search).has("blank");
 const storageKey = isBlankTemplate ? "btk.keto.entries.blank.v1" : "btk.keto.entries.v1";
+let activeDate = "";
 
 const seedEntries = [
   {
@@ -106,6 +107,10 @@ function saveEntries(entries) {
   localStorage.setItem(storageKey, JSON.stringify(entries));
 }
 
+function findEntry(date) {
+  return getEntries().find((entry) => entry.date === date);
+}
+
 function mealText(entry) {
   return [entry.breakfast, entry.lunch, entry.dinner, entry.extras, entry.notes].filter(Boolean).join(" ");
 }
@@ -185,9 +190,10 @@ function coach(entry, macros, kind) {
   return notes.join(" ");
 }
 
-function render() {
+function render(selectedDate = activeDate) {
   const entries = getEntries().sort((a, b) => a.date.localeCompare(b.date));
-  const latest = entries.at(-1);
+  const latest = entries.find((entry) => entry.date === selectedDate) || entries.at(-1) || emptyEntry();
+  activeDate = latest.date;
   const macros = estimateMacros(latest);
   const kind = classify(latest, macros);
   const delta = latest.weight ? latest.weight - startWeight : 0;
@@ -234,6 +240,7 @@ function render() {
 }
 
 function fillForm(entry) {
+  activeDate = entry.date || activeDate || todayIso();
   for (const [key, input] of Object.entries(fields)) {
     if (!input) continue;
     input.value = entry[key] ?? "";
@@ -254,10 +261,11 @@ function saveCurrentEntry() {
     entry[key] = ["weight", "fat", "protein", "carbs"].includes(key) && value ? Number(value) : value;
   }
   entry.date ||= todayIso();
+  activeDate = entry.date;
   const entries = getEntries().filter((item) => item.date !== entry.date);
   entries.push(entry);
   saveEntries(entries);
-  render();
+  render(entry.date);
   fillForm(entry);
   setSaveStatus(`Sparat ${entry.date} kl. ${new Date().toLocaleTimeString("sv-SE", {
     hour: "2-digit",
@@ -278,10 +286,18 @@ window.addEventListener("error", (event) => {
 
 document.querySelector("#todayButton").addEventListener("click", () => {
   const today = todayIso();
-  const entries = getEntries();
-  const existing = entries.find((entry) => entry.date === today);
+  const existing = findEntry(today);
   fillForm(existing || emptyEntry(today));
+  render(today);
   setSaveStatus(existing ? `Visar sparad rad för ${today}` : `Ny rad för ${today}`);
+});
+
+fields.date.addEventListener("change", () => {
+  const date = fields.date.value || todayIso();
+  const existing = findEntry(date);
+  fillForm(existing || emptyEntry(date));
+  render(date);
+  setSaveStatus(existing ? `Visar sparad rad för ${date}` : `Ny tom rad för ${date}`);
 });
 
 document.querySelector("#blankLinkButton").addEventListener("click", async () => {
@@ -327,5 +343,6 @@ if ("serviceWorker" in navigator) {
   });
 }
 
-fillForm(getEntries().at(-1) || emptyEntry());
-render();
+const initialEntry = getEntries().at(-1) || emptyEntry();
+fillForm(initialEntry);
+render(initialEntry.date);
