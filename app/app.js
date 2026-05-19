@@ -1,6 +1,6 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
-const appVersion = "36";
+const appVersion = "37";
 let activeDate = "";
 let supabaseClient = null;
 let syncUser = null;
@@ -480,6 +480,7 @@ async function syncNow() {
     setSyncStatus("Logga in för att synka.", true);
     return;
   }
+  setSyncStatus("Synkar...");
   await pullCloudData();
 }
 
@@ -532,12 +533,18 @@ signInButton?.addEventListener("click", async () => {
     setSyncStatus("Skriv in e-post först.", true);
     return;
   }
+  signInButton.disabled = true;
+  setSyncStatus("Skickar inloggningslänk...");
   const { error } = await supabaseClient.auth.signInWithOtp({
     email,
     options: { emailRedirectTo: stableAppUrl() },
   });
+  signInButton.disabled = false;
   if (error) {
-    setSyncStatus(`Inloggningsfel: ${error.message}`, true);
+    const message = /rate limit/i.test(error.message)
+      ? "För många inloggningslänkar har skickats. Vänta några minuter och försök igen."
+      : `Inloggningsfel: ${error.message}`;
+    setSyncStatus(message, true);
     return;
   }
   setSyncStatus("Inloggningslänk skickad. Öppna länken på den här enheten.");
@@ -545,6 +552,7 @@ signInButton?.addEventListener("click", async () => {
 
 signOutButton?.addEventListener("click", async () => {
   if (!supabaseClient) return;
+  setSyncStatus("Loggar ut...");
   await supabaseClient.auth.signOut();
   syncUser = null;
   setSyncStatus("Utloggad. Appen sparar lokalt på den här enheten.");
