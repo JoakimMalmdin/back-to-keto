@@ -394,8 +394,10 @@ textarea {
   bottom: -4px;
   width: 2px;
   border-radius: 999px;
-  background: var(--ink);
+  background: rgb(31 37 35 / 62%);
   transform: translateX(-1px);
+  z-index: 2;
+  pointer-events: none;
 }
 
 .goal-marker em {
@@ -408,6 +410,7 @@ textarea {
   font-style: normal;
   font-weight: 850;
   white-space: nowrap;
+  pointer-events: none;
 }
 
 #proteinBar {

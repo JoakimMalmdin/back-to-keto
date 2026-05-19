@@ -206,21 +206,18 @@ function render() {
   badge.textContent = kind;
   badge.className = `badge ${kind === "strikt keto" ? "strict" : kind === "riskzon" ? "risk" : ""}`;
 
-  const fatScale = Math.max(150, Math.ceil(macros.fat / 25) * 25);
-  const proteinScale = Math.max(120, Math.ceil(macros.protein / 20) * 20);
-  const carbScale = Math.max(50, Math.ceil(macros.carbs / 10) * 10);
-  document.querySelector("#fatBar").style.width = `${Math.min((macros.fat / fatScale) * 100, 100)}%`;
-  document.querySelector("#proteinBar").style.width = `${Math.min((macros.protein / proteinScale) * 100, 100)}%`;
-  document.querySelector("#carbBar").style.width = `${Math.min((macros.carbs / carbScale) * 100, 100)}%`;
-  document.querySelector("#fatGoalMarker").style.left = `${Math.min((100 / fatScale) * 100, 100)}%`;
-  document.querySelector("#carbGoalMarker").style.left = `${Math.min((20 / carbScale) * 100, 100)}%`;
-  document.querySelector("#fatText").textContent = `${macros.fatPct}% / ${decimal(macros.fat)} g`;
-  document.querySelector("#proteinText").textContent = `${macros.proteinPct}% / ${decimal(macros.protein)} g`;
-  document.querySelector("#carbText").textContent = `${macros.carbPct}% / ${decimal(macros.carbs)} g`;
+  document.querySelector("#fatBar").style.width = `${Math.min(macros.fatPct, 100)}%`;
+  document.querySelector("#proteinBar").style.width = `${Math.min(macros.proteinPct, 100)}%`;
+  document.querySelector("#carbBar").style.width = `${Math.min(macros.carbPct, 100)}%`;
+  document.querySelector("#fatGoalMarker").style.left = "66.7%";
+  document.querySelector("#carbGoalMarker").style.left = "40%";
+  document.querySelector("#fatText").textContent = `${macros.fatPct}% (${decimal(macros.fat)} g)`;
+  document.querySelector("#proteinText").textContent = `${macros.proteinPct}% (${decimal(macros.protein)} g)`;
+  document.querySelector("#carbText").textContent = `${macros.carbPct}% (${decimal(macros.carbs)} g)`;
   document.querySelector("#macroNote").textContent =
     macros.source === "manual"
       ? "Makron bygger på manuellt inmatade gram för fett, protein och kolhydrater."
-      : "Procenten visar andel av kalorierna. Staplarna visar gram-progress med målmarkörer för 100 g fett och 20 g kolhydrater.";
+      : "Staplarna visar andel av kalorierna. Markörerna är praktiska gramreferenser: 100 g fett och 20 g kolhydrater.";
 
   const history = document.querySelector("#historyList");
   history.innerHTML = "";
@@ -277,7 +274,13 @@ window.addEventListener("error", (event) => {
   setSaveStatus(`Appfel: ${event.message}`, true);
 });
 
-document.querySelector("#todayButton").addEventListener("click", () => fillForm(emptyEntry()));
+document.querySelector("#todayButton").addEventListener("click", () => {
+  const today = todayIso();
+  const entries = getEntries();
+  const existing = entries.find((entry) => entry.date === today);
+  fillForm(existing || emptyEntry(today));
+  setSaveStatus(existing ? `Visar sparad rad för ${today}` : `Ny rad för ${today}`);
+});
 
 document.querySelector("#blankLinkButton").addEventListener("click", async () => {
   const blankUrl = `${window.location.origin}${window.location.pathname}?blank=1`;
