@@ -3,7 +3,7 @@ const goalKey = "btk.keto.goal.v1";
 let activeDate = "";
 
 const foodSignals = [
-  { match: /ägg|agg/i, kcal: 70, protein: 6.2, fat: 5, carbs: 0.5, keto: 2 },
+  { match: /(^|[^a-zåäö])(?:ägg|agg)(?:[^a-zåäö]|$)/i, quantity: /(\d+(?:[,.]\d+)?)\s*(?:st\s*)?(?:ägg|agg)/gi, kcal: 70, protein: 6.2, fat: 5, carbs: 0.5, keto: 2 },
   { match: /makrill/i, kcal: 238, protein: 15, fat: 17.5, carbs: 4.9, keto: 2 },
   { match: /majonnäs|majonnas/i, kcal: 105, protein: 0, fat: 11.5, carbs: 0.2, keto: 2 },
   { match: /ost|cheddar|brie|gouda|gruyere|parmesan/i, kcal: 120, protein: 7, fat: 10, carbs: 0.5, keto: 2 },
@@ -13,6 +13,7 @@ const foodSignals = [
   { match: /avokado|avocado/i, kcal: 160, protein: 2, fat: 15, carbs: 2, keto: 2 },
   { match: /olivolja|olive oil/i, kcal: 120, protein: 0, fat: 13.5, carbs: 0, keto: 2 },
   { match: /nötter|notter|mandel|valnöt|valnot|macadamia/i, kcal: 180, protein: 5, fat: 17, carbs: 3, keto: 1 },
+  { match: /påläggsskinka|palaggsskinka|skinka|kalkonpålägg|kalkonpalagg|kycklingpålägg|kycklingpalagg/i, kcal: 30, protein: 5, fat: 1, carbs: 0.3, keto: 1 },
   { match: /pulled pork/i, kcal: 375, protein: 34, fat: 25, carbs: 3, keto: 1 },
   { match: /falukorv/i, kcal: 260, protein: 10, fat: 23, carbs: 4, keto: 0 },
   { match: /gräddfil|graddfil/i, kcal: 70, protein: 1.5, fat: 6, carbs: 2, keto: 1 },
@@ -114,6 +115,15 @@ function mealText(entry) {
   return [entry.breakfast, entry.lunch, entry.dinner, entry.extras, entry.notes].filter(Boolean).join(" ");
 }
 
+function countSignal(text, signal) {
+  if (signal.quantity) {
+    const quantities = [...text.matchAll(signal.quantity)].map((match) => Number(match[1].replace(",", ".")));
+    const total = quantities.reduce((sum, value) => sum + (Number.isFinite(value) ? value : 0), 0);
+    if (total > 0) return total;
+  }
+  return (text.match(new RegExp(signal.match.source, "gi")) || []).length;
+}
+
 function estimateMacros(entry) {
   const manualFat = Number(entry.fat);
   const manualProtein = Number(entry.protein);
@@ -142,9 +152,8 @@ function estimateMacros(entry) {
   const totals = { kcal: 0, protein: 0, fat: 0, carbs: 0, score: 0 };
 
   for (const signal of foodSignals) {
-    const matches = text.match(new RegExp(signal.match.source, "gi")) || [];
-    const count = Math.max(1, matches.length);
-    if (matches.length > 0) {
+    const count = countSignal(text, signal);
+    if (count > 0) {
       totals.kcal += signal.kcal * count;
       totals.protein += signal.protein * count;
       totals.fat += signal.fat * count;
