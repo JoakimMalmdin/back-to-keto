@@ -32,6 +32,7 @@ const fields = {
   notes: document.querySelector("#notesInput"),
 };
 const goalInput = document.querySelector("#goalInput");
+let autosaveTimer = null;
 
 function decimal(value) {
   return Number(value).toLocaleString("sv-SE", { maximumFractionDigits: 1 });
@@ -198,7 +199,7 @@ function render(selectedDate = activeDate) {
   document.querySelector("#deltaWeight").textContent =
     latest.weight && startWeight ? `${delta > 0 ? "+" : ""}${decimal(delta)} kg` : "--";
   document.querySelector("#toGoal").textContent = latest.weight && goalWeight ? `${decimal(toGoal)} kg` : "--";
-  goalInput.value = goalWeight ? goalWeight : "";
+  if (goalInput) goalInput.value = goalWeight ? goalWeight : "";
   const marker = macros.source === "manual" ? "" : "~";
   document.querySelector("#carbMetric").textContent = hasContent ? `${marker}${decimal(macros.carbs)} g` : "--";
   document.querySelector("#fatMetric").textContent = hasContent ? `${marker}${macros.fatPct}%` : "--";
@@ -243,7 +244,7 @@ function fillForm(entry) {
     if (!input) continue;
     input.value = entry[key] ?? "";
   }
-  goalInput.value = getGoalWeight() || "";
+  if (goalInput) goalInput.value = getGoalWeight() || "";
 }
 
 function setSaveStatus(message, isError = false) {
@@ -252,14 +253,14 @@ function setSaveStatus(message, isError = false) {
   status.classList.toggle("error", isError);
 }
 
-function saveCurrentEntry() {
+function saveCurrentEntry(options = {}) {
   const entry = {};
   for (const [key, input] of Object.entries(fields)) {
     if (!input) continue;
     const value = input.value.trim();
     entry[key] = ["weight", "fat", "protein", "carbs"].includes(key) && value ? Number(value) : value;
   }
-  saveGoalWeight(goalInput.value.trim());
+  if (goalInput) saveGoalWeight(goalInput.value.trim());
   entry.date ||= todayIso();
   activeDate = entry.date;
   const entries = getEntries().filter((item) => item.date !== entry.date);
@@ -267,10 +268,19 @@ function saveCurrentEntry() {
   saveEntries(entries);
   render(entry.date);
   fillForm(entry);
+  if (options.silent) return;
   setSaveStatus(`Sparat ${entry.date} kl. ${new Date().toLocaleTimeString("sv-SE", {
     hour: "2-digit",
     minute: "2-digit",
   })}`);
+}
+
+function queueAutosave() {
+  window.clearTimeout(autosaveTimer);
+  autosaveTimer = window.setTimeout(() => {
+    saveCurrentEntry({ silent: true });
+    setSaveStatus(`Autosparat ${activeDate || todayIso()}`);
+  }, 800);
 }
 
 form.addEventListener("submit", (event) => {
@@ -279,6 +289,11 @@ form.addEventListener("submit", (event) => {
 });
 
 saveButton.addEventListener("click", saveCurrentEntry);
+
+saveButton.addEventListener("pointerup", () => {
+  window.clearTimeout(autosaveTimer);
+  saveCurrentEntry();
+});
 
 window.addEventListener("error", (event) => {
   setSaveStatus(`Appfel: ${event.message}`, true);
@@ -300,15 +315,22 @@ fields.date.addEventListener("change", () => {
   setSaveStatus(existing ? `Visar sparad rad för ${date}` : `Ny tom rad för ${date}`);
 });
 
-goalInput.addEventListener("change", () => {
-  const goal = saveGoalWeight(goalInput.value.trim());
-  render(activeDate);
-  setSaveStatus(goal ? `Målvikt sparad: ${decimal(goal)} kg` : "Målvikt rensad");
+form.addEventListener("input", (event) => {
+  if (event.target === goalInput) return;
+  queueAutosave();
 });
 
-goalInput.addEventListener("input", () => {
-  saveGoalWeight(goalInput.value.trim());
-});
+if (goalInput) {
+  goalInput.addEventListener("change", () => {
+    const goal = saveGoalWeight(goalInput.value.trim());
+    render(activeDate);
+    setSaveStatus(goal ? `Målvikt sparad: ${decimal(goal)} kg` : "Målvikt rensad");
+  });
+
+  goalInput.addEventListener("input", () => {
+    saveGoalWeight(goalInput.value.trim());
+  });
+}
 
 document.querySelector("#blankLinkButton").addEventListener("click", async () => {
   const appUrl = `${window.location.origin}${window.location.pathname}`;
