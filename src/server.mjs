@@ -25,7 +25,10 @@ const server = http.createServer(async (request, response) => {
       return;
     }
     const data = await fs.readFile(filePath);
-    response.writeHead(200, { "content-type": types[path.extname(filePath)] || "application/octet-stream" });
+    response.writeHead(200, {
+      "content-type": types[path.extname(filePath)] || "application/octet-stream",
+      "cache-control": "no-store",
+    });
     response.end(data);
   } catch {
     response.writeHead(404, { "content-type": "text/plain; charset=utf-8" });

@@ -7,8 +7,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="BTK" />
     <title>Back to Keto</title>
-    <link rel="manifest" href="manifest.webmanifest" />
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="manifest" href="manifest.webmanifest?v=8" />
+    <link rel="stylesheet" href="styles.css?v=8" />
   </head>
   <body>
     <div class="app-shell">
@@ -158,10 +158,11 @@
             <h2 id="macroTitle">Makrobild</h2>
             <span id="strictnessBadge" class="badge">keto-ish</span>
           </div>
-          <div class="macro-bars">
+          <h3 class="subhead">Energifördelning</h3>
+          <div class="macro-bars energy-bars">
             <div>
               <span>Fett</span>
-              <div class="bar goal-bar"><i id="fatBar"></i><b class="goal-marker" id="fatGoalMarker"><em>100 g</em></b></div>
+              <div class="bar"><i id="fatBar"></i></div>
               <strong id="fatText">60%</strong>
             </div>
             <div>
@@ -171,8 +172,21 @@
             </div>
             <div>
               <span>Kolhydrater</span>
-              <div class="bar goal-bar"><i id="carbBar"></i><b class="goal-marker" id="carbGoalMarker"><em>20 g</em></b></div>
+              <div class="bar"><i id="carbBar"></i></div>
               <strong id="carbText">15%</strong>
+            </div>
+          </div>
+          <h3 class="subhead target-subhead">Dagsmål i gram</h3>
+          <div class="target-bars">
+            <div>
+              <span>Fett mot 100 g</span>
+              <div class="target-bar"><i id="fatGramBar"></i><b></b></div>
+              <strong id="fatGramText">0 g</strong>
+            </div>
+            <div>
+              <span>Kolhydrater mot 20 g</span>
+              <div class="target-bar carb-target"><i id="carbGramBar"></i><b></b></div>
+              <strong id="carbGramText">0 g</strong>
             </div>
           </div>
           <p id="macroNote" class="note"></p>
@@ -196,6 +210,6 @@
       </main>
     </div>
 
-    <script src="app.js" type="module"></script>
+    <script src="app.js?v=8" type="module"></script>
   </body>
 </html>

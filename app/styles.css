@@ -350,7 +350,19 @@ textarea {
   gap: 13px;
 }
 
-.macro-bars > div {
+.subhead {
+  margin: 2px 0 12px;
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 900;
+}
+
+.target-subhead {
+  margin-top: 20px;
+}
+
+.macro-bars > div,
+.target-bars > div {
   display: grid;
   grid-template-columns: 88px 1fr 92px;
   align-items: center;
@@ -358,17 +370,20 @@ textarea {
   font-size: 0.9rem;
 }
 
-.macro-bars strong {
+.macro-bars strong,
+.target-bars strong {
   font-size: 0.82rem;
   text-align: right;
 }
 
-.macro-bars span {
+.macro-bars span,
+.target-bars span {
   color: var(--muted);
   font-weight: 800;
 }
 
-.bar {
+.bar,
+.target-bar {
   position: relative;
   overflow: hidden;
   height: 12px;
@@ -376,7 +391,8 @@ textarea {
   background: #ebe1d2;
 }
 
-.bar i {
+.bar i,
+.target-bar i {
   display: block;
   width: 0;
   height: 100%;
@@ -384,41 +400,26 @@ textarea {
   background: var(--leaf);
 }
 
-.goal-bar {
-  overflow: visible;
-}
-
-.goal-marker {
-  position: absolute;
-  top: -4px;
-  bottom: -4px;
-  width: 2px;
-  border-radius: 999px;
-  background: rgb(31 37 35 / 62%);
-  transform: translateX(-1px);
-  z-index: 2;
-  pointer-events: none;
-}
-
-.goal-marker em {
-  position: absolute;
-  top: -22px;
-  left: 50%;
-  transform: translateX(-50%);
-  color: var(--muted);
-  font-size: 0.68rem;
-  font-style: normal;
-  font-weight: 850;
-  white-space: nowrap;
-  pointer-events: none;
-}
-
 #proteinBar {
   background: var(--berry);
 }
 
-#carbBar {
+#carbBar,
+#carbGramBar {
   background: var(--gold);
+}
+
+.target-bars {
+  display: grid;
+  gap: 13px;
+}
+
+.target-bar b {
+  position: absolute;
+  inset: -4px 0 -4px auto;
+  width: 2px;
+  border-radius: 999px;
+  background: rgb(31 37 35 / 70%);
 }
 
 .note {
@@ -481,7 +482,8 @@ textarea {
     grid-template-columns: 1fr;
   }
 
-  .macro-bars > div {
+  .macro-bars > div,
+  .target-bars > div {
     grid-template-columns: 72px 1fr 82px;
   }
 }

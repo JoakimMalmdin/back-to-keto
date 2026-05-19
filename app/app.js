@@ -209,15 +209,17 @@ function render() {
   document.querySelector("#fatBar").style.width = `${Math.min(macros.fatPct, 100)}%`;
   document.querySelector("#proteinBar").style.width = `${Math.min(macros.proteinPct, 100)}%`;
   document.querySelector("#carbBar").style.width = `${Math.min(macros.carbPct, 100)}%`;
-  document.querySelector("#fatGoalMarker").style.left = "66.7%";
-  document.querySelector("#carbGoalMarker").style.left = "40%";
-  document.querySelector("#fatText").textContent = `${macros.fatPct}% (${decimal(macros.fat)} g)`;
-  document.querySelector("#proteinText").textContent = `${macros.proteinPct}% (${decimal(macros.protein)} g)`;
-  document.querySelector("#carbText").textContent = `${macros.carbPct}% (${decimal(macros.carbs)} g)`;
+  document.querySelector("#fatGramBar").style.width = `${Math.min((macros.fat / 100) * 100, 100)}%`;
+  document.querySelector("#carbGramBar").style.width = `${Math.min((macros.carbs / 20) * 100, 100)}%`;
+  document.querySelector("#fatText").textContent = `${macros.fatPct}%`;
+  document.querySelector("#proteinText").textContent = `${macros.proteinPct}%`;
+  document.querySelector("#carbText").textContent = `${macros.carbPct}%`;
+  document.querySelector("#fatGramText").textContent = `${decimal(macros.fat)} g`;
+  document.querySelector("#carbGramText").textContent = `${decimal(macros.carbs)} g`;
   document.querySelector("#macroNote").textContent =
     macros.source === "manual"
       ? "Makron bygger på manuellt inmatade gram för fett, protein och kolhydrater."
-      : "Staplarna visar andel av kalorierna. Markörerna är praktiska gramreferenser: 100 g fett och 20 g kolhydrater.";
+      : "Övre staplarna visar kaloriprocent. Nedre staplarna visar gram mot praktiska dagsgränser.";
 
   const history = document.querySelector("#historyList");
   history.innerHTML = "";
@@ -319,8 +321,12 @@ document.querySelector("#exportButton").addEventListener("click", async () => {
   document.querySelector("#coachLine").textContent = "Data kopierad som JSON. Klistra in den här i chatten när du vill att jag synkar loggen.";
 });
 
-if ("serviceWorker" in navigator) {
+if ("serviceWorker" in navigator && location.protocol === "https:") {
   navigator.serviceWorker.register("service-worker.js").catch(() => {});
+} else if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.getRegistrations().then((registrations) => {
+    registrations.forEach((registration) => registration.unregister());
+  });
 }
 
 fillForm(getEntries().at(-1) || emptyEntry());
