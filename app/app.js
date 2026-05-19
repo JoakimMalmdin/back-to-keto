@@ -1,5 +1,5 @@
-const upperGoal = 83;
 const storageKey = "btk.keto.entries.v1";
+const goalKey = "btk.keto.goal.v1";
 let activeDate = "";
 
 const foodSignals = [
@@ -31,6 +31,7 @@ const fields = {
   coffee: document.querySelector("#coffeeInput"),
   notes: document.querySelector("#notesInput"),
 };
+const goalInput = document.querySelector("#goalInput");
 
 function decimal(value) {
   return Number(value).toLocaleString("sv-SE", { maximumFractionDigits: 1 });
@@ -71,6 +72,21 @@ function getEntries() {
 
 function saveEntries(entries) {
   localStorage.setItem(storageKey, JSON.stringify(entries));
+}
+
+function getGoalWeight() {
+  const goal = Number(localStorage.getItem(goalKey));
+  return Number.isFinite(goal) && goal > 0 ? goal : null;
+}
+
+function saveGoalWeight(value) {
+  const goal = Number(value);
+  if (Number.isFinite(goal) && goal > 0) {
+    localStorage.setItem(goalKey, String(goal));
+    return goal;
+  }
+  localStorage.removeItem(goalKey);
+  return null;
 }
 
 function hasEntryContent(entry) {
@@ -174,13 +190,15 @@ function render(selectedDate = activeDate) {
   const kind = hasContent ? classify(latest, macros) : "ny logg";
   const startWeight = baselineWeight(entries);
   const delta = latest.weight && startWeight ? latest.weight - startWeight : 0;
-  const toGoal = latest.weight ? latest.weight - upperGoal : 0;
+  const goalWeight = getGoalWeight();
+  const toGoal = latest.weight && goalWeight ? latest.weight - goalWeight : 0;
 
   document.querySelector("#todayDate").textContent = latest.date;
   document.querySelector("#currentWeight").textContent = latest.weight ? decimal(latest.weight) : "--";
   document.querySelector("#deltaWeight").textContent =
     latest.weight && startWeight ? `${delta > 0 ? "+" : ""}${decimal(delta)} kg` : "--";
-  document.querySelector("#toGoal").textContent = latest.weight ? `${decimal(toGoal)} kg` : "--";
+  document.querySelector("#toGoal").textContent = latest.weight && goalWeight ? `${decimal(toGoal)} kg` : "--";
+  goalInput.value = goalWeight ? goalWeight : "";
   const marker = macros.source === "manual" ? "" : "~";
   document.querySelector("#carbMetric").textContent = hasContent ? `${marker}${decimal(macros.carbs)} g` : "--";
   document.querySelector("#fatMetric").textContent = hasContent ? `${marker}${macros.fatPct}%` : "--";
@@ -225,6 +243,7 @@ function fillForm(entry) {
     if (!input) continue;
     input.value = entry[key] ?? "";
   }
+  goalInput.value = getGoalWeight() || "";
 }
 
 function setSaveStatus(message, isError = false) {
@@ -240,6 +259,7 @@ function saveCurrentEntry() {
     const value = input.value.trim();
     entry[key] = ["weight", "fat", "protein", "carbs"].includes(key) && value ? Number(value) : value;
   }
+  saveGoalWeight(goalInput.value.trim());
   entry.date ||= todayIso();
   activeDate = entry.date;
   const entries = getEntries().filter((item) => item.date !== entry.date);
@@ -283,19 +303,21 @@ fields.date.addEventListener("change", () => {
 document.querySelector("#blankLinkButton").addEventListener("click", async () => {
   const appUrl = `${window.location.origin}${window.location.pathname}`;
   await navigator.clipboard.writeText(appUrl);
-  document.querySelector("#toolsNote").textContent = "App-länk kopierad. Nya användare får en tom logg; din data följer inte med.";
+  document.querySelector("#toolsNote").textContent = "App-länk kopierad. Lokala loggar och inställningar följer inte med länken.";
 });
 
 document.querySelector("#importButton").addEventListener("click", () => {
   const input = document.querySelector("#importInput");
   try {
     const imported = JSON.parse(input.value);
-    if (!Array.isArray(imported)) throw new Error("Expected an array");
-    const cleaned = imported
+    const importedEntries = Array.isArray(imported) ? imported : imported.entries;
+    if (!Array.isArray(importedEntries)) throw new Error("Expected entries");
+    const cleaned = importedEntries
       .filter((entry) => entry && entry.date)
       .map((entry) => ({ ...emptyEntry(entry.date), ...entry }));
     if (cleaned.length === 0) throw new Error("No dated entries");
     saveEntries(cleaned);
+    if (imported.goalWeight) saveGoalWeight(imported.goalWeight);
     fillForm(cleaned.sort((a, b) => a.date.localeCompare(b.date)).at(-1));
     render();
     document.querySelector("#toolsNote").textContent = "Importerad data sparad i den här browsern.";
@@ -307,14 +329,15 @@ document.querySelector("#importButton").addEventListener("click", () => {
 document.querySelector("#resetButton").addEventListener("click", () => {
   if (!window.confirm("Rensa din lokala data i den här browsern?")) return;
   localStorage.removeItem(storageKey);
+  localStorage.removeItem(goalKey);
   fillForm(emptyEntry());
   render();
 });
 
 document.querySelector("#exportButton").addEventListener("click", async () => {
-  const payload = JSON.stringify(getEntries(), null, 2);
+  const payload = JSON.stringify({ entries: getEntries(), goalWeight: getGoalWeight() }, null, 2);
   await navigator.clipboard.writeText(payload);
-  document.querySelector("#coachLine").textContent = "Data kopierad som JSON. Klistra in den här i chatten när du vill att jag synkar loggen.";
+  document.querySelector("#coachLine").textContent = "Data kopierad. Den kan importeras i appen på en annan enhet.";
 });
 
 if ("serviceWorker" in navigator) {

@@ -7,8 +7,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="BTK" />
     <title>Back to Keto</title>
-    <link rel="manifest" href="manifest.webmanifest?v=23" />
-    <link rel="stylesheet" href="styles.css?v=23" />
+    <link rel="manifest" href="manifest.webmanifest?v=24" />
+    <link rel="stylesheet" href="styles.css?v=24" />
   </head>
   <body>
     <div class="app-shell">
@@ -41,7 +41,7 @@
             <strong id="deltaWeight">--</strong>
           </div>
           <div class="metric">
-            <span>Till 83 kg</span>
+            <span>Till målvikt</span>
             <strong id="toGoal">--</strong>
           </div>
           <div class="metric">
@@ -71,6 +71,13 @@
                 Vikt kg
                 <input id="weightInput" name="weight" type="number" step="0.1" inputmode="decimal" />
               </label>
+              <label>
+                Målvikt kg
+                <input id="goalInput" name="goal" type="number" step="0.1" inputmode="decimal" />
+              </label>
+            </div>
+
+            <div class="two-col">
               <label>
                 Sömn
                 <select id="sleepInput" name="sleep">
@@ -150,7 +157,7 @@
             <button class="secondary-button" id="resetButton" type="button">Rensa min lokala data</button>
           </div>
           <textarea id="importInput" class="import-box" rows="4" placeholder="Klistra in exporterad data här"></textarea>
-          <p class="note" id="toolsNote">Nya användare får en tom logg. Din data sparas bara lokalt i den browser där du använder appen.</p>
+          <p class="note" id="toolsNote">Loggar och inställningar sparas lokalt i den webbläsare där appen används.</p>
         </section>
 
         <section class="macro-panel" aria-labelledby="macroTitle">
@@ -228,6 +235,6 @@
       </main>
     </div>
 
-    <script src="app.js?v=23" type="module"></script>
+    <script src="app.js?v=24" type="module"></script>
   </body>
 </html>
