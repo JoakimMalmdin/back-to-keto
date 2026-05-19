@@ -7,8 +7,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="BTK" />
     <title>Back to Keto</title>
-    <link rel="manifest" href="manifest.webmanifest?v=22" />
-    <link rel="stylesheet" href="styles.css?v=22" />
+    <link rel="manifest" href="manifest.webmanifest?v=23" />
+    <link rel="stylesheet" href="styles.css?v=23" />
   </head>
   <body>
     <div class="app-shell">
@@ -30,7 +30,7 @@
             <p id="coachLine" class="coach-line"></p>
           </div>
           <div class="status-ring" aria-label="Progress mot mål">
-            <span id="currentWeight">90,6</span>
+            <span id="currentWeight">--</span>
             <small>kg</small>
           </div>
         </section>
@@ -38,19 +38,19 @@
         <section class="metric-grid" aria-label="Nyckeltal">
           <div class="metric">
             <span>Från start</span>
-            <strong id="deltaWeight">-0,8 kg</strong>
+            <strong id="deltaWeight">--</strong>
           </div>
           <div class="metric">
             <span>Till 83 kg</span>
-            <strong id="toGoal">7,6 kg</strong>
+            <strong id="toGoal">--</strong>
           </div>
           <div class="metric">
             <span>Kolhydrater, uppsk.</span>
-            <strong id="carbMetric">~20 g</strong>
+            <strong id="carbMetric">--</strong>
           </div>
           <div class="metric">
             <span>Fettandel, uppsk.</span>
-            <strong id="fatMetric">~60%</strong>
+            <strong id="fatMetric">--</strong>
           </div>
         </section>
 
@@ -143,14 +143,14 @@
         </section>
 
         <section class="tools-panel" aria-labelledby="toolsTitle">
-          <h2 id="toolsTitle">Delning</h2>
+          <h2 id="toolsTitle">Data</h2>
           <div class="button-row">
-            <button class="secondary-button" id="blankLinkButton" type="button">Kopiera tom mall-länk</button>
-            <button class="secondary-button" id="importButton" type="button">Importera JSON</button>
-            <button class="secondary-button" id="resetButton" type="button">Nollställ lokal data</button>
+            <button class="secondary-button" id="blankLinkButton" type="button">Kopiera app-länk</button>
+            <button class="secondary-button" id="importButton" type="button">Importera data</button>
+            <button class="secondary-button" id="resetButton" type="button">Rensa min lokala data</button>
           </div>
-          <textarea id="importInput" class="import-box" rows="4" placeholder="Klistra in exporterad JSON här"></textarea>
-          <p class="note" id="toolsNote">Dina loggar sparas lokalt i den browser där du använder appen.</p>
+          <textarea id="importInput" class="import-box" rows="4" placeholder="Klistra in exporterad data här"></textarea>
+          <p class="note" id="toolsNote">Nya användare får en tom logg. Din data sparas bara lokalt i den browser där du använder appen.</p>
         </section>
 
         <section class="macro-panel" aria-labelledby="macroTitle">
@@ -228,6 +228,6 @@
       </main>
     </div>
 
-    <script src="app.js?v=22" type="module"></script>
+    <script src="app.js?v=23" type="module"></script>
   </body>
 </html>

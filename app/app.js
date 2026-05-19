@@ -1,41 +1,6 @@
-const startWeight = 91.4;
 const upperGoal = 83;
-const isBlankTemplate = new URLSearchParams(window.location.search).has("blank");
-const storageKey = isBlankTemplate ? "btk.keto.entries.blank.v1" : "btk.keto.entries.v1";
+const storageKey = "btk.keto.entries.v1";
 let activeDate = "";
-
-const seedEntries = [
-  {
-    date: "2026-05-18",
-    weight: 91.4,
-    sleep: "+7 timmar",
-    breakfast: "Kaffe, 2 ägg, kaffe totalt 4 koppar",
-    lunch: "5 falukorvsskivor med majonnäs och osötad ketchup, 2 plommontomater",
-    dinner: "Pulled pork, några skivor falukorv, majonnäs, gräddfil, 3 plommontomater",
-    extras: "",
-    fat: "",
-    protein: "",
-    carbs: "",
-    water: "Ca 1 liter",
-    coffee: "4 koppar",
-    notes: "Keto återupptaget",
-  },
-  {
-    date: "2026-05-19",
-    weight: 90.6,
-    sleep: "-6 timmar",
-    breakfast: "1,5 dl yoghurt 3% med bär, 2 stekta ägg, kaffe 2 koppar",
-    lunch: "1 burk ICA spansk makrillfilé i tomatsås, 2 ägg",
-    dinner: "",
-    extras: "",
-    fat: "",
-    protein: "",
-    carbs: "",
-    water: "",
-    coffee: "2 koppar",
-    notes: "-0,8 kg från start",
-  },
-];
 
 const foodSignals = [
   { match: /ägg|agg/i, kcal: 70, protein: 6.2, fat: 5, carbs: 0.5, keto: 2 },
@@ -95,12 +60,12 @@ function emptyEntry(date = todayIso()) {
 
 function getEntries() {
   const raw = localStorage.getItem(storageKey);
-  if (!raw) return isBlankTemplate ? [emptyEntry()] : seedEntries;
+  if (!raw) return [emptyEntry()];
   try {
     const stored = JSON.parse(raw);
-    return isBlankTemplate ? stored : restoreSeedEntries(stored);
+    return Array.isArray(stored) ? stored : [emptyEntry()];
   } catch {
-    return isBlankTemplate ? [emptyEntry()] : seedEntries;
+    return [emptyEntry()];
   }
 }
 
@@ -112,28 +77,13 @@ function hasEntryContent(entry) {
   return Object.entries(entry).some(([key, value]) => key !== "date" && value !== "" && value !== null && value !== undefined);
 }
 
-function mergeEntry(seed, stored) {
-  if (!stored || !hasEntryContent(stored)) return seed;
-  const merged = { ...seed };
-  for (const [key, value] of Object.entries(stored)) {
-    if (value !== "" && value !== null && value !== undefined) {
-      merged[key] = value;
-    }
-  }
-  return merged;
-}
-
-function restoreSeedEntries(storedEntries) {
-  const stored = Array.isArray(storedEntries) ? storedEntries : [];
-  const byDate = new Map(stored.map((entry) => [entry.date, entry]));
-  const restored = seedEntries.map((seed) => mergeEntry(seed, byDate.get(seed.date)));
-  const seedDates = new Set(seedEntries.map((entry) => entry.date));
-  const extraEntries = stored.filter((entry) => entry?.date && !seedDates.has(entry.date));
-  return [...restored, ...extraEntries].sort((a, b) => a.date.localeCompare(b.date));
-}
-
 function findEntry(date) {
   return getEntries().find((entry) => entry.date === date);
+}
+
+function baselineWeight(entries) {
+  const firstWeightedEntry = entries.find((entry) => Number(entry.weight) > 0);
+  return firstWeightedEntry ? Number(firstWeightedEntry.weight) : null;
 }
 
 function mealText(entry) {
@@ -219,19 +169,24 @@ function render(selectedDate = activeDate) {
   const entries = getEntries().sort((a, b) => a.date.localeCompare(b.date));
   const latest = entries.find((entry) => entry.date === selectedDate) || entries.at(-1) || emptyEntry();
   activeDate = latest.date;
+  const hasContent = hasEntryContent(latest);
   const macros = estimateMacros(latest);
-  const kind = classify(latest, macros);
-  const delta = latest.weight ? latest.weight - startWeight : 0;
+  const kind = hasContent ? classify(latest, macros) : "ny logg";
+  const startWeight = baselineWeight(entries);
+  const delta = latest.weight && startWeight ? latest.weight - startWeight : 0;
   const toGoal = latest.weight ? latest.weight - upperGoal : 0;
 
   document.querySelector("#todayDate").textContent = latest.date;
   document.querySelector("#currentWeight").textContent = latest.weight ? decimal(latest.weight) : "--";
-  document.querySelector("#deltaWeight").textContent = `${delta > 0 ? "+" : ""}${decimal(delta)} kg`;
+  document.querySelector("#deltaWeight").textContent =
+    latest.weight && startWeight ? `${delta > 0 ? "+" : ""}${decimal(delta)} kg` : "--";
   document.querySelector("#toGoal").textContent = latest.weight ? `${decimal(toGoal)} kg` : "--";
   const marker = macros.source === "manual" ? "" : "~";
-  document.querySelector("#carbMetric").textContent = `${marker}${decimal(macros.carbs)} g`;
-  document.querySelector("#fatMetric").textContent = `${marker}${macros.fatPct}%`;
-  document.querySelector("#coachLine").textContent = coach(latest, macros, kind);
+  document.querySelector("#carbMetric").textContent = hasContent ? `${marker}${decimal(macros.carbs)} g` : "--";
+  document.querySelector("#fatMetric").textContent = hasContent ? `${marker}${macros.fatPct}%` : "--";
+  document.querySelector("#coachLine").textContent = hasContent
+    ? coach(latest, macros, kind)
+    : "Fyll i dagens mat, vikt, sömn och vätska så börjar coachningen.";
 
   const badge = document.querySelector("#strictnessBadge");
   badge.textContent = kind;
@@ -242,15 +197,15 @@ function render(selectedDate = activeDate) {
   document.querySelector("#carbBar").style.width = `${Math.min(macros.carbPct, 100)}%`;
   document.querySelector("#fatGramBar").style.width = `${Math.min((macros.fat / 200) * 100, 100)}%`;
   document.querySelector("#carbGramBar").style.width = `${Math.min((macros.carbs / 20) * 100, 100)}%`;
-  document.querySelector("#fatText").textContent = `${macros.fatPct}%`;
-  document.querySelector("#proteinText").textContent = `${macros.proteinPct}%`;
-  document.querySelector("#carbText").textContent = `${macros.carbPct}%`;
-  document.querySelector("#fatGramText").textContent = `${decimal(macros.fat)} g`;
-  document.querySelector("#carbGramText").textContent = `${decimal(macros.carbs)} g`;
+  document.querySelector("#fatText").textContent = hasContent ? `${macros.fatPct}%` : "--";
+  document.querySelector("#proteinText").textContent = hasContent ? `${macros.proteinPct}%` : "--";
+  document.querySelector("#carbText").textContent = hasContent ? `${macros.carbPct}%` : "--";
+  document.querySelector("#fatGramText").textContent = hasContent ? `${decimal(macros.fat)} g` : "--";
+  document.querySelector("#carbGramText").textContent = hasContent ? `${decimal(macros.carbs)} g` : "--";
   document.querySelector("#macroNote").textContent =
     macros.source === "manual"
       ? "Makron bygger på manuellt inmatade gram för fett, protein och kolhydrater."
-      : "Övre staplarna visar kaloriprocent. Nedre staplarna visar gram mot bokens praktiska riktmärken: 200 g fett och 20 g kolhydrater.";
+      : "Övre staplarna visar kaloriprocent. Nedre staplarna visar gram mot praktiska riktmärken: 200 g fett och 20 g kolhydrater.";
 
   const history = document.querySelector("#historyList");
   history.innerHTML = "";
@@ -326,9 +281,9 @@ fields.date.addEventListener("change", () => {
 });
 
 document.querySelector("#blankLinkButton").addEventListener("click", async () => {
-  const blankUrl = `${window.location.origin}${window.location.pathname}?blank=1`;
-  await navigator.clipboard.writeText(blankUrl);
-  document.querySelector("#toolsNote").textContent = "Tom mall-länk kopierad. Den startar utan dina befintliga värden.";
+  const appUrl = `${window.location.origin}${window.location.pathname}`;
+  await navigator.clipboard.writeText(appUrl);
+  document.querySelector("#toolsNote").textContent = "App-länk kopierad. Nya användare får en tom logg; din data följer inte med.";
 });
 
 document.querySelector("#importButton").addEventListener("click", () => {
@@ -345,14 +300,14 @@ document.querySelector("#importButton").addEventListener("click", () => {
     render();
     document.querySelector("#toolsNote").textContent = "Importerad data sparad i den här browsern.";
   } catch {
-    document.querySelector("#toolsNote").textContent = "Importen fungerade inte. Kontrollera att du klistrat in exporterad JSON.";
+    document.querySelector("#toolsNote").textContent = "Importen fungerade inte. Kontrollera att du klistrat in exporterad data.";
   }
 });
 
 document.querySelector("#resetButton").addEventListener("click", () => {
-  if (!window.confirm("Nollställa lokal data i den här browsern?")) return;
+  if (!window.confirm("Rensa din lokala data i den här browsern?")) return;
   localStorage.removeItem(storageKey);
-  fillForm(isBlankTemplate ? emptyEntry() : seedEntries.at(-1));
+  fillForm(emptyEntry());
   render();
 });
 
