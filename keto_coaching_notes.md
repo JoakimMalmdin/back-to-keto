@@ -73,7 +73,7 @@ Kalla: anvandarens fotograferade boksidor, 2026-05-19.
 - Sokra drinkar, artificiellt sotade mixers och fardigblandade drinkar undviks. Hall mixers till vatten, mineralvatten, soda, is, citron eller lime.
 - Torrt vin, till exempel Chianti, ar ofta lagt i kolhydrater och kan rymmas i en keto-dag i begransad mangd.
 - Ol ar ofta kolhydratrikt och ar normalt ett svagt val for strikt keto.
-- Alkohol kan tillfalligt bromsa fettforbranning och gora snacksbeslut samre.
+- Alkohol kan bromsa fettforbranning tillfalligt och sanka Ojjes omdome kring snacks.
 
 ## Hur jag ska coacha dag for dag
 
