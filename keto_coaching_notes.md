@@ -66,6 +66,15 @@ Kalla: anvandarens fotograferade boksidor, 2026-05-19.
 - Var vaksam pa kroppens reaktioner, hunger, mattnad, blodtryck och energi.
 - Efterstrava mat som ar mattande, blodsockerstabil och enkel att upprepa.
 
+## Alkohol och keto
+
+- Ren sprit som vodka, gin, whisky och tequila innehaller i praktiken 0 g kolhydrater, men alkohol ger energi.
+- Alkohol ger cirka 7 kcal per gram och raknas inte som fett, protein eller kolhydrater i makrofordelningen.
+- Sokra drinkar och mixers kan snabbt gora en annars kolhydratfri spritdrink kolhydratrik.
+- Torrt vin, till exempel Chianti, ar ofta lagt i kolhydrater och kan rymmas i en keto-dag i begransad mangd.
+- Ol ar ofta kolhydratrikt och ar normalt ett svagt val for strikt keto.
+- Alkohol kan tillfalligt bromsa fettforbranning och gora snacksbeslut samre.
+
 ## Hur jag ska coacha dag for dag
 
 - Bedom varje dag pa fyra huvudpunkter: kolhydratniva, fettandel, proteinbalans och praktisk hallbarhet.

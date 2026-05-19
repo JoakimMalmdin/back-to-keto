@@ -108,7 +108,8 @@ main {
 .macro-panel,
 .history-panel,
 .tools-panel,
-.rules-panel {
+.rules-panel,
+.party-panel {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: color-mix(in srgb, var(--panel) 92%, white);
@@ -187,7 +188,8 @@ main {
 .macro-panel,
 .history-panel,
 .tools-panel,
-.rules-panel {
+.rules-panel,
+.party-panel {
   padding: 16px;
 }
 
@@ -314,13 +316,20 @@ textarea {
   line-height: 1.4;
 }
 
-.rules-panel ul {
+.rules-panel ul,
+.party-panel ul {
   display: grid;
   gap: 8px;
   margin: 12px 0 0;
   padding-left: 20px;
   color: var(--muted);
   line-height: 1.42;
+}
+
+.party-panel {
+  background:
+    linear-gradient(125deg, rgb(141 55 86 / 9%), transparent 60%),
+    var(--panel);
 }
 
 .badge {
