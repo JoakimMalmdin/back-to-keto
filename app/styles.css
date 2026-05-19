@@ -269,6 +269,10 @@ textarea {
   font-weight: 800;
 }
 
+.save-status.error {
+  color: var(--warn);
+}
+
 .button-row {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

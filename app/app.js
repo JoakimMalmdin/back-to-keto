@@ -49,6 +49,7 @@ const foodSignals = [
 ];
 
 const form = document.querySelector("#entryForm");
+const saveButton = document.querySelector("#saveButton");
 const fields = {
   date: document.querySelector("#dateInput"),
   weight: document.querySelector("#weightInput"),
@@ -235,8 +236,13 @@ function fillForm(entry) {
   }
 }
 
-form.addEventListener("submit", (event) => {
-  event.preventDefault();
+function setSaveStatus(message, isError = false) {
+  const status = document.querySelector("#saveStatus");
+  status.textContent = message;
+  status.classList.toggle("error", isError);
+}
+
+function saveCurrentEntry() {
   const entry = {};
   for (const [key, input] of Object.entries(fields)) {
     if (!input) continue;
@@ -249,11 +255,21 @@ form.addEventListener("submit", (event) => {
   saveEntries(entries);
   render();
   fillForm(entry);
-  const status = document.querySelector("#saveStatus");
-  status.textContent = `Sparat ${entry.date} kl. ${new Date().toLocaleTimeString("sv-SE", {
+  setSaveStatus(`Sparat ${entry.date} kl. ${new Date().toLocaleTimeString("sv-SE", {
     hour: "2-digit",
     minute: "2-digit",
-  })}`;
+  })}`);
+}
+
+form.addEventListener("submit", (event) => {
+  event.preventDefault();
+  saveCurrentEntry();
+});
+
+saveButton.addEventListener("click", saveCurrentEntry);
+
+window.addEventListener("error", (event) => {
+  setSaveStatus(`Appfel: ${event.message}`, true);
 });
 
 document.querySelector("#todayButton").addEventListener("click", () => fillForm(emptyEntry()));
