@@ -110,6 +110,25 @@
               </label>
             </div>
 
+            <details class="manual-macros">
+              <summary>Manuella makron</summary>
+              <p class="mini-note">Fyll i gram från etikett eller Codex-beräkning om du vill ersätta appens grova uppskattning.</p>
+              <div class="three-col">
+                <label>
+                  Fett g
+                  <input id="fatInput" name="fat" type="number" step="0.1" inputmode="decimal" />
+                </label>
+                <label>
+                  Protein g
+                  <input id="proteinInput" name="protein" type="number" step="0.1" inputmode="decimal" />
+                </label>
+                <label>
+                  Kolh. g
+                  <input id="carbsInput" name="carbs" type="number" step="0.1" inputmode="decimal" />
+                </label>
+              </div>
+            </details>
+
             <label>
               Notering
               <textarea id="notesInput" name="notes" rows="2"></textarea>
@@ -156,6 +175,17 @@
             </div>
           </div>
           <p id="macroNote" class="note"></p>
+        </section>
+
+        <section class="rules-panel" aria-labelledby="rulesTitle">
+          <h2 id="rulesTitle">Coachningsregler</h2>
+          <ul>
+            <li>Strikt keto: sikta på under 20 g kolhydrater per dag.</li>
+            <li>Fett ska vara huvudbränsle: ofta cirka 70 E% eller mer.</li>
+            <li>Protein ska vara lagom, helst med tydlig fettkälla.</li>
+            <li>Plus: ägg, fisk, kött, majonnäs, smör, olivolja, avokado och feta mejerier i rimlig mängd.</li>
+            <li>Risk: yoghurt, bär, tomatsås, ketchup, falukorv och andra processade produkter.</li>
+          </ul>
         </section>
 
         <section class="history-panel" aria-labelledby="historyTitle">

@@ -12,6 +12,9 @@ const seedEntries = [
     lunch: "5 falukorvsskivor med majonnäs och osötad ketchup, 2 plommontomater",
     dinner: "Pulled pork, några skivor falukorv, majonnäs, gräddfil, 3 plommontomater",
     extras: "",
+    fat: "",
+    protein: "",
+    carbs: "",
     water: "Ca 1 liter",
     coffee: "4 koppar",
     notes: "Keto återupptaget",
@@ -24,6 +27,9 @@ const seedEntries = [
     lunch: "1 burk ICA spansk makrillfilé i tomatsås, 2 ägg",
     dinner: "",
     extras: "",
+    fat: "",
+    protein: "",
+    carbs: "",
     water: "",
     coffee: "2 koppar",
     notes: "-0,8 kg från start",
@@ -51,6 +57,9 @@ const fields = {
   lunch: document.querySelector("#lunchInput"),
   dinner: document.querySelector("#dinnerInput"),
   extras: document.querySelector("#extrasInput"),
+  fat: document.querySelector("#fatInput"),
+  protein: document.querySelector("#proteinInput"),
+  carbs: document.querySelector("#carbsInput"),
   water: document.querySelector("#waterInput"),
   coffee: document.querySelector("#coffeeInput"),
   notes: document.querySelector("#notesInput"),
@@ -73,6 +82,9 @@ function emptyEntry(date = todayIso()) {
     lunch: "",
     dinner: "",
     extras: "",
+    fat: "",
+    protein: "",
+    carbs: "",
     water: "",
     coffee: "",
     notes: "",
@@ -98,6 +110,29 @@ function mealText(entry) {
 }
 
 function estimateMacros(entry) {
+  const manualFat = Number(entry.fat);
+  const manualProtein = Number(entry.protein);
+  const manualCarbs = Number(entry.carbs);
+  const hasManualMacros = [manualFat, manualProtein, manualCarbs].some((value) => Number.isFinite(value) && value > 0);
+  if (hasManualMacros) {
+    const fat = Number.isFinite(manualFat) ? manualFat : 0;
+    const protein = Number.isFinite(manualProtein) ? manualProtein : 0;
+    const carbs = Number.isFinite(manualCarbs) ? manualCarbs : 0;
+    const macroCalories = { protein: protein * 4, fat: fat * 9, carbs: carbs * 4 };
+    const macroTotal = macroCalories.protein + macroCalories.fat + macroCalories.carbs || 1;
+    return {
+      kcal: Math.round(macroTotal),
+      protein,
+      fat,
+      carbs,
+      score: 0,
+      source: "manual",
+      proteinPct: Math.round((macroCalories.protein / macroTotal) * 100),
+      fatPct: Math.round((macroCalories.fat / macroTotal) * 100),
+      carbPct: Math.round((macroCalories.carbs / macroTotal) * 100),
+    };
+  }
+
   const text = mealText(entry);
   const totals = { kcal: 0, protein: 0, fat: 0, carbs: 0, score: 0 };
 
@@ -126,6 +161,7 @@ function estimateMacros(entry) {
 
   return {
     ...totals,
+    source: "estimate",
     proteinPct: Math.round((macroCalories.protein / macroTotal) * 100),
     fatPct: Math.round((macroCalories.fat / macroTotal) * 100),
     carbPct: Math.round((macroCalories.carbs / macroTotal) * 100),
@@ -160,8 +196,9 @@ function render() {
   document.querySelector("#currentWeight").textContent = latest.weight ? decimal(latest.weight) : "--";
   document.querySelector("#deltaWeight").textContent = `${delta > 0 ? "+" : ""}${decimal(delta)} kg`;
   document.querySelector("#toGoal").textContent = latest.weight ? `${decimal(toGoal)} kg` : "--";
-  document.querySelector("#carbMetric").textContent = `~${decimal(macros.carbs)} g`;
-  document.querySelector("#fatMetric").textContent = `~${macros.fatPct}%`;
+  const marker = macros.source === "manual" ? "" : "~";
+  document.querySelector("#carbMetric").textContent = `${marker}${decimal(macros.carbs)} g`;
+  document.querySelector("#fatMetric").textContent = `${marker}${macros.fatPct}%`;
   document.querySelector("#coachLine").textContent = coach(latest, macros, kind);
 
   const badge = document.querySelector("#strictnessBadge");
@@ -175,7 +212,9 @@ function render() {
   document.querySelector("#proteinText").textContent = `${macros.proteinPct}%`;
   document.querySelector("#carbText").textContent = `${macros.carbPct}%`;
   document.querySelector("#macroNote").textContent =
-    "Makron är dina uppskattade värden från dagens logg, inte målbilden. Ju mer mängder och etiketter du skriver in, desto bättre blir bedömningen.";
+    macros.source === "manual"
+      ? "Makron bygger på manuellt inmatade gram för fett, protein och kolhydrater."
+      : "Makron är grovt uppskattade från dagens logg, inte målbilden. För Codex-lik precision: fyll i manuella gram från etikett eller min beräkning.";
 
   const history = document.querySelector("#historyList");
   history.innerHTML = "";
@@ -199,7 +238,7 @@ form.addEventListener("submit", (event) => {
   event.preventDefault();
   const entry = {};
   for (const [key, input] of Object.entries(fields)) {
-    entry[key] = key === "weight" && input.value ? Number(input.value) : input.value.trim();
+    entry[key] = ["weight", "fat", "protein", "carbs"].includes(key) && input.value ? Number(input.value) : input.value.trim();
   }
   const entries = getEntries().filter((item) => item.date !== entry.date);
   entries.push(entry);
