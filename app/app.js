@@ -250,6 +250,7 @@ function render(selectedDate = activeDate) {
   document.querySelector("#currentWeight").textContent = latest.weight ? decimal(latest.weight) : "--";
   document.querySelector("#deltaWeight").textContent =
     latest.weight && startWeight ? `${delta > 0 ? "+" : ""}${decimal(delta)} kg` : "--";
+  document.querySelector("#goalMetricLabel").textContent = goalWeight ? `Till målvikt ${decimal(goalWeight)} kg` : "Till målvikt";
   document.querySelector("#toGoal").textContent = latest.weight && goalWeight ? `${decimal(toGoal)} kg` : "--";
   if (goalInput) goalInput.value = goalWeight ? goalWeight : "";
   const marker = macros.source === "manual" ? "" : "~";
