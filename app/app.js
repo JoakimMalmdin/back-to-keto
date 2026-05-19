@@ -97,7 +97,8 @@ function getEntries() {
   const raw = localStorage.getItem(storageKey);
   if (!raw) return isBlankTemplate ? [emptyEntry()] : seedEntries;
   try {
-    return JSON.parse(raw);
+    const stored = JSON.parse(raw);
+    return isBlankTemplate ? stored : restoreSeedEntries(stored);
   } catch {
     return isBlankTemplate ? [emptyEntry()] : seedEntries;
   }
@@ -105,6 +106,30 @@ function getEntries() {
 
 function saveEntries(entries) {
   localStorage.setItem(storageKey, JSON.stringify(entries));
+}
+
+function hasEntryContent(entry) {
+  return Object.entries(entry).some(([key, value]) => key !== "date" && value !== "" && value !== null && value !== undefined);
+}
+
+function mergeEntry(seed, stored) {
+  if (!stored || !hasEntryContent(stored)) return seed;
+  const merged = { ...seed };
+  for (const [key, value] of Object.entries(stored)) {
+    if (value !== "" && value !== null && value !== undefined) {
+      merged[key] = value;
+    }
+  }
+  return merged;
+}
+
+function restoreSeedEntries(storedEntries) {
+  const stored = Array.isArray(storedEntries) ? storedEntries : [];
+  const byDate = new Map(stored.map((entry) => [entry.date, entry]));
+  const restored = seedEntries.map((seed) => mergeEntry(seed, byDate.get(seed.date)));
+  const seedDates = new Set(seedEntries.map((entry) => entry.date));
+  const extraEntries = stored.filter((entry) => entry?.date && !seedDates.has(entry.date));
+  return [...restored, ...extraEntries].sort((a, b) => a.date.localeCompare(b.date));
 }
 
 function findEntry(date) {
