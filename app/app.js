@@ -1,7 +1,7 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
-const appVersion = "39";
+const appVersion = "40";
 let activeDate = "";
 let supabaseClient = null;
 let cloudSyncTimer = null;
@@ -444,7 +444,7 @@ function queueCloudSync() {
 async function pushCloudData({ silent = false } = {}) {
   const syncCode = getSyncCode();
   if (!supabaseClient || !syncCode) return;
-  const { error } = await supabaseClient.rpc("keto_sync_push", {
+  const { error } = await supabaseRpc("keto_sync_push", {
     sync_key: syncCode,
     profile_entries: getEntries(),
     profile_goal_weight: getGoalWeight(),
@@ -459,7 +459,7 @@ async function pushCloudData({ silent = false } = {}) {
 async function pullCloudData() {
   const syncCode = getSyncCode();
   if (!supabaseClient || !syncCode) return false;
-  const { data, error } = await supabaseClient.rpc("keto_sync_pull", { sync_key: syncCode });
+  const { data, error } = await supabaseRpc("keto_sync_pull", { sync_key: syncCode });
   if (error) {
     setSyncStatus(`Synkfel: ${error.message}`, true);
     return false;
@@ -485,6 +485,24 @@ async function pullCloudData() {
   return true;
 }
 
+async function supabaseRpc(functionName, payload) {
+  const response = await fetch(`${supabaseClient.url}/rest/v1/rpc/${functionName}`, {
+    method: "POST",
+    headers: {
+      apikey: supabaseClient.anonKey,
+      authorization: `Bearer ${supabaseClient.anonKey}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+  const text = await response.text();
+  const data = text ? JSON.parse(text) : null;
+  if (!response.ok) {
+    return { data: null, error: { message: data?.message || response.statusText } };
+  }
+  return { data, error: null };
+}
+
 async function syncNow() {
   if (!supabaseClient) {
     setSyncStatus("Supabase är inte konfigurerat ännu.", true);
@@ -506,8 +524,10 @@ async function initSync() {
       setSyncStatus("Synk är redo i appen, men Supabase-url och anon key saknas.");
       return;
     }
-    const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
-    supabaseClient = createClient(supabaseConfig.url, supabaseConfig.anonKey);
+    supabaseClient = {
+      url: supabaseConfig.url.replace(/\/$/, ""),
+      anonKey: supabaseConfig.anonKey,
+    };
     const savedCode = getSyncCode();
     if (savedCode) {
       if (syncCodeInput) syncCodeInput.value = savedCode;
