@@ -4,34 +4,34 @@ let activeDate = "";
 
 const foodSignals = [
   { match: /(^|[^a-zåäö])(?:ägg|agg)(?:[^a-zåäö]|$)/i, quantity: /(\d+(?:[,.]\d+)?)\s*(?:st\s*)?(?:ägg|agg)/gi, kcal: 70, protein: 6.2, fat: 5, carbs: 0.5, keto: 2 },
-  { match: /makrill/i, kcal: 238, protein: 15, fat: 17.5, carbs: 4.9, keto: 2 },
-  { match: /majonnäs|majonnas/i, kcal: 105, protein: 0, fat: 11.5, carbs: 0.2, keto: 2 },
-  { match: /ost|cheddar|brie|gouda|gruyere|parmesan/i, kcal: 120, protein: 7, fat: 10, carbs: 0.5, keto: 2 },
-  { match: /smör|smor|bregott/i, kcal: 75, protein: 0.1, fat: 8.2, carbs: 0.1, keto: 2 },
-  { match: /grädde|gradde/i, kcal: 100, protein: 0.6, fat: 10, carbs: 0.9, keto: 2 },
-  { match: /bacon/i, kcal: 170, protein: 11, fat: 14, carbs: 0.5, keto: 2 },
-  { match: /salami/i, kcal: 120, protein: 7, fat: 10, carbs: 0.5, keto: 1 },
+  { match: /makrill/i, kcal: 238, protein: 15, fat: 17.5, carbs: 4.9, servingGrams: 125, keto: 2 },
+  { match: /majonnäs|majonnas/i, kcal: 105, protein: 0, fat: 11.5, carbs: 0.2, servingGrams: 15, keto: 2 },
+  { match: /ost|cheddar|brie|gouda|gruyere|parmesan/i, kcal: 120, protein: 7, fat: 10, carbs: 0.5, servingGrams: 30, keto: 2 },
+  { match: /smör|smor|bregott/i, kcal: 75, protein: 0.1, fat: 8.2, carbs: 0.1, servingGrams: 10, keto: 2 },
+  { match: /grädde|gradde/i, kcal: 100, protein: 0.6, fat: 10, carbs: 0.9, servingGrams: 30, keto: 2 },
+  { match: /bacon/i, kcal: 170, protein: 11, fat: 14, carbs: 0.5, servingGrams: 50, keto: 2 },
+  { match: /salami/i, kcal: 120, protein: 7, fat: 10, carbs: 0.5, servingGrams: 30, keto: 1 },
   { match: /hamburgare\s*90\s*g/i, kcal: 230, protein: 17, fat: 18, carbs: 0, keto: 2 },
   { match: /hamburgare\s*150\s*g/i, kcal: 385, protein: 28, fat: 30, carbs: 0, keto: 2 },
-  { match: /grillkorv\s*85\s*%?\s*(?:kött|kott)?/i, kcal: 260, protein: 12, fat: 23, carbs: 2, keto: 1 },
-  { match: /korv\s*75\s*%?\s*(?:kött|kott)?/i, kcal: 250, protein: 11, fat: 22, carbs: 4, keto: 0 },
-  { match: /gräddfil\s*12\s*%|graddfil\s*12\s*%/i, kcal: 135, protein: 3, fat: 12, carbs: 3.5, keto: 1 },
-  { match: /grekisk\s+(?:yoghurt|youghurt|yogurt)\s*10\s*%/i, kcal: 130, protein: 4, fat: 10, carbs: 4, keto: 1 },
-  { match: /entrecote|entrecôte/i, kcal: 430, protein: 30, fat: 34, carbs: 0, keto: 2 },
-  { match: /nötfärs\s*12\s*%|notfars\s*12\s*%/i, kcal: 190, protein: 20, fat: 12, carbs: 0, keto: 2 },
-  { match: /cashewnötter\s*saltade|cashewnotter\s*saltade/i, kcal: 175, protein: 5.5, fat: 13, carbs: 9, keto: -1 },
-  { match: /cashewnötter\s*osaltade|cashewnotter\s*osaltade|cashewnötter|cashewnotter/i, exclude: /cashewnötter\s*saltade|cashewnotter\s*saltade/i, kcal: 175, protein: 5.5, fat: 13, carbs: 9, keto: -1 },
-  { match: /jordnötter\s*saltade|jordnotter\s*saltade|jordnötter|jordnotter/i, kcal: 180, protein: 8, fat: 15, carbs: 4.5, keto: 0 },
+  { match: /grillkorv\s*85\s*%?\s*(?:kött|kott)?/i, kcal: 260, protein: 12, fat: 23, carbs: 2, servingGrams: 100, keto: 1 },
+  { match: /korv\s*75\s*%?\s*(?:kött|kott)?/i, kcal: 250, protein: 11, fat: 22, carbs: 4, servingGrams: 100, keto: 0 },
+  { match: /gräddfil\s*12\s*%|graddfil\s*12\s*%/i, kcal: 135, protein: 3, fat: 12, carbs: 3.5, servingGrams: 100, keto: 1 },
+  { match: /grekisk\s+(?:yoghurt|youghurt|yogurt)\s*10\s*%/i, kcal: 130, protein: 4, fat: 10, carbs: 4, servingGrams: 100, keto: 1 },
+  { match: /entrecote|entrecôte/i, kcal: 430, protein: 30, fat: 34, carbs: 0, servingGrams: 150, keto: 2 },
+  { match: /nötfärs\s*12\s*%|notfars\s*12\s*%/i, kcal: 190, protein: 20, fat: 12, carbs: 0, servingGrams: 100, keto: 2 },
+  { match: /cashewnötter\s*saltade|cashewnotter\s*saltade/i, kcal: 175, protein: 5.5, fat: 13, carbs: 9, servingGrams: 30, keto: -1 },
+  { match: /cashewnötter\s*osaltade|cashewnotter\s*osaltade|cashewnötter|cashewnotter/i, exclude: /cashewnötter\s*saltade|cashewnotter\s*saltade/i, kcal: 175, protein: 5.5, fat: 13, carbs: 9, servingGrams: 30, keto: -1 },
+  { match: /jordnötter\s*saltade|jordnotter\s*saltade|jordnötter|jordnotter/i, kcal: 180, protein: 8, fat: 15, carbs: 4.5, servingGrams: 30, keto: 0 },
   { match: /(?:1\s*glas\s*)?chianti\s*(?:15\s*cl)?/i, kcal: 125, protein: 0, fat: 0, carbs: 3, alcohol: 113, keto: 0 },
   { match: /laxfilé\s*125\s*g|laxfile\s*125\s*g/i, kcal: 260, protein: 25, fat: 17, carbs: 0, keto: 2 },
-  { match: /avokado|avocado/i, kcal: 160, protein: 2, fat: 15, carbs: 2, keto: 2 },
-  { match: /olivolja|olive oil/i, kcal: 120, protein: 0, fat: 13.5, carbs: 0, keto: 2 },
-  { match: /(^|[^a-zåäö])(?:nötter|notter|mandel|valnöt|valnot|macadamia)(?:[^a-zåäö]|$)/i, kcal: 180, protein: 5, fat: 17, carbs: 3, keto: 1 },
+  { match: /avokado|avocado/i, kcal: 160, protein: 2, fat: 15, carbs: 2, servingGrams: 100, keto: 2 },
+  { match: /olivolja|olive oil/i, kcal: 120, protein: 0, fat: 13.5, carbs: 0, servingGrams: 15, keto: 2 },
+  { match: /(^|[^a-zåäö])(?:nötter|notter|mandel|valnöt|valnot|macadamia)(?:[^a-zåäö]|$)/i, kcal: 180, protein: 5, fat: 17, carbs: 3, servingGrams: 30, keto: 1 },
   { match: /påläggsskinka|palaggsskinka|skinka|kalkonpålägg|kalkonpalagg|kycklingpålägg|kycklingpalagg/i, kcal: 30, protein: 5, fat: 1, carbs: 0.3, keto: 1 },
-  { match: /pulled pork/i, kcal: 375, protein: 34, fat: 25, carbs: 3, keto: 1 },
-  { match: /falukorv/i, kcal: 260, protein: 10, fat: 23, carbs: 4, keto: 0 },
-  { match: /gräddfil|graddfil/i, exclude: /gräddfil\s*12|graddfil\s*12/i, kcal: 70, protein: 1.5, fat: 6, carbs: 2, keto: 1 },
-  { match: /yoghurt|youghurt|yogurt/i, exclude: /grekisk\s+(?:yoghurt|youghurt|yogurt)\s*10/i, kcal: 90, protein: 5, fat: 4.5, carbs: 7, keto: -1 },
+  { match: /pulled pork/i, kcal: 375, protein: 34, fat: 25, carbs: 3, servingGrams: 150, keto: 1 },
+  { match: /falukorv/i, kcal: 260, protein: 10, fat: 23, carbs: 4, servingGrams: 100, keto: 0 },
+  { match: /gräddfil|graddfil/i, exclude: /gräddfil\s*12|graddfil\s*12/i, kcal: 70, protein: 1.5, fat: 6, carbs: 2, servingGrams: 50, keto: 1 },
+  { match: /yoghurt|youghurt|yogurt/i, exclude: /grekisk\s+(?:yoghurt|youghurt|yogurt)\s*10/i, kcal: 90, protein: 5, fat: 4.5, carbs: 7, servingGrams: 150, keto: -1 },
   { match: /bär|bar|jordgubb|hallon|blåbär/i, kcal: 25, protein: 0.4, fat: 0.2, carbs: 5.5, keto: -1 },
   { match: /tomat|tomatsås|tomatsas|ketchup/i, kcal: 20, protein: 0.7, fat: 0.1, carbs: 4, keto: -1 },
 ];
@@ -129,6 +129,24 @@ function mealText(entry) {
   return [entry.breakfast, entry.lunch, entry.dinner, entry.extras, entry.notes].filter(Boolean).join(" ");
 }
 
+function gramMultiplier(text, signal) {
+  if (!signal.servingGrams) return null;
+  const matcher = new RegExp(signal.match.source, signal.match.flags.includes("g") ? signal.match.flags : `${signal.match.flags}g`);
+  for (const match of text.matchAll(matcher)) {
+    const start = match.index ?? 0;
+    const end = start + match[0].length;
+    const before = text.slice(Math.max(0, start - 24), start);
+    const after = text.slice(end, Math.min(text.length, end + 24));
+    const beforeAmount = before.match(/(\d+(?:[,.]\d+)?)\s*g(?:ram)?(?:\s|[a-zåäö%])*$/i);
+    const afterAmount = after.match(/^(?:\s|[a-zåäö%]){0,18}(\d+(?:[,.]\d+)?)\s*g(?:ram)?/i);
+    const amount = beforeAmount?.[1] || afterAmount?.[1];
+    if (!amount) continue;
+    const grams = Number(amount.replace(",", "."));
+    if (Number.isFinite(grams) && grams > 0) return grams / signal.servingGrams;
+  }
+  return null;
+}
+
 function countSignal(text, signal) {
   if (signal.exclude?.test(text)) return 0;
   if (signal.quantity) {
@@ -136,6 +154,8 @@ function countSignal(text, signal) {
     const total = quantities.reduce((sum, value) => sum + (Number.isFinite(value) ? value : 0), 0);
     if (total > 0) return total;
   }
+  const grams = gramMultiplier(text, signal);
+  if (grams) return grams;
   return (text.match(new RegExp(signal.match.source, "gi")) || []).length;
 }
 
@@ -258,7 +278,7 @@ function render(selectedDate = activeDate) {
       ? "Makron bygger på manuellt inmatade gram för fett, protein och kolhydrater."
       : macros.alcohol > 0
         ? "Övre staplarna visar kaloriprocent. Alkohol ger energi men visas inte som fett, protein eller kolhydrater."
-        : "Övre staplarna visar kaloriprocent. Nedre staplarna visar gram mot praktiska riktmärken: 200 g fett och 20 g kolhydrater.";
+        : "Automatisk uppskattning: om gram anges räknar appen på gram, annars på normalportioner.";
 
   const history = document.querySelector("#historyList");
   history.innerHTML = "";
