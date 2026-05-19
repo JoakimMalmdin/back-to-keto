@@ -1,7 +1,7 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
-const appVersion = "41";
+const appVersion = "42";
 let activeDate = "";
 let supabaseClient = null;
 let cloudSyncTimer = null;
@@ -15,8 +15,8 @@ const foodSignals = [
   { match: /smör|smor|bregott/i, kcal: 75, protein: 0.1, fat: 8.2, carbs: 0.1, servingGrams: 10, keto: 2 },
   { match: /grädde|gradde/i, kcal: 100, protein: 0.6, fat: 10, carbs: 0.9, servingGrams: 30, keto: 2 },
   { match: /baconlindad(?:e)?\s+(?:köttfärs|kottfars)?(?:bit|bitar|biff|biffar)/i, quantity: /(\d+(?:[,.]\d+)?)\s*(?:st\s*)?baconlindad(?:e)?\s+(?:köttfärs|kottfars)?(?:bit|bitar|biff|biffar)/gi, kcal: 220, protein: 16.5, fat: 17.5, carbs: 0.8, keto: 2 },
-  { match: /bacon/i, exclude: /baconlindad/i, kcal: 170, protein: 11, fat: 14, carbs: 0.5, servingGrams: 50, keto: 2 },
-  { match: /bearnaise|bea|bea-?sås|bea-?sas|bearnie/i, quantity: /(\d+(?:[,.]\d+)?)\s*msk\s*(?:bearnaise|bea|bea-?sås|bea-?sas|bearnie)/gi, kcal: 85, protein: 0.2, fat: 9, carbs: 0.4, keto: 2 },
+  { match: /bacon/i, exclude: /baconlindad/i, quantity: [/(\d+(?:[,.]\d+)?)\s*(?:skivor?|st)\s*bacon/gi, /bacon\s*(?:ca\s*)?(\d+(?:[,.]\d+)?)\s*(?:skivor?|st)/gi], kcal: 55, protein: 3.5, fat: 4.5, carbs: 0.1, keto: 2 },
+  { match: /bearnaise(?:sås|sas)?|bea|bea-?sås|bea-?sas|bearnie(?:sås|sas)?/i, quantity: [/(\d+(?:[,.]\d+)?)\s*msk\s*(?:bearnaise(?:sås|sas)?|bea|bea-?sås|bea-?sas|bearnie(?:sås|sas)?)/gi, /(?:bearnaise(?:sås|sas)?|bea|bea-?sås|bea-?sas|bearnie(?:sås|sas)?)\s*(?:ca|minst)?\s*(\d+(?:[,.]\d+)?)\s*msk/gi], kcal: 85, protein: 0.2, fat: 9, carbs: 0.4, keto: 2 },
   { match: /salami/i, kcal: 120, protein: 7, fat: 10, carbs: 0.5, servingGrams: 30, keto: 1 },
   { match: /hamburgare\s*90\s*g/i, kcal: 230, protein: 17, fat: 18, carbs: 0, keto: 2 },
   { match: /hamburgare\s*150\s*g/i, kcal: 385, protein: 28, fat: 30, carbs: 0, keto: 2 },
@@ -26,6 +26,7 @@ const foodSignals = [
   { match: /grekisk\s+(?:yoghurt|youghurt|yogurt)\s*10\s*%/i, kcal: 130, protein: 4, fat: 10, carbs: 4, servingGrams: 100, keto: 1 },
   { match: /mozzarella/i, kcal: 150, protein: 10, fat: 11, carbs: 1.5, servingGrams: 60, keto: 2 },
   { match: /entrecote|entrecôte/i, kcal: 430, protein: 30, fat: 34, carbs: 0, servingGrams: 150, keto: 2 },
+  { match: /köttfärs|kottfars/i, exclude: /baconlindad/i, kcal: 245, protein: 19, fat: 18, carbs: 0, servingGrams: 100, keto: 2 },
   { match: /nötfärs\s*12\s*%|notfars\s*12\s*%/i, kcal: 190, protein: 20, fat: 12, carbs: 0, servingGrams: 100, keto: 2 },
   { match: /cashewnötter\s*saltade|cashewnotter\s*saltade/i, kcal: 175, protein: 5.5, fat: 13, carbs: 9, servingGrams: 30, keto: -1 },
   { match: /cashewnötter\s*osaltade|cashewnotter\s*osaltade|cashewnötter|cashewnotter/i, exclude: /cashewnötter\s*saltade|cashewnotter\s*saltade/i, kcal: 175, protein: 5.5, fat: 13, carbs: 9, servingGrams: 30, keto: -1 },
@@ -172,7 +173,13 @@ function gramMultiplier(text, signal) {
 function countSignal(text, signal) {
   if (signal.exclude?.test(text)) return 0;
   if (signal.quantity) {
-    const quantities = [...text.matchAll(signal.quantity)].map((match) => Number(match[1].replace(",", ".")));
+    const quantityPatterns = Array.isArray(signal.quantity) ? signal.quantity : [signal.quantity];
+    const quantities = quantityPatterns.flatMap((pattern) =>
+      [...text.matchAll(pattern)].map((match) => {
+        const amount = match.find((part, index) => index > 0 && part);
+        return Number(amount?.replace(",", "."));
+      })
+    );
     const total = quantities.reduce((sum, value) => sum + (Number.isFinite(value) ? value : 0), 0);
     if (total > 0) return total;
   }
