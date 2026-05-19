@@ -352,10 +352,15 @@ textarea {
 
 .macro-bars > div {
   display: grid;
-  grid-template-columns: 88px 1fr 48px;
+  grid-template-columns: 88px 1fr 92px;
   align-items: center;
   gap: 9px;
   font-size: 0.9rem;
+}
+
+.macro-bars strong {
+  font-size: 0.82rem;
+  text-align: right;
 }
 
 .macro-bars span {
@@ -364,6 +369,7 @@ textarea {
 }
 
 .bar {
+  position: relative;
   overflow: hidden;
   height: 12px;
   border-radius: 999px;
@@ -376,6 +382,32 @@ textarea {
   height: 100%;
   border-radius: inherit;
   background: var(--leaf);
+}
+
+.goal-bar {
+  overflow: visible;
+}
+
+.goal-marker {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 2px;
+  border-radius: 999px;
+  background: var(--ink);
+  transform: translateX(-1px);
+}
+
+.goal-marker em {
+  position: absolute;
+  top: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-style: normal;
+  font-weight: 850;
+  white-space: nowrap;
 }
 
 #proteinBar {
@@ -447,6 +479,6 @@ textarea {
   }
 
   .macro-bars > div {
-    grid-template-columns: 72px 1fr 44px;
+    grid-template-columns: 72px 1fr 82px;
   }
 }

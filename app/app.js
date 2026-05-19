@@ -206,16 +206,21 @@ function render() {
   badge.textContent = kind;
   badge.className = `badge ${kind === "strikt keto" ? "strict" : kind === "riskzon" ? "risk" : ""}`;
 
-  document.querySelector("#fatBar").style.width = `${Math.min(macros.fatPct, 100)}%`;
-  document.querySelector("#proteinBar").style.width = `${Math.min(macros.proteinPct, 100)}%`;
-  document.querySelector("#carbBar").style.width = `${Math.min(macros.carbPct, 100)}%`;
-  document.querySelector("#fatText").textContent = `${macros.fatPct}%`;
-  document.querySelector("#proteinText").textContent = `${macros.proteinPct}%`;
-  document.querySelector("#carbText").textContent = `${macros.carbPct}%`;
+  const fatScale = Math.max(150, Math.ceil(macros.fat / 25) * 25);
+  const proteinScale = Math.max(120, Math.ceil(macros.protein / 20) * 20);
+  const carbScale = Math.max(50, Math.ceil(macros.carbs / 10) * 10);
+  document.querySelector("#fatBar").style.width = `${Math.min((macros.fat / fatScale) * 100, 100)}%`;
+  document.querySelector("#proteinBar").style.width = `${Math.min((macros.protein / proteinScale) * 100, 100)}%`;
+  document.querySelector("#carbBar").style.width = `${Math.min((macros.carbs / carbScale) * 100, 100)}%`;
+  document.querySelector("#fatGoalMarker").style.left = `${Math.min((100 / fatScale) * 100, 100)}%`;
+  document.querySelector("#carbGoalMarker").style.left = `${Math.min((20 / carbScale) * 100, 100)}%`;
+  document.querySelector("#fatText").textContent = `${macros.fatPct}% / ${decimal(macros.fat)} g`;
+  document.querySelector("#proteinText").textContent = `${macros.proteinPct}% / ${decimal(macros.protein)} g`;
+  document.querySelector("#carbText").textContent = `${macros.carbPct}% / ${decimal(macros.carbs)} g`;
   document.querySelector("#macroNote").textContent =
     macros.source === "manual"
       ? "Makron bygger på manuellt inmatade gram för fett, protein och kolhydrater."
-      : "Makron är grovt uppskattade från dagens logg, inte målbilden. För Codex-lik precision: fyll i manuella gram från etikett eller min beräkning.";
+      : "Procenten visar andel av kalorierna. Staplarna visar gram-progress med målmarkörer för 100 g fett och 20 g kolhydrater.";
 
   const history = document.querySelector("#historyList");
   history.innerHTML = "";
