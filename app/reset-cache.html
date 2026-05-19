@@ -47,7 +47,7 @@
       <h1>Rensa app-cache</h1>
       <p id="status">Rensar gammal offline-cache. Din sparade keto-logg lämnas kvar.</p>
       <button id="resetButton" type="button">Rensa igen</button>
-      <a href="./?v=9">Öppna appen</a>
+      <a href="./?v=10">Öppna appen</a>
     </main>
     <script>
       async function resetCache() {
@@ -63,7 +63,7 @@
           }
           status.textContent = "Klart. Öppna appen igen med knappen nedan.";
         } catch (error) {
-          status.textContent = "Kunde inte rensa allt automatiskt. Testa att ladda om appen med ?v=9 i adressen.";
+          status.textContent = "Kunde inte rensa allt automatiskt. Testa att ladda om appen med ?v=10 i adressen.";
         }
       }
 

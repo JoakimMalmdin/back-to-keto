@@ -321,9 +321,7 @@ document.querySelector("#exportButton").addEventListener("click", async () => {
   document.querySelector("#coachLine").textContent = "Data kopierad som JSON. Klistra in den här i chatten när du vill att jag synkar loggen.";
 });
 
-if ("serviceWorker" in navigator && location.protocol === "https:") {
-  navigator.serviceWorker.register("service-worker.js").catch(() => {});
-} else if ("serviceWorker" in navigator) {
+if ("serviceWorker" in navigator) {
   navigator.serviceWorker.getRegistrations().then((registrations) => {
     registrations.forEach((registration) => registration.unregister());
   });
