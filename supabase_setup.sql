@@ -1,4 +1,4 @@
-create extension if not exists pgcrypto;
+create extension if not exists pgcrypto with schema extensions;
 
 create table if not exists public.keto_sync_profiles (
   sync_key_hash text primary key,
@@ -17,7 +17,7 @@ language sql
 immutable
 strict
 as $$
-  select encode(digest(sync_key, 'sha256'), 'hex')
+  select encode(extensions.digest(sync_key, 'sha256'), 'hex')
 $$;
 
 create or replace function public.keto_sync_pull(sync_key text)
