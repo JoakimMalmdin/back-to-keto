@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#274a3c"/>
+  <circle cx="174" cy="238" r="86" fill="#fbf7ef"/>
+  <circle cx="338" cy="274" r="86" fill="#c9953d"/>
+  <path d="M155 239c26-38 60-60 101-66 40-6 75 6 105 35" fill="none" stroke="#fbf7ef" stroke-width="32" stroke-linecap="round"/>
+  <text x="256" y="404" text-anchor="middle" font-family="Arial, sans-serif" font-size="76" font-weight="800" fill="#fbf7ef">BTK</text>
+</svg>

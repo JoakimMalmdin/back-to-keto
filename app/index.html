@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="sv">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#f7f2e8" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="BTK" />
+    <title>Back to Keto</title>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Back to Keto</p>
+          <h1>Daglig keto-logg</h1>
+        </div>
+        <button class="icon-button" id="exportButton" type="button" aria-label="Exportera data">
+          <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" /></svg>
+        </button>
+      </header>
+
+      <main>
+        <section class="hero-panel" aria-labelledby="todayTitle">
+          <div>
+            <p class="section-kicker" id="todayDate"></p>
+            <h2 id="todayTitle">Dagens läge</h2>
+            <p id="coachLine" class="coach-line"></p>
+          </div>
+          <div class="status-ring" aria-label="Progress mot mål">
+            <span id="currentWeight">90,6</span>
+            <small>kg</small>
+          </div>
+        </section>
+
+        <section class="metric-grid" aria-label="Nyckeltal">
+          <div class="metric">
+            <span>Från start</span>
+            <strong id="deltaWeight">-0,8 kg</strong>
+          </div>
+          <div class="metric">
+            <span>Till 83 kg</span>
+            <strong id="toGoal">7,6 kg</strong>
+          </div>
+          <div class="metric">
+            <span>Kolhydrater, uppsk.</span>
+            <strong id="carbMetric">~20 g</strong>
+          </div>
+          <div class="metric">
+            <span>Fettandel, uppsk.</span>
+            <strong id="fatMetric">~60%</strong>
+          </div>
+        </section>
+
+        <section class="entry-panel" aria-labelledby="entryTitle">
+          <div class="section-heading">
+            <h2 id="entryTitle">Lägg in dag</h2>
+            <button class="text-button" id="todayButton" type="button">Idag</button>
+          </div>
+
+          <form id="entryForm" class="entry-form">
+            <label>
+              Datum
+              <input id="dateInput" name="date" type="date" required />
+            </label>
+
+            <div class="two-col">
+              <label>
+                Vikt kg
+                <input id="weightInput" name="weight" type="number" step="0.1" inputmode="decimal" />
+              </label>
+              <label>
+                Sömn
+                <select id="sleepInput" name="sleep">
+                  <option value=""></option>
+                  <option>-6 timmar</option>
+                  <option>+6 timmar</option>
+                  <option>+7 timmar</option>
+                </select>
+              </label>
+            </div>
+
+            <label>
+              Frukost
+              <textarea id="breakfastInput" name="breakfast" rows="2"></textarea>
+            </label>
+            <label>
+              Lunch
+              <textarea id="lunchInput" name="lunch" rows="2"></textarea>
+            </label>
+            <label>
+              Middag
+              <textarea id="dinnerInput" name="dinner" rows="2"></textarea>
+            </label>
+            <label>
+              Övrigt matintag
+              <textarea id="extrasInput" name="extras" rows="2" placeholder="t.ex. ost, nötter, skinka, extra kaffe med grädde"></textarea>
+            </label>
+
+            <div class="two-col">
+              <label>
+                Vatten
+                <input id="waterInput" name="water" placeholder="t.ex. 2,5 liter" />
+              </label>
+              <label>
+                Kaffe
+                <input id="coffeeInput" name="coffee" placeholder="t.ex. 3 koppar" />
+              </label>
+            </div>
+
+            <label>
+              Notering
+              <textarea id="notesInput" name="notes" rows="2"></textarea>
+            </label>
+
+            <button class="primary-button" type="submit">
+              <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" /></svg>
+              Spara dag
+            </button>
+          </form>
+        </section>
+
+        <section class="tools-panel" aria-labelledby="toolsTitle">
+          <h2 id="toolsTitle">Delning</h2>
+          <div class="button-row">
+            <button class="secondary-button" id="blankLinkButton" type="button">Kopiera tom mall-länk</button>
+            <button class="secondary-button" id="importButton" type="button">Importera JSON</button>
+            <button class="secondary-button" id="resetButton" type="button">Nollställ lokal data</button>
+          </div>
+          <textarea id="importInput" class="import-box" rows="4" placeholder="Klistra in exporterad JSON här"></textarea>
+          <p class="note" id="toolsNote">Dina loggar sparas lokalt i den browser där du använder appen.</p>
+        </section>
+
+        <section class="macro-panel" aria-labelledby="macroTitle">
+          <div class="section-heading">
+            <h2 id="macroTitle">Makrobild</h2>
+            <span id="strictnessBadge" class="badge">keto-ish</span>
+          </div>
+          <div class="macro-bars">
+            <div>
+              <span>Fett</span>
+              <div class="bar"><i id="fatBar"></i></div>
+              <strong id="fatText">60%</strong>
+            </div>
+            <div>
+              <span>Protein</span>
+              <div class="bar"><i id="proteinBar"></i></div>
+              <strong id="proteinText">25%</strong>
+            </div>
+            <div>
+              <span>Kolhydrater</span>
+              <div class="bar"><i id="carbBar"></i></div>
+              <strong id="carbText">15%</strong>
+            </div>
+          </div>
+          <p id="macroNote" class="note"></p>
+        </section>
+
+        <section class="history-panel" aria-labelledby="historyTitle">
+          <h2 id="historyTitle">Senaste dagar</h2>
+          <div id="historyList" class="history-list"></div>
+        </section>
+      </main>
+    </div>
+
+    <script src="app.js" type="module"></script>
+  </body>
+</html>
