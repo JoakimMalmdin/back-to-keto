@@ -359,13 +359,40 @@ textarea {
 }
 
 .rules-panel ul,
-.party-panel ul {
+.party-panel ul,
+.food-list-panel ul {
   display: grid;
   gap: 8px;
   margin: 12px 0 0;
   padding-left: 20px;
   color: var(--muted);
   line-height: 1.42;
+}
+
+.food-list-panel details {
+  margin-top: 12px;
+}
+
+.food-list-panel summary {
+  color: var(--leaf-strong);
+  cursor: pointer;
+  font-weight: 850;
+}
+
+.food-list-grid {
+  display: grid;
+  gap: 18px;
+  margin-top: 12px;
+}
+
+.food-list-grid h3 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 0.9rem;
+}
+
+.food-list-grid li {
+  font-size: 0.84rem;
 }
 
 .party-panel {
