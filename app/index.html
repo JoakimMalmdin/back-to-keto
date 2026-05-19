@@ -7,10 +7,10 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="BTK" />
     <title>Back to Keto</title>
-    <link rel="manifest" href="manifest.webmanifest?v=48" />
-    <link rel="icon" href="icon.svg?v=48" type="image/svg+xml" />
-    <link rel="apple-touch-icon" href="apple-touch-icon.png?v=48" />
-    <link rel="stylesheet" href="styles.css?v=48" />
+    <link rel="manifest" href="manifest.webmanifest?v=49" />
+    <link rel="icon" href="icon.svg?v=49" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png?v=49" />
+    <link rel="stylesheet" href="styles.css?v=49" />
   </head>
   <body>
     <div class="app-shell">
@@ -108,7 +108,7 @@
               <textarea id="extrasInput" name="extras" rows="2" placeholder="t.ex. ost, nötter, skinka, extra kaffe med grädde"></textarea>
             </label>
 
-            <div class="two-col">
+            <div class="three-col">
               <label>
                 Vatten
                 <input id="waterInput" name="water" placeholder="t.ex. 2,5 liter" />
@@ -117,6 +117,19 @@
                 Kaffe
                 <input id="coffeeInput" name="coffee" placeholder="t.ex. 3 koppar" />
               </label>
+              <fieldset class="segmented-field">
+                <legend>Promenad</legend>
+                <div class="segmented-control" role="radiogroup" aria-label="Promenad">
+                  <input id="walkNoneInput" name="walk" type="radio" value="" />
+                  <label for="walkNoneInput">Ingen</label>
+                  <input id="walkMinus30Input" name="walk" type="radio" value="-30 min" />
+                  <label for="walkMinus30Input">-30 min</label>
+                  <input id="walkPlus30Input" name="walk" type="radio" value="+30 min" />
+                  <label for="walkPlus30Input">+30 min</label>
+                  <input id="walkPlus60Input" name="walk" type="radio" value="+60 min" />
+                  <label for="walkPlus60Input">+60 min</label>
+                </div>
+              </fieldset>
             </div>
 
             <details class="manual-macros">
@@ -337,6 +350,6 @@
       </main>
     </div>
 
-    <script src="app.js?v=48" type="module"></script>
+    <script src="app.js?v=49" type="module"></script>
   </body>
 </html>

@@ -282,6 +282,64 @@ textarea {
   line-height: 1.35;
 }
 
+.segmented-field {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.segmented-field legend {
+  padding: 0;
+}
+
+.segmented-control {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  min-height: 44px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fffaf2;
+}
+
+.segmented-control input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.segmented-control label {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  padding: 0 8px;
+  border-left: 1px solid var(--line);
+  color: var(--leaf-strong);
+  font-size: 0.86rem;
+  font-weight: 850;
+}
+
+.segmented-control label:first-of-type {
+  border-left: 0;
+}
+
+.segmented-control input:checked + label {
+  background: var(--leaf-strong);
+  color: #fffaf2;
+}
+
+.segmented-control input:focus-visible + label {
+  outline: 3px solid rgb(63 111 91 / 35%);
+  outline-offset: -3px;
+}
+
 .primary-button {
   display: inline-flex;
   align-items: center;
