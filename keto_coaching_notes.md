@@ -5,8 +5,8 @@ Kalla: anvandarens fotograferade boksidor, 2026-05-19.
 ## Grundmodell
 
 - Keto beskrivs som en kost dar kroppen styrs mot fettdrift genom mycket lagt kolhydratintag, hogt fettintag och lagom protein.
-- Boken anger att effektiv keto ofta hamnar kring 80-90 E% fett for en stabil ketos, och att majoriteten av kalorierna bor komma fran fett.
-- Det praktiska exemplet i boken visar kaloriupplagg med cirka 70 E% fett, men texten lyfter att hogre fettandel ofta kan ge stabilare ketos.
+- Effektiv keto hamnar ofta kring 80-90 E% fett for en stabil ketos, och majoriteten av kalorierna bor komma fran fett.
+- Ett praktiskt kaloriupplagg kan ligga kring cirka 70 E% fett, men hogre fettandel kan ge stabilare ketos.
 - Kolhydrater ska hallas mycket laga, med omkring 20 g per dag som tydlig regel och under 20 g som sarskilt strikt niva.
 - Protein ska inte overdrivas. Rekommendationen ar att fokusera pa lagom mangd protein och inte ata mycket magert protein utan fett.
 
@@ -14,14 +14,14 @@ Kalla: anvandarens fotograferade boksidor, 2026-05-19.
 
 - E% betyder energiprocent, alltsa andelen av dagens kalorier som kommer fran fett, protein respektive kolhydrater.
 - Fett ar huvudbranslet och bor vara den dominerande energikallan.
-- Protein behovs for mnad, muskler, immunforsvar och hormoner, men overskott kan enligt boken minska keto-effekten.
+- Protein behovs for mnad, muskler, immunforsvar och hormoner, men overskott kan minska keto-effekten.
 - Kolhydrater ska begransas hart, sarskilt i borjan.
 - Nar du ater keto bor varje maltid helst innehalla en tydlig fettkalla.
 
 ## Fasta och mattnad
 
 - Ketogen kost beskrivs som blodsockerstabil och mattande, vilket kan gora fasta naturligare.
-- Boken foreslar att man kan hoppa over frukost eller lunch om man inte ar hungrig.
+- Man kan hoppa over frukost eller lunch om man inte ar hungrig.
 - Om fasta skapar stress, energidipp eller cravings ska den inte pressas fram.
 - Ett exempel ar dygnsfasta, men med tydlig betoning pa att det ska fungera i vardagen.
 
@@ -39,7 +39,7 @@ Kalla: anvandarens fotograferade boksidor, 2026-05-19.
 
 ## Mejerier
 
-- Bra mejerier enligt boken ar fullfeta val som vispgradde, farskost, fullfet keso, harda och mjuka ostar, mascarpone, getost, farost och buffelost.
+- Bra mejerier ar fullfeta val som vispgradde, farskost, fullfet keso, harda och mjuka ostar, mascarpone, getost, farost och buffelost.
 - Mejerier kan vara ett problem om vikten stannar, sarskilt mjolkprodukter med mer kolhydrater eller om mangden blir stor.
 
 ## Fettkallor
@@ -60,7 +60,7 @@ Kalla: anvandarens fotograferade boksidor, 2026-05-19.
 ## Praktisk regellista
 
 - Kolhydrater: under 20 g per dag.
-- Fett: cirka 70 E% eller mer, helst stabilt hogt; materialet lyfter 80-90 E% som mer strikt ketogen niva. Bokens sammanfattning anger ocksa 200 g fett per dag som praktiskt riktmarke.
+- Fett: cirka 70 E% eller mer, helst stabilt hogt; 80-90 E% ar en mer strikt ketogen niva. 200 g fett per dag anvands som praktiskt riktmarke.
 - Rotera proteiner och fokusera pa feta styckdetaljer.
 - At gronsaker men undvik att de blir kolhydratbasen i maltiden.
 - Var vaksam pa kroppens reaktioner, hunger, mattnad, blodtryck och energi.
