@@ -395,6 +395,42 @@ textarea {
   font-size: 0.84rem;
 }
 
+.macro-breakdown {
+  margin-top: 12px;
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+
+.macro-breakdown summary {
+  color: var(--leaf-strong);
+  cursor: pointer;
+  font-size: 0.86rem;
+  font-weight: 850;
+}
+
+#macroBreakdown {
+  display: grid;
+  gap: 7px;
+  margin-top: 10px;
+}
+
+#macroBreakdown > div {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) 48px repeat(3, 64px);
+  gap: 8px;
+  align-items: center;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+#macroBreakdown strong {
+  color: var(--ink);
+}
+
+#macroBreakdown span {
+  text-align: right;
+}
+
 .party-panel {
   background:
     linear-gradient(125deg, rgb(141 55 86 / 9%), transparent 60%),
@@ -563,5 +599,13 @@ textarea {
   .macro-bars > div,
   .target-bars > div {
     grid-template-columns: 72px 1fr 82px;
+  }
+
+  #macroBreakdown > div {
+    grid-template-columns: 1fr 44px;
+  }
+
+  #macroBreakdown span:nth-child(n + 3) {
+    text-align: left;
   }
 }

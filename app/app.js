@@ -1,7 +1,7 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
-const appVersion = "46";
+const appVersion = "47";
 let activeDate = "";
 let supabaseClient = null;
 let cloudSyncTimer = null;
@@ -29,7 +29,7 @@ const foodSignals = [
   { match: /entrecote|entrecôte/i, kcal: 430, protein: 30, fat: 34, carbs: 0, servingGrams: 150, keto: 2 },
   { match: /oxfil[eé]/i, kcal: 170, protein: 26, fat: 7, carbs: 0, servingGrams: 100, keto: 2 },
   { match: /fläskfil[eé]|flaskfil[eé]/i, kcal: 120, protein: 22, fat: 3, carbs: 0, servingGrams: 100, keto: 1 },
-  { match: /nötfärs|notfars|köttfärs|kottfars/i, exclude: /baconlindad/i, kcal: 190, protein: 20, fat: 12, carbs: 0, servingGrams: 100, keto: 2 },
+  { match: /nötfärs|notfars|köttfärs|kottfars/i, exclude: /baconlindad/i, kcal: 245, protein: 19, fat: 18, carbs: 0, servingGrams: 100, keto: 2 },
   { match: /kycklingfil[eé]|kyckling\s*\(?\s*fil[eé](?:\s+utan\s+skinn)?\s*\)?|kycklingbröst|kycklingbrost/i, kcal: 165, protein: 31, fat: 3.6, carbs: 0, servingGrams: 100, keto: 1 },
   { match: /torsk/i, kcal: 82, protein: 18, fat: 0.7, carbs: 0, servingGrams: 100, keto: 1 },
   { match: /leverpastej/i, kcal: 95, protein: 3, fat: 8, carbs: 2.5, servingGrams: 30, keto: 0 },
@@ -207,6 +207,66 @@ function countSignal(text, signal) {
   return (text.match(new RegExp(signal.match.source, "gi")) || []).length;
 }
 
+function signalLabel(signal) {
+  const source = signal.match.source;
+  const labels = [
+    [/ägg|agg/, "Ägg"],
+    [/makrill/, "Makrill"],
+    [/majonn/, "Majonnäs"],
+    [/ost|cheddar|brie|gouda|gruyere|parmesan/, "Ost"],
+    [/smör|smor/, "Smör"],
+    [/grädde|gradde/, "Grädde"],
+    [/baconlindad/, "Baconlindad köttfärsbit"],
+    [/bacon/, "Bacon"],
+    [/bearnaise|bearnie|bea/, "Bearnaise"],
+    [/salami/, "Salami"],
+    [/hamburgare/, "Hamburgare"],
+    [/grillkorv/, "Grillkorv 85%"],
+    [/korv/, "Korv 75%"],
+    [/gräddfil|graddfil/, "Gräddfil"],
+    [/grekisk/, "Grekisk yoghurt 10%"],
+    [/färskost|farskost|cream cheese/, "Färskost"],
+    [/mozzarella/, "Mozzarella"],
+    [/entrecote|entrecôte/, "Entrecote"],
+    [/oxfil/, "Oxfilé"],
+    [/fläskfil|flaskfil/, "Fläskfilé"],
+    [/nötfärs|notfars|köttfärs|kottfars/, "Köttfärs/nötfärs"],
+    [/kyckling/, "Kycklingfilé"],
+    [/torsk/, "Torsk"],
+    [/leverpastej/, "Leverpastej"],
+    [/blodpudding/, "Blodpudding"],
+    [/cashewn/, "Cashewnötter"],
+    [/jordn/, "Jordnötter"],
+    [/chianti/, "Chianti"],
+    [/lätt|latt/, "Lättöl"],
+    [/laxfil/, "Laxfilé"],
+    [/avokado|avocado/, "Avokado"],
+    [/olivolja|olive oil/, "Olivolja"],
+    [/nötter|notter|mandel|valnöt|valnot|macadamia/, "Nötter"],
+    [/påläggsskinka|palaggsskinka|skinka|kalkon|kycklingpålägg|kycklingpalagg/, "Påläggsskinka"],
+    [/pulled pork/, "Pulled pork"],
+    [/falukorv/, "Falukorv"],
+    [/yoghurt|youghurt|yogurt/, "Yoghurt"],
+    [/bär|bar|jordgubb|hallon|blåbär/, "Bär"],
+    [/äpple|apple/, "Äpple"],
+    [/apelsin/, "Apelsin"],
+    [/spetskål|spetskal/, "Spetskål"],
+    [/broccoli/, "Broccoli"],
+    [/blomkål|blomkal/, "Blomkål"],
+    [/vitkål|vitkal/, "Vitkål"],
+    [/zucchini/, "Zucchini"],
+    [/sparris/, "Sparris"],
+    [/svamp|champinjon/, "Svamp"],
+    [/bladgrönt|bladgront|spenat|sallad|ruccola/, "Bladgrönt"],
+    [/gurka/, "Gurka"],
+    [/balsamico/, "Balsamico"],
+    [/osötad|osotad/, "Osötad ketchup"],
+    [/ketchup/, "Ketchup"],
+    [/tomat|tomatsås|tomatsas/, "Tomat/tomatsås"],
+  ];
+  return labels.find(([pattern]) => pattern.test(source))?.[1] || "Okänd träff";
+}
+
 function estimateMacros(entry) {
   const manualFat = Number(entry.fat);
   const manualProtein = Number(entry.protein);
@@ -225,6 +285,7 @@ function estimateMacros(entry) {
       carbs,
       score: 0,
       source: "manual",
+      items: [],
       proteinPct: Math.round((macroCalories.protein / macroTotal) * 100),
       fatPct: Math.round((macroCalories.fat / macroTotal) * 100),
       carbPct: Math.round((macroCalories.carbs / macroTotal) * 100),
@@ -233,14 +294,24 @@ function estimateMacros(entry) {
 
   const text = mealText(entry);
   const totals = { kcal: 0, protein: 0, fat: 0, carbs: 0, alcohol: 0, score: 0 };
+  const items = [];
 
   for (const signal of foodSignals) {
     const count = countSignal(text, signal);
     if (count > 0) {
-      totals.kcal += signal.kcal * count;
-      totals.protein += signal.protein * count;
-      totals.fat += signal.fat * count;
-      totals.carbs += signal.carbs * count;
+      const item = {
+        label: signalLabel(signal),
+        count,
+        kcal: signal.kcal * count,
+        protein: signal.protein * count,
+        fat: signal.fat * count,
+        carbs: signal.carbs * count,
+      };
+      items.push(item);
+      totals.kcal += item.kcal;
+      totals.protein += item.protein;
+      totals.fat += item.fat;
+      totals.carbs += item.carbs;
       totals.alcohol += (signal.alcohol || 0) * count;
       totals.score += signal.keto * count;
     }
@@ -259,6 +330,7 @@ function estimateMacros(entry) {
 
   return {
     ...totals,
+    items,
     source: "estimate",
     proteinPct: Math.round((macroCalories.protein / macroTotal) * 100),
     fatPct: Math.round((macroCalories.fat / macroTotal) * 100),
@@ -280,6 +352,31 @@ function coach(entry, macros, kind) {
   if (entry.sleep === "-6 timmar") notes.push("Kort sömn kan öka hunger, så prioritera salt, vatten och enkel mat idag.");
   if (/1 liter/i.test(entry.water || "")) notes.push("Vattenintaget var lågt; sikta hellre runt 2,5-3 liter.");
   return notes.join(" ");
+}
+
+function renderMacroBreakdown(macros, hasContent) {
+  const breakdown = document.querySelector("#macroBreakdown");
+  if (!breakdown) return;
+  if (!hasContent) {
+    breakdown.textContent = "Inga matposter beräknade ännu.";
+    return;
+  }
+  if (macros.source === "manual") {
+    breakdown.textContent = "Makron är manuellt ifyllda för hela dagen.";
+    return;
+  }
+  if (!macros.items?.length) {
+    breakdown.textContent = "Inga kända livsmedel hittades i dagens text.";
+    return;
+  }
+  const rows = macros.items
+    .sort((a, b) => b.fat - a.fat)
+    .map((item) => {
+      const count = Number.isInteger(item.count) ? item.count : decimal(item.count);
+      return `<div><strong>${item.label}</strong><span>x ${count}</span><span>${decimal(item.fat)} g F</span><span>${decimal(item.protein)} g P</span><span>${decimal(item.carbs)} g K</span></div>`;
+    })
+    .join("");
+  breakdown.innerHTML = rows;
 }
 
 function render(selectedDate = activeDate) {
@@ -328,6 +425,7 @@ function render(selectedDate = activeDate) {
       : macros.alcohol > 0
         ? "Övre staplarna visar kaloriprocent. Alkohol ger energi men visas inte som fett, protein eller kolhydrater."
         : "Automatisk uppskattning: om gram anges räknar appen på gram, annars på normalportioner.";
+  renderMacroBreakdown(macros, hasContent);
 
   const history = document.querySelector("#historyList");
   history.innerHTML = "";
