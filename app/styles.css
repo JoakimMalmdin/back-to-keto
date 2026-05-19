@@ -296,6 +296,12 @@ textarea {
   min-height: 94px;
 }
 
+.sync-panel {
+  background:
+    linear-gradient(125deg, rgb(63 111 91 / 8%), transparent 62%),
+    var(--panel);
+}
+
 .manual-macros {
   border: 1px solid var(--line);
   border-radius: 8px;

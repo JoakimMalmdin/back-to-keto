@@ -1,7 +1,11 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
-const appVersion = "33";
+const appVersion = "34";
 let activeDate = "";
+let supabaseClient = null;
+let syncUser = null;
+let cloudSyncTimer = null;
+let applyingRemoteData = false;
 
 const foodSignals = [
   { match: /(^|[^a-zåäö])(?:ägg|agg)(?:[^a-zåäö]|$)/i, quantity: /(\d+(?:[,.]\d+)?)\s*(?:st\s*)?(?:ägg|agg)/gi, kcal: 70, protein: 6.2, fat: 5, carbs: 0.5, keto: 2 },
@@ -55,6 +59,11 @@ const fields = {
   notes: document.querySelector("#notesInput"),
 };
 const goalInput = document.querySelector("#goalInput");
+const syncEmailInput = document.querySelector("#syncEmailInput");
+const syncStatus = document.querySelector("#syncStatus");
+const signInButton = document.querySelector("#signInButton");
+const signOutButton = document.querySelector("#signOutButton");
+const syncNowButton = document.querySelector("#syncNowButton");
 let autosaveTimer = null;
 
 function decimal(value) {
@@ -96,6 +105,7 @@ function getEntries() {
 
 function saveEntries(entries) {
   localStorage.setItem(storageKey, JSON.stringify(entries));
+  queueCloudSync();
 }
 
 function getGoalWeight() {
@@ -107,9 +117,11 @@ function saveGoalWeight(value) {
   const goal = Number(value);
   if (Number.isFinite(goal) && goal > 0) {
     localStorage.setItem(goalKey, String(goal));
+    queueCloudSync();
     return goal;
   }
   localStorage.removeItem(goalKey);
+  queueCloudSync();
   return null;
 }
 
@@ -395,6 +407,147 @@ document.querySelector("#blankLinkButton").addEventListener("click", async () =>
   document.querySelector("#toolsNote").textContent = "App-länk kopierad. Lokala loggar och inställningar följer inte med länken.";
 });
 
+function setSyncStatus(message, isError = false) {
+  if (!syncStatus) return;
+  syncStatus.textContent = message;
+  syncStatus.classList.toggle("error", isError);
+}
+
+function syncPayload() {
+  return {
+    user_id: syncUser.id,
+    entries: getEntries(),
+    goal_weight: getGoalWeight(),
+    updated_at: new Date().toISOString(),
+  };
+}
+
+function queueCloudSync() {
+  if (applyingRemoteData || !supabaseClient || !syncUser) return;
+  window.clearTimeout(cloudSyncTimer);
+  cloudSyncTimer = window.setTimeout(() => {
+    pushCloudData({ silent: true });
+  }, 900);
+}
+
+async function pushCloudData({ silent = false } = {}) {
+  if (!supabaseClient || !syncUser) return;
+  const { error } = await supabaseClient.from("keto_profiles").upsert(syncPayload(), { onConflict: "user_id" });
+  if (error) {
+    setSyncStatus(`Synkfel: ${error.message}`, true);
+    return;
+  }
+  if (!silent) setSyncStatus(`Synkat ${new Date().toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" })}`);
+}
+
+async function pullCloudData() {
+  if (!supabaseClient || !syncUser) return false;
+  const { data, error } = await supabaseClient
+    .from("keto_profiles")
+    .select("entries, goal_weight, updated_at")
+    .eq("user_id", syncUser.id)
+    .maybeSingle();
+  if (error) {
+    setSyncStatus(`Synkfel: ${error.message}`, true);
+    return false;
+  }
+  if (!data) {
+    await pushCloudData({ silent: true });
+    setSyncStatus("Molnprofil skapad från den här enheten.");
+    return true;
+  }
+  applyingRemoteData = true;
+  localStorage.setItem(storageKey, JSON.stringify(Array.isArray(data.entries) ? data.entries : [emptyEntry()]));
+  if (data.goal_weight) {
+    localStorage.setItem(goalKey, String(data.goal_weight));
+  } else {
+    localStorage.removeItem(goalKey);
+  }
+  applyingRemoteData = false;
+  const nextEntry = getEntries().at(-1) || emptyEntry();
+  fillForm(nextEntry);
+  render(nextEntry.date);
+  setSyncStatus(`Synkat från molnet ${new Date(data.updated_at).toLocaleString("sv-SE")}`);
+  return true;
+}
+
+async function syncNow() {
+  if (!supabaseClient || !syncUser) {
+    setSyncStatus("Logga in för att synka.", true);
+    return;
+  }
+  await pullCloudData();
+}
+
+async function initSync() {
+  if (!syncStatus) return;
+  try {
+    const { supabaseConfig } = await import(`./supabase-config.js?v=${appVersion}`);
+    if (!supabaseConfig?.url || !supabaseConfig?.anonKey) {
+      setSyncStatus("Synk är redo i appen, men Supabase-url och anon key saknas.");
+      return;
+    }
+    const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
+    supabaseClient = createClient(supabaseConfig.url, supabaseConfig.anonKey, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+      },
+    });
+    const { data } = await supabaseClient.auth.getSession();
+    syncUser = data.session?.user || null;
+    if (syncUser) {
+      if (syncEmailInput) syncEmailInput.value = syncUser.email || "";
+      setSyncStatus(`Inloggad som ${syncUser.email || "användare"}.`);
+      await pullCloudData();
+    } else {
+      setSyncStatus("Synk konfigurerad. Logga in med e-post för att synka mellan enheter.");
+    }
+    supabaseClient.auth.onAuthStateChange(async (_event, session) => {
+      syncUser = session?.user || null;
+      if (syncUser) {
+        if (syncEmailInput) syncEmailInput.value = syncUser.email || "";
+        await pullCloudData();
+      } else {
+        setSyncStatus("Utloggad. Appen sparar lokalt på den här enheten.");
+      }
+    });
+  } catch (error) {
+    setSyncStatus(`Synk kunde inte laddas: ${error.message}`, true);
+  }
+}
+
+signInButton?.addEventListener("click", async () => {
+  if (!supabaseClient) {
+    setSyncStatus("Supabase är inte konfigurerat ännu.", true);
+    return;
+  }
+  const email = syncEmailInput?.value.trim();
+  if (!email) {
+    setSyncStatus("Skriv in e-post först.", true);
+    return;
+  }
+  const { error } = await supabaseClient.auth.signInWithOtp({
+    email,
+    options: { emailRedirectTo: `${window.location.origin}${window.location.pathname}?v=${appVersion}` },
+  });
+  if (error) {
+    setSyncStatus(`Inloggningsfel: ${error.message}`, true);
+    return;
+  }
+  setSyncStatus("Inloggningslänk skickad. Öppna länken på den här enheten.");
+});
+
+signOutButton?.addEventListener("click", async () => {
+  if (!supabaseClient) return;
+  await supabaseClient.auth.signOut();
+  syncUser = null;
+  setSyncStatus("Utloggad. Appen sparar lokalt på den här enheten.");
+});
+
+syncNowButton?.addEventListener("click", syncNow);
+
 document.querySelector("#importButton").addEventListener("click", () => {
   const input = document.querySelector("#importInput");
   try {
@@ -438,3 +591,4 @@ if ("serviceWorker" in navigator) {
 const initialEntry = getEntries().at(-1) || emptyEntry();
 fillForm(initialEntry);
 render(initialEntry.date);
+initSync();
