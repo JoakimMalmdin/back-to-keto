@@ -1,33 +1,60 @@
-create table if not exists public.keto_profiles (
-  user_id uuid primary key references auth.users(id) on delete cascade,
+create extension if not exists pgcrypto;
+
+create table if not exists public.keto_sync_profiles (
+  sync_key_hash text primary key,
   entries jsonb not null default '[]'::jsonb,
   goal_weight numeric,
   updated_at timestamptz not null default now()
 );
 
-alter table public.keto_profiles enable row level security;
+alter table public.keto_sync_profiles enable row level security;
 
-grant usage on schema public to authenticated;
-grant select, insert, update on public.keto_profiles to authenticated;
+revoke all on public.keto_sync_profiles from anon, authenticated;
 
-drop policy if exists "Users can read own keto profile" on public.keto_profiles;
-create policy "Users can read own keto profile"
-on public.keto_profiles
-for select
-to authenticated
-using (auth.uid() = user_id);
+create or replace function public.keto_sync_hash(sync_key text)
+returns text
+language sql
+immutable
+strict
+as $$
+  select encode(digest(sync_key, 'sha256'), 'hex')
+$$;
 
-drop policy if exists "Users can insert own keto profile" on public.keto_profiles;
-create policy "Users can insert own keto profile"
-on public.keto_profiles
-for insert
-to authenticated
-with check (auth.uid() = user_id);
+create or replace function public.keto_sync_pull(sync_key text)
+returns table(entries jsonb, goal_weight numeric, updated_at timestamptz)
+language sql
+security definer
+set search_path = public
+as $$
+  select p.entries, p.goal_weight, p.updated_at
+  from public.keto_sync_profiles p
+  where p.sync_key_hash = public.keto_sync_hash(sync_key);
+$$;
 
-drop policy if exists "Users can update own keto profile" on public.keto_profiles;
-create policy "Users can update own keto profile"
-on public.keto_profiles
-for update
-to authenticated
-using (auth.uid() = user_id)
-with check (auth.uid() = user_id);
+create or replace function public.keto_sync_push(
+  sync_key text,
+  profile_entries jsonb,
+  profile_goal_weight numeric
+)
+returns void
+language sql
+security definer
+set search_path = public
+as $$
+  insert into public.keto_sync_profiles (sync_key_hash, entries, goal_weight, updated_at)
+  values (
+    public.keto_sync_hash(sync_key),
+    coalesce(profile_entries, '[]'::jsonb),
+    profile_goal_weight,
+    now()
+  )
+  on conflict (sync_key_hash)
+  do update set
+    entries = excluded.entries,
+    goal_weight = excluded.goal_weight,
+    updated_at = now();
+$$;
+
+revoke all on function public.keto_sync_hash(text) from public;
+grant execute on function public.keto_sync_pull(text) to anon, authenticated;
+grant execute on function public.keto_sync_push(text, jsonb, numeric) to anon, authenticated;

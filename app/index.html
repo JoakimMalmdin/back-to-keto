@@ -7,8 +7,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="BTK" />
     <title>Back to Keto</title>
-    <link rel="manifest" href="manifest.webmanifest?v=38" />
-    <link rel="stylesheet" href="styles.css?v=38" />
+    <link rel="manifest" href="manifest.webmanifest?v=39" />
+    <link rel="stylesheet" href="styles.css?v=39" />
   </head>
   <body>
     <div class="app-shell">
@@ -163,15 +163,15 @@
         <section class="tools-panel sync-panel" aria-labelledby="syncTitle">
           <h2 id="syncTitle">Synk</h2>
           <label>
-            E-post
-            <input id="syncEmailInput" name="syncEmail" type="email" autocomplete="email" placeholder="namn@example.com" />
+            Synkkod
+            <input id="syncCodeInput" name="syncCode" type="password" autocomplete="off" placeholder="Välj en egen kod" />
           </label>
           <div class="button-row">
-            <button class="secondary-button" id="signInButton" type="button">Skicka inloggningslänk</button>
+            <button class="secondary-button" id="saveSyncCodeButton" type="button">Spara synkkod</button>
             <button class="secondary-button" id="syncNowButton" type="button">Synka nu</button>
-            <button class="secondary-button" id="signOutButton" type="button">Logga ut</button>
+            <button class="secondary-button" id="clearSyncCodeButton" type="button">Koppla bort</button>
           </div>
-          <p class="note" id="syncStatus">Synk är inte konfigurerad ännu.</p>
+          <p class="note" id="syncStatus">Skriv samma synkkod på varje enhet som ska dela data.</p>
         </section>
 
         <section class="macro-panel" aria-labelledby="macroTitle">
@@ -249,6 +249,6 @@
       </main>
     </div>
 
-    <script src="app.js?v=38" type="module"></script>
+    <script src="app.js?v=39" type="module"></script>
   </body>
 </html>

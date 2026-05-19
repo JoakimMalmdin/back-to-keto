@@ -18,10 +18,10 @@ Datan sparas lokalt i varje browser. Anvand export/import i appen for att flytta
 
 ## Supabase-synk
 
-Appen har valfri molnsynk via Supabase. Lokal lagring fungerar fortfarande om Supabase inte ar konfigurerat.
+Appen har valfri molnsynk via Supabase. Lokal lagring fungerar fortfarande om Supabase inte ar konfigurerat. Synken anvander en personlig synkkod i appen, inte e-postinloggning.
 
 1. Skapa ett Supabase-projekt.
-2. Oppna SQL Editor i Supabase och kor hela `supabase_setup.sql`, inklusive grants och RLS-policyer.
+2. Oppna SQL Editor i Supabase och kor hela `supabase_setup.sql`.
 3. Ga till Project Settings > API och kopiera Project URL samt anon public key.
 4. Fyll i `app/supabase-config.js`:
 
@@ -32,10 +32,4 @@ export const supabaseConfig = {
 };
 ```
 
-5. I Authentication > URL Configuration, lagg till GitHub Pages-urlen som tillaten redirect-url:
-
-```text
-https://joakimmalmdin.github.io/back-to-keto/app/
-```
-
-Efter detta kan anvandaren logga in med e-postlank i appens Synk-ruta. Varje inloggad anvandare far egen rad i databasen via Supabase Row Level Security.
+Efter detta valjer anvandaren en egen synkkod i appens Synk-ruta. Samma kod pa dator och telefon ger samma molnprofil. Valj en lang och svargissad kod, eftersom alla som kan koden kan lasa och skriva den profilen.

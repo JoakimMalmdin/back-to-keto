@@ -1,9 +1,9 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
-const appVersion = "38";
+const syncCodeKey = "btk.keto.syncCode.v1";
+const appVersion = "39";
 let activeDate = "";
 let supabaseClient = null;
-let syncUser = null;
 let cloudSyncTimer = null;
 let applyingRemoteData = false;
 
@@ -59,24 +59,15 @@ const fields = {
   notes: document.querySelector("#notesInput"),
 };
 const goalInput = document.querySelector("#goalInput");
-const syncEmailInput = document.querySelector("#syncEmailInput");
+const syncCodeInput = document.querySelector("#syncCodeInput");
 const syncStatus = document.querySelector("#syncStatus");
-const signInButton = document.querySelector("#signInButton");
-const signOutButton = document.querySelector("#signOutButton");
+const saveSyncCodeButton = document.querySelector("#saveSyncCodeButton");
+const clearSyncCodeButton = document.querySelector("#clearSyncCodeButton");
 const syncNowButton = document.querySelector("#syncNowButton");
 let autosaveTimer = null;
 
 function stableAppUrl() {
   return `${window.location.origin}${window.location.pathname}`;
-}
-
-function authParams() {
-  return new URLSearchParams(`${window.location.search.slice(1)}&${window.location.hash.slice(1)}`);
-}
-
-function cleanAuthUrl() {
-  if (!window.location.search && !window.location.hash) return;
-  window.history.replaceState({}, document.title, `${window.location.pathname}?v=${appVersion}`);
 }
 
 function decimal(value) {
@@ -426,17 +417,24 @@ function setSyncStatus(message, isError = false) {
   syncStatus.classList.toggle("error", isError);
 }
 
-function syncPayload() {
-  return {
-    user_id: syncUser.id,
-    entries: getEntries(),
-    goal_weight: getGoalWeight(),
-    updated_at: new Date().toISOString(),
-  };
+function getSyncCode() {
+  return localStorage.getItem(syncCodeKey) || "";
+}
+
+function saveSyncCode(value) {
+  const code = value.trim();
+  if (code.length < 8) {
+    setSyncStatus("Välj en synkkod med minst 8 tecken.", true);
+    return "";
+  }
+  localStorage.setItem(syncCodeKey, code);
+  if (syncCodeInput) syncCodeInput.value = code;
+  setSyncStatus("Synkkod sparad. Tryck Synka nu för att hämta eller skicka molndata.");
+  return code;
 }
 
 function queueCloudSync() {
-  if (applyingRemoteData || !supabaseClient || !syncUser) return;
+  if (applyingRemoteData || !supabaseClient || !getSyncCode()) return;
   window.clearTimeout(cloudSyncTimer);
   cloudSyncTimer = window.setTimeout(() => {
     pushCloudData({ silent: true });
@@ -444,8 +442,13 @@ function queueCloudSync() {
 }
 
 async function pushCloudData({ silent = false } = {}) {
-  if (!supabaseClient || !syncUser) return;
-  const { error } = await supabaseClient.from("keto_profiles").upsert(syncPayload(), { onConflict: "user_id" });
+  const syncCode = getSyncCode();
+  if (!supabaseClient || !syncCode) return;
+  const { error } = await supabaseClient.rpc("keto_sync_push", {
+    sync_key: syncCode,
+    profile_entries: getEntries(),
+    profile_goal_weight: getGoalWeight(),
+  });
   if (error) {
     setSyncStatus(`Synkfel: ${error.message}`, true);
     return;
@@ -454,25 +457,23 @@ async function pushCloudData({ silent = false } = {}) {
 }
 
 async function pullCloudData() {
-  if (!supabaseClient || !syncUser) return false;
-  const { data, error } = await supabaseClient
-    .from("keto_profiles")
-    .select("entries, goal_weight, updated_at")
-    .eq("user_id", syncUser.id)
-    .maybeSingle();
+  const syncCode = getSyncCode();
+  if (!supabaseClient || !syncCode) return false;
+  const { data, error } = await supabaseClient.rpc("keto_sync_pull", { sync_key: syncCode });
   if (error) {
     setSyncStatus(`Synkfel: ${error.message}`, true);
     return false;
   }
-  if (!data) {
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row) {
     await pushCloudData({ silent: true });
     setSyncStatus("Molnprofil skapad från den här enheten.");
     return true;
   }
   applyingRemoteData = true;
-  localStorage.setItem(storageKey, JSON.stringify(Array.isArray(data.entries) ? data.entries : [emptyEntry()]));
-  if (data.goal_weight) {
-    localStorage.setItem(goalKey, String(data.goal_weight));
+  localStorage.setItem(storageKey, JSON.stringify(Array.isArray(row.entries) ? row.entries : [emptyEntry()]));
+  if (row.goal_weight) {
+    localStorage.setItem(goalKey, String(row.goal_weight));
   } else {
     localStorage.removeItem(goalKey);
   }
@@ -480,13 +481,17 @@ async function pullCloudData() {
   const nextEntry = getEntries().at(-1) || emptyEntry();
   fillForm(nextEntry);
   render(nextEntry.date);
-  setSyncStatus(`Synkat från molnet ${new Date(data.updated_at).toLocaleString("sv-SE")}`);
+  setSyncStatus(`Synkat från molnet ${new Date(row.updated_at).toLocaleString("sv-SE")}`);
   return true;
 }
 
 async function syncNow() {
-  if (!supabaseClient || !syncUser) {
-    setSyncStatus("Logga in för att synka.", true);
+  if (!supabaseClient) {
+    setSyncStatus("Supabase är inte konfigurerat ännu.", true);
+    return;
+  }
+  if (!getSyncCode()) {
+    setSyncStatus("Skriv och spara en synkkod först.", true);
     return;
   }
   setSyncStatus("Synkar...");
@@ -502,83 +507,27 @@ async function initSync() {
       return;
     }
     const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
-    supabaseClient = createClient(supabaseConfig.url, supabaseConfig.anonKey, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-        flowType: "implicit",
-      },
-    });
-    const params = authParams();
-    if (params.get("access_token") && params.get("refresh_token")) {
-      const { error } = await supabaseClient.auth.setSession({
-        access_token: params.get("access_token"),
-        refresh_token: params.get("refresh_token"),
-      });
-      if (error) throw error;
-      cleanAuthUrl();
-    } else if (params.get("code")) {
-      const { error } = await supabaseClient.auth.exchangeCodeForSession(params.get("code"));
-      if (error) throw error;
-      cleanAuthUrl();
-    }
-    const { data } = await supabaseClient.auth.getSession();
-    syncUser = data.session?.user || null;
-    if (syncUser) {
-      if (syncEmailInput) syncEmailInput.value = syncUser.email || "";
-      setSyncStatus(`Inloggad som ${syncUser.email || "användare"}.`);
-      await pullCloudData();
+    supabaseClient = createClient(supabaseConfig.url, supabaseConfig.anonKey);
+    const savedCode = getSyncCode();
+    if (savedCode) {
+      if (syncCodeInput) syncCodeInput.value = savedCode;
+      setSyncStatus("Synk är redo. Tryck Synka nu.");
     } else {
-      setSyncStatus("Synk konfigurerad. Logga in med e-post för att synka mellan enheter.");
+      setSyncStatus("Synk är redo. Skriv samma synkkod på varje enhet som ska dela data.");
     }
-    supabaseClient.auth.onAuthStateChange(async (_event, session) => {
-      syncUser = session?.user || null;
-      if (syncUser) {
-        if (syncEmailInput) syncEmailInput.value = syncUser.email || "";
-        await pullCloudData();
-      } else {
-        setSyncStatus("Utloggad. Appen sparar lokalt på den här enheten.");
-      }
-    });
   } catch (error) {
     setSyncStatus(`Synk kunde inte laddas: ${error.message}`, true);
   }
 }
 
-signInButton?.addEventListener("click", async () => {
-  if (!supabaseClient) {
-    setSyncStatus("Supabase är inte konfigurerat ännu.", true);
-    return;
-  }
-  const email = syncEmailInput?.value.trim();
-  if (!email) {
-    setSyncStatus("Skriv in e-post först.", true);
-    return;
-  }
-  signInButton.disabled = true;
-  setSyncStatus("Skickar inloggningslänk...");
-  const { error } = await supabaseClient.auth.signInWithOtp({
-    email,
-    options: { emailRedirectTo: stableAppUrl() },
-  });
-  signInButton.disabled = false;
-  if (error) {
-    const message = /rate limit/i.test(error.message)
-      ? "För många inloggningslänkar har skickats. Vänta några minuter och försök igen."
-      : `Inloggningsfel: ${error.message}`;
-    setSyncStatus(message, true);
-    return;
-  }
-  setSyncStatus("Inloggningslänk skickad. Öppna länken i samma webbläsare/enhet där du vill synka.");
+saveSyncCodeButton?.addEventListener("click", () => {
+  saveSyncCode(syncCodeInput?.value || "");
 });
 
-signOutButton?.addEventListener("click", async () => {
-  if (!supabaseClient) return;
-  setSyncStatus("Loggar ut...");
-  await supabaseClient.auth.signOut();
-  syncUser = null;
-  setSyncStatus("Utloggad. Appen sparar lokalt på den här enheten.");
+clearSyncCodeButton?.addEventListener("click", () => {
+  localStorage.removeItem(syncCodeKey);
+  if (syncCodeInput) syncCodeInput.value = "";
+  setSyncStatus("Kopplad från molnsynk på den här enheten. Lokal data finns kvar.");
 });
 
 syncNowButton?.addEventListener("click", syncNow);
