@@ -1,6 +1,6 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
-const appVersion = "37";
+const appVersion = "38";
 let activeDate = "";
 let supabaseClient = null;
 let syncUser = null;
@@ -68,6 +68,15 @@ let autosaveTimer = null;
 
 function stableAppUrl() {
   return `${window.location.origin}${window.location.pathname}`;
+}
+
+function authParams() {
+  return new URLSearchParams(`${window.location.search.slice(1)}&${window.location.hash.slice(1)}`);
+}
+
+function cleanAuthUrl() {
+  if (!window.location.search && !window.location.hash) return;
+  window.history.replaceState({}, document.title, `${window.location.pathname}?v=${appVersion}`);
 }
 
 function decimal(value) {
@@ -498,8 +507,22 @@ async function initSync() {
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
+        flowType: "implicit",
       },
     });
+    const params = authParams();
+    if (params.get("access_token") && params.get("refresh_token")) {
+      const { error } = await supabaseClient.auth.setSession({
+        access_token: params.get("access_token"),
+        refresh_token: params.get("refresh_token"),
+      });
+      if (error) throw error;
+      cleanAuthUrl();
+    } else if (params.get("code")) {
+      const { error } = await supabaseClient.auth.exchangeCodeForSession(params.get("code"));
+      if (error) throw error;
+      cleanAuthUrl();
+    }
     const { data } = await supabaseClient.auth.getSession();
     syncUser = data.session?.user || null;
     if (syncUser) {
@@ -547,7 +570,7 @@ signInButton?.addEventListener("click", async () => {
     setSyncStatus(message, true);
     return;
   }
-  setSyncStatus("Inloggningslänk skickad. Öppna länken på den här enheten.");
+  setSyncStatus("Inloggningslänk skickad. Öppna länken i samma webbläsare/enhet där du vill synka.");
 });
 
 signOutButton?.addEventListener("click", async () => {
