@@ -240,7 +240,7 @@ function render(selectedDate = activeDate) {
   document.querySelector("#fatBar").style.width = `${Math.min(macros.fatPct, 100)}%`;
   document.querySelector("#proteinBar").style.width = `${Math.min(macros.proteinPct, 100)}%`;
   document.querySelector("#carbBar").style.width = `${Math.min(macros.carbPct, 100)}%`;
-  document.querySelector("#fatGramBar").style.width = `${Math.min((macros.fat / 100) * 100, 100)}%`;
+  document.querySelector("#fatGramBar").style.width = `${Math.min((macros.fat / 200) * 100, 100)}%`;
   document.querySelector("#carbGramBar").style.width = `${Math.min((macros.carbs / 20) * 100, 100)}%`;
   document.querySelector("#fatText").textContent = `${macros.fatPct}%`;
   document.querySelector("#proteinText").textContent = `${macros.proteinPct}%`;
@@ -250,7 +250,7 @@ function render(selectedDate = activeDate) {
   document.querySelector("#macroNote").textContent =
     macros.source === "manual"
       ? "Makron bygger på manuellt inmatade gram för fett, protein och kolhydrater."
-      : "Övre staplarna visar kaloriprocent. Nedre staplarna visar gram mot praktiska dagsgränser.";
+      : "Övre staplarna visar kaloriprocent. Nedre staplarna visar gram mot bokens praktiska riktmärken: 200 g fett och 20 g kolhydrater.";
 
   const history = document.querySelector("#historyList");
   history.innerHTML = "";
