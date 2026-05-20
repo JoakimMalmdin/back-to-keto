@@ -1,7 +1,7 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
-const appVersion = "80";
+const appVersion = "81";
 let activeDate = "";
 let supabaseClient = null;
 let cloudSyncTimer = null;
@@ -483,8 +483,8 @@ function renderTrendChart(entries) {
             `<text class="chart-date" x="${xFor(index).toFixed(1)}" y="${height - 14}" text-anchor="${index === 0 ? "start" : index === rows.length - 1 ? "end" : "middle"}">${rows[index].date.slice(5)}</text>`
         )
         .join("")}
-      <text class="axis-label" x="${pad.left}" y="11">kg</text>
-      <text class="axis-label" x="${width - pad.right}" y="11" text-anchor="end">gram</text>
+      <text class="axis-label" x="${pad.left}" y="22">kg</text>
+      <text class="axis-label" x="${width - pad.right}" y="22" text-anchor="end">gram</text>
     </svg>
   `;
   note.textContent = `Senast: ${latest.weight ? `${decimal(latest.weight)} kg, ` : ""}${decimal(latest.fat || 0)} g fett, ${decimal(latest.carbs || 0)} g kolhydrater.`;
