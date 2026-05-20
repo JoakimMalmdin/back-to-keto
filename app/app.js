@@ -1,7 +1,7 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
-const appVersion = "81";
+const appVersion = "82";
 let activeDate = "";
 let supabaseClient = null;
 let cloudSyncTimer = null;
@@ -422,8 +422,8 @@ function renderTrendChart(entries) {
   }
 
   const width = 640;
-  const height = 260;
-  const pad = { top: 18, right: 48, bottom: 42, left: 48 };
+  const height = 276;
+  const pad = { top: 34, right: 48, bottom: 42, left: 48 };
   const plotWidth = width - pad.left - pad.right;
   const plotHeight = height - pad.top - pad.bottom;
   const xFor = (index) => pad.left + (rows.length === 1 ? plotWidth / 2 : (index / (rows.length - 1)) * plotWidth);
