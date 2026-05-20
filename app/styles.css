@@ -142,11 +142,16 @@ main {
 .history-panel,
 .tools-panel,
 .rules-panel,
-.party-panel {
+.party-panel,
+.food-list-panel {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: color-mix(in srgb, var(--panel) 92%, white);
   box-shadow: 0 12px 30px rgb(49 40 28 / 8%);
+  transition:
+    box-shadow 120ms ease,
+    border-color 120ms ease,
+    transform 120ms ease;
 }
 
 .hero-panel {
@@ -223,8 +228,22 @@ main {
 .history-panel,
 .tools-panel,
 .rules-panel,
-.party-panel {
+.party-panel,
+.food-list-panel {
   padding: 16px;
+}
+
+.rules-panel:hover,
+.party-panel:hover,
+.food-list-panel:hover {
+  border-color: color-mix(in srgb, var(--leaf) 45%, var(--line));
+  box-shadow: 0 4px 12px rgb(49 40 28 / 10%);
+}
+
+.rules-panel:active,
+.party-panel:active,
+.food-list-panel:active {
+  transform: translateY(1px) scale(0.998);
 }
 
 .section-heading {
@@ -459,10 +478,6 @@ textarea {
 
 .info-details summary::-webkit-details-marker {
   color: var(--leaf-strong);
-}
-
-.food-list-panel .note {
-  margin-bottom: 12px;
 }
 
 .food-list-grid {
