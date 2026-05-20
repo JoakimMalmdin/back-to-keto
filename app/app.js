@@ -1,7 +1,7 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
-const appVersion = "51";
+const appVersion = "52";
 let activeDate = "";
 let supabaseClient = null;
 let cloudSyncTimer = null;
@@ -47,7 +47,7 @@ const foodSignals = [
   { match: /pulled pork/i, kcal: 375, protein: 34, fat: 25, carbs: 3, servingGrams: 150, keto: 1 },
   { match: /falukorv/i, kcal: 260, protein: 10, fat: 23, carbs: 4, servingGrams: 100, keto: 0 },
   { match: /gräddfil|graddfil/i, exclude: /gräddfil\s*12|graddfil\s*12/i, kcal: 70, protein: 1.5, fat: 6, carbs: 2, servingGrams: 50, keto: 1 },
-  { match: /yoghurt|youghurt|yogurt/i, exclude: /grekisk\s+(?:yoghurt|youghurt|yogurt)\s*10/i, kcal: 84, protein: 5.3, fat: 4.5, carbs: 5.6, servingGrams: 150, keto: -1 },
+  { match: /yoghurt|youghurt|yogurt/i, exclude: /grekisk\s+(?:yoghurt|youghurt|yogurt)\s*10/i, kcal: 56, protein: 3.5, fat: 3, carbs: 3.7, servingGrams: 100, keto: -1 },
   { match: /bär|bar|jordgubb|hallon|blåbär/i, kcal: 25, protein: 0.4, fat: 0.2, carbs: 5.5, keto: -1 },
   { match: /äpple|apple/i, kcal: 70, protein: 0.3, fat: 0.2, carbs: 17, keto: -2 },
   { match: /apelsin/i, kcal: 62, protein: 1.2, fat: 0.2, carbs: 15, keto: -2 },
