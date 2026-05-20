@@ -653,14 +653,17 @@ textarea {
 
 .weight-dot {
   fill: var(--blue);
+  opacity: 0.72;
 }
 
 .fat-dot {
   fill: var(--leaf-strong);
+  opacity: 0.72;
 }
 
 .carb-dot {
   fill: var(--gold);
+  opacity: 0.72;
 }
 
 .empty-chart {

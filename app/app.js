@@ -1,7 +1,7 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
-const appVersion = "77";
+const appVersion = "78";
 let activeDate = "";
 let supabaseClient = null;
 let cloudSyncTimer = null;
@@ -474,9 +474,9 @@ function renderTrendChart(entries) {
       <path class="chart-line weight-line" d="${chartPath(weightPoints)}"></path>
       <path class="chart-line fat-line" d="${chartPath(fatPoints)}"></path>
       <path class="chart-line carb-line" d="${chartPath(carbPoints)}"></path>
-      ${weightPoints.map((point) => `<circle class="weight-dot" cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="2.6"></circle>`).join("")}
-      ${fatPoints.map((point) => `<circle class="fat-dot" cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="2.4"></circle>`).join("")}
-      ${carbPoints.map((point) => `<circle class="carb-dot" cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="2.4"></circle>`).join("")}
+      ${weightPoints.map((point) => `<circle class="weight-dot" cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="1.7"></circle>`).join("")}
+      ${fatPoints.map((point) => `<circle class="fat-dot" cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="1.5"></circle>`).join("")}
+      ${carbPoints.map((point) => `<circle class="carb-dot" cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="1.5"></circle>`).join("")}
       ${labelIndexes
         .map(
           (index) =>
