@@ -771,13 +771,14 @@ textarea {
 .macro-bars strong,
 .target-bars strong {
   font-size: 0.82rem;
+  font-weight: 400;
   text-align: right;
 }
 
 .macro-bars span,
 .target-bars span {
   color: var(--muted);
-  font-weight: 800;
+  font-weight: 400;
 }
 
 .bar,
