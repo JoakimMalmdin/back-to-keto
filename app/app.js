@@ -1,7 +1,7 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
-const appVersion = "91";
+const appVersion = "92";
 let activeDate = "";
 let supabaseClient = null;
 let cloudSyncTimer = null;
@@ -102,6 +102,10 @@ function decimal(value) {
   return Number(value).toLocaleString("sv-SE", { maximumFractionDigits: 1 });
 }
 
+function decimalMeasure(value) {
+  return Number(value).toLocaleString("sv-SE", { maximumFractionDigits: 2 });
+}
+
 function todayIso() {
   return new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Stockholm" });
 }
@@ -175,10 +179,11 @@ function mealText(entry) {
   return [entry.breakfast, entry.lunch, entry.dinner, entry.extras, entry.notes].filter(Boolean).join(" ");
 }
 
-function gramMultiplier(text, signal) {
+function measuredAmount(text, signal) {
   if (!signal.servingGrams) return null;
   const matcher = new RegExp(signal.match.source, signal.match.flags.includes("g") ? signal.match.flags : `${signal.match.flags}g`);
-  let total = 0;
+  let count = 0;
+  const amounts = { g: 0, dl: 0, msk: 0 };
   for (const match of text.matchAll(matcher)) {
     const start = match.index ?? 0;
     const end = start + match[0].length;
@@ -191,7 +196,8 @@ function gramMultiplier(text, signal) {
       if (dlAmount) {
         const dl = Number(dlAmount.replace(",", "."));
         if (Number.isFinite(dl) && dl > 0) {
-          total += (dl * signal.dlGrams) / signal.servingGrams;
+          count += (dl * signal.dlGrams) / signal.servingGrams;
+          amounts.dl += dl;
           continue;
         }
       }
@@ -203,7 +209,8 @@ function gramMultiplier(text, signal) {
       if (mskAmount) {
         const msk = Number(mskAmount.replace(",", "."));
         if (Number.isFinite(msk) && msk > 0) {
-          total += (msk * signal.mskGrams) / signal.servingGrams;
+          count += (msk * signal.mskGrams) / signal.servingGrams;
+          amounts.msk += msk;
           continue;
         }
       }
@@ -213,13 +220,19 @@ function gramMultiplier(text, signal) {
     const amount = beforeAmount?.[1] || afterAmount?.[1];
     if (!amount) continue;
     const grams = Number(amount.replace(",", "."));
-    if (Number.isFinite(grams) && grams > 0) total += grams / signal.servingGrams;
+    if (Number.isFinite(grams) && grams > 0) {
+      count += grams / signal.servingGrams;
+      amounts.g += grams;
+    }
   }
-  return total > 0 ? total : null;
+  if (count <= 0) return null;
+  const measuredUnits = Object.entries(amounts).filter(([, value]) => value > 0);
+  const amountLabel = measuredUnits.length === 1 ? `${decimalMeasure(measuredUnits[0][1])} ${measuredUnits[0][0]}` : null;
+  return { count, amountLabel };
 }
 
 function countSignal(text, signal) {
-  if (signal.exclude?.test(text)) return 0;
+  if (signal.exclude?.test(text)) return { count: 0, amountLabel: null };
   if (signal.quantity) {
     const quantityPatterns = Array.isArray(signal.quantity) ? signal.quantity : [signal.quantity];
     const quantities = quantityPatterns.flatMap((pattern) =>
@@ -229,11 +242,11 @@ function countSignal(text, signal) {
       })
     );
     const total = quantities.reduce((sum, value) => sum + (Number.isFinite(value) ? value : 0), 0);
-    if (total > 0) return total;
+    if (total > 0) return { count: total, amountLabel: null };
   }
-  const grams = gramMultiplier(text, signal);
-  if (grams) return grams;
-  return (text.match(new RegExp(signal.match.source, "gi")) || []).length;
+  const measured = measuredAmount(text, signal);
+  if (measured) return measured;
+  return { count: (text.match(new RegExp(signal.match.source, "gi")) || []).length, amountLabel: null };
 }
 
 function signalLabel(signal) {
@@ -326,11 +339,12 @@ function estimateMacros(entry) {
   const items = [];
 
   for (const signal of foodSignals) {
-    const count = countSignal(text, signal);
+    const { count, amountLabel } = countSignal(text, signal);
     if (count > 0) {
       const item = {
         label: signalLabel(signal),
         count,
+        amountLabel,
         kcal: signal.kcal * count,
         protein: signal.protein * count,
         fat: signal.fat * count,
@@ -407,7 +421,7 @@ function renderMacroBreakdown(macros, hasContent) {
     .sort((a, b) => b.fat - a.fat)
     .map((item) => {
       const count = Number.isInteger(item.count) ? item.count : decimal(item.count);
-      return `<div><strong>${item.label}</strong><span class="macro-count">x ${count}</span><span class="macro-value">${decimal(item.fat)} g F</span><span class="macro-value">${decimal(item.protein)} g P</span><span class="macro-value">${decimal(item.carbs)} g K</span></div>`;
+      return `<div><strong>${item.label}</strong><span class="macro-count">${item.amountLabel || `x ${count}`}</span><span class="macro-value">${decimal(item.fat)} g F</span><span class="macro-value">${decimal(item.protein)} g P</span><span class="macro-value">${decimal(item.carbs)} g K</span></div>`;
     })
     .join("");
   breakdown.innerHTML = rows;
