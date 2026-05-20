@@ -1,7 +1,7 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
-const appVersion = "75";
+const appVersion = "76";
 let activeDate = "";
 let supabaseClient = null;
 let cloudSyncTimer = null;
@@ -498,6 +498,7 @@ function render(selectedDate = activeDate) {
   const macros = estimateMacros(latest);
   const kind = hasContent ? classify(latest, macros) : "ny logg";
   const startWeight = baselineWeight(entries);
+  const startDate = entries[0]?.date || latest.date || todayIso();
   const delta = latest.weight && startWeight ? latest.weight - startWeight : 0;
   const goalWeight = getGoalWeight();
   const toGoal = latest.weight && goalWeight ? latest.weight - goalWeight : 0;
@@ -519,6 +520,7 @@ function render(selectedDate = activeDate) {
   const badge = document.querySelector("#strictnessBadge");
   badge.textContent = kind;
   badge.className = `badge ${kind === "strikt keto" ? "strict" : kind === "riskzon" ? "risk" : ""}`;
+  document.querySelector("#trendRange").textContent = `${startDate}--${todayIso()}`;
 
   document.querySelector("#fatBar").style.width = `${Math.min(macros.fatPct, 100)}%`;
   document.querySelector("#proteinBar").style.width = `${Math.min(macros.proteinPct, 100)}%`;
