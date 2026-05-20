@@ -1,7 +1,7 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
-const appVersion = "52";
+const appVersion = "53";
 let activeDate = "";
 let supabaseClient = null;
 let cloudSyncTimer = null;
@@ -383,6 +383,109 @@ function renderMacroBreakdown(macros, hasContent) {
   breakdown.innerHTML = rows;
 }
 
+function chartPath(points) {
+  return points.map((point, index) => `${index === 0 ? "M" : "L"} ${point.x.toFixed(1)} ${point.y.toFixed(1)}`).join(" ");
+}
+
+function renderTrendChart(entries) {
+  const chart = document.querySelector("#trendChart");
+  const note = document.querySelector("#trendNote");
+  if (!chart || !note) return;
+
+  const rows = entries
+    .map((entry) => {
+      const macros = estimateMacros(entry);
+      return {
+        date: entry.date,
+        weight: Number(entry.weight),
+        fat: hasEntryContent(entry) ? macros.fat : null,
+        carbs: hasEntryContent(entry) ? macros.carbs : null,
+      };
+    })
+    .filter((row) => Number.isFinite(row.weight) || Number.isFinite(row.fat) || Number.isFinite(row.carbs));
+
+  if (rows.length < 2) {
+    chart.innerHTML = '<p class="empty-chart">Diagrammet visas när minst två dagar har data.</p>';
+    note.textContent = "Spara minst två dagar med vikt eller matposter för att se utvecklingen.";
+    return;
+  }
+
+  const width = 640;
+  const height = 260;
+  const pad = { top: 18, right: 48, bottom: 42, left: 48 };
+  const plotWidth = width - pad.left - pad.right;
+  const plotHeight = height - pad.top - pad.bottom;
+  const xFor = (index) => pad.left + (rows.length === 1 ? plotWidth / 2 : (index / (rows.length - 1)) * plotWidth);
+
+  const weights = rows.map((row) => row.weight).filter(Number.isFinite);
+  const grams = rows.flatMap((row) => [row.fat, row.carbs]).filter(Number.isFinite);
+  let weightMin = weights.length ? Math.min(...weights) : 0;
+  let weightMax = weights.length ? Math.max(...weights) : 1;
+  if (weightMin === weightMax) {
+    weightMin -= 1;
+    weightMax += 1;
+  } else {
+    const padding = Math.max((weightMax - weightMin) * 0.15, 0.4);
+    weightMin -= padding;
+    weightMax += padding;
+  }
+  const gramMax = Math.max(20, Math.ceil(Math.max(...grams, 0) / 10) * 10);
+  const yWeight = (value) => pad.top + ((weightMax - value) / (weightMax - weightMin)) * plotHeight;
+  const yGram = (value) => pad.top + ((gramMax - value) / gramMax) * plotHeight;
+
+  const weightPoints = rows
+    .map((row, index) => (Number.isFinite(row.weight) ? { x: xFor(index), y: yWeight(row.weight), value: row.weight } : null))
+    .filter(Boolean);
+  const fatPoints = rows
+    .map((row, index) => (Number.isFinite(row.fat) ? { x: xFor(index), y: yGram(row.fat), value: row.fat } : null))
+    .filter(Boolean);
+  const carbPoints = rows
+    .map((row, index) => (Number.isFinite(row.carbs) ? { x: xFor(index), y: yGram(row.carbs), value: row.carbs } : null))
+    .filter(Boolean);
+  const gridLines = [0, 0.25, 0.5, 0.75, 1].map((ratio) => {
+    const y = pad.top + ratio * plotHeight;
+    const leftValue = weightMax - ratio * (weightMax - weightMin);
+    const rightValue = gramMax - ratio * gramMax;
+    return { y, leftValue, rightValue };
+  });
+  const labelIndexes = rows.length <= 5 ? rows.map((_, index) => index) : [0, Math.floor((rows.length - 1) / 2), rows.length - 1];
+  const latest = rows.at(-1);
+
+  chart.innerHTML = `
+    <svg viewBox="0 0 ${width} ${height}" aria-hidden="true">
+      <g class="chart-grid">
+        ${gridLines
+          .map(
+            (line) => `
+              <line x1="${pad.left}" y1="${line.y.toFixed(1)}" x2="${width - pad.right}" y2="${line.y.toFixed(1)}"></line>
+              <text x="${pad.left - 8}" y="${(line.y + 4).toFixed(1)}" text-anchor="end">${decimal(line.leftValue)}</text>
+              <text x="${width - pad.right + 8}" y="${(line.y + 4).toFixed(1)}">${Math.round(line.rightValue)}</text>
+            `
+          )
+          .join("")}
+      </g>
+      <line class="chart-axis" x1="${pad.left}" y1="${pad.top}" x2="${pad.left}" y2="${height - pad.bottom}"></line>
+      <line class="chart-axis" x1="${width - pad.right}" y1="${pad.top}" x2="${width - pad.right}" y2="${height - pad.bottom}"></line>
+      <line class="chart-axis" x1="${pad.left}" y1="${height - pad.bottom}" x2="${width - pad.right}" y2="${height - pad.bottom}"></line>
+      <path class="chart-line weight-line" d="${chartPath(weightPoints)}"></path>
+      <path class="chart-line fat-line" d="${chartPath(fatPoints)}"></path>
+      <path class="chart-line carb-line" d="${chartPath(carbPoints)}"></path>
+      ${weightPoints.map((point) => `<circle class="weight-dot" cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="3.4"></circle>`).join("")}
+      ${fatPoints.map((point) => `<circle class="fat-dot" cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="3.2"></circle>`).join("")}
+      ${carbPoints.map((point) => `<circle class="carb-dot" cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="3.2"></circle>`).join("")}
+      ${labelIndexes
+        .map(
+          (index) =>
+            `<text class="chart-date" x="${xFor(index).toFixed(1)}" y="${height - 14}" text-anchor="${index === 0 ? "start" : index === rows.length - 1 ? "end" : "middle"}">${rows[index].date.slice(5)}</text>`
+        )
+        .join("")}
+      <text class="axis-label" x="${pad.left}" y="11">kg</text>
+      <text class="axis-label" x="${width - pad.right}" y="11" text-anchor="end">gram</text>
+    </svg>
+  `;
+  note.textContent = `Senast: ${latest.weight ? `${decimal(latest.weight)} kg, ` : ""}${decimal(latest.fat || 0)} g fett, ${decimal(latest.carbs || 0)} g kolhydrater.`;
+}
+
 function render(selectedDate = activeDate) {
   const entries = getEntries().sort((a, b) => a.date.localeCompare(b.date));
   const latest = entries.find((entry) => entry.date === selectedDate) || entries.at(-1) || emptyEntry();
@@ -430,6 +533,7 @@ function render(selectedDate = activeDate) {
         ? "Övre staplarna visar kaloriprocent. Alkohol ger energi men visas inte som fett, protein eller kolhydrater."
         : "Automatisk uppskattning: om gram anges räknar appen på gram, annars på normalportioner.";
   renderMacroBreakdown(macros, hasContent);
+  renderTrendChart(entries);
 
   const history = document.querySelector("#historyList");
   history.innerHTML = "";
