@@ -54,6 +54,13 @@ textarea {
   text-transform: uppercase;
 }
 
+.version-pill {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 750;
+}
+
 h1,
 h2,
 p {
@@ -849,16 +856,38 @@ textarea {
   }
 
   #macroBreakdown > div {
-    grid-template-columns: 1fr auto auto auto;
-    gap: 4px 8px;
+    display: block;
+    padding: 7px 0;
   }
 
   #macroBreakdown strong {
-    grid-column: 1 / -1;
+    display: block;
+    margin-bottom: 4px;
   }
 
   #macroBreakdown .macro-count,
   #macroBreakdown .macro-value {
+    display: inline-block;
+    margin-right: 10px;
+    text-align: left;
+  }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  #macroBreakdown > div {
+    display: block;
+    padding: 7px 0;
+  }
+
+  #macroBreakdown strong {
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  #macroBreakdown .macro-count,
+  #macroBreakdown .macro-value {
+    display: inline-block;
+    margin-right: 10px;
     text-align: left;
   }
 }
