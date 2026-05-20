@@ -408,6 +408,10 @@ textarea {
   gap: 10px;
 }
 
+.data-actions {
+  margin-top: 14px;
+}
+
 .secondary-button {
   border: 1px solid var(--line);
   border-radius: 8px;
