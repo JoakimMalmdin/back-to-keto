@@ -1,7 +1,7 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
-const appVersion = "83";
+const appVersion = "84";
 let activeDate = "";
 let supabaseClient = null;
 let cloudSyncTimer = null;
@@ -489,7 +489,7 @@ function renderTrendChart(entries) {
       ${labelIndexes
         .map(
           (index, labelPosition) =>
-            `<text class="chart-date" x="${xFor(index).toFixed(1)}" y="${height - 14}" text-anchor="${index === 0 ? "start" : index === rows.length - 1 ? "end" : "middle"}">${chartDateLabel(index, labelPosition)}</text>`
+            `<text class="chart-date" x="${xFor(index).toFixed(1)}" y="${height - 14}" text-anchor="middle">${chartDateLabel(index, labelPosition)}</text>`
         )
         .join("")}
       <text class="axis-label" x="${pad.left - 8}" y="22" text-anchor="end">kg</text>
