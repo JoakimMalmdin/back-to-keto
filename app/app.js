@@ -1,7 +1,7 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
-const appVersion = "55";
+const appVersion = "56";
 let activeDate = "";
 let supabaseClient = null;
 let cloudSyncTimer = null;
@@ -21,9 +21,9 @@ const foodSignals = [
   { match: /hamburgare\s*90\s*g/i, kcal: 230, protein: 17, fat: 18, carbs: 0, keto: 2 },
   { match: /hamburgare\s*150\s*g/i, kcal: 385, protein: 28, fat: 30, carbs: 0, keto: 2 },
   { match: /grillkorv\s*85\s*%?\s*(?:kött|kott)?/i, kcal: 260, protein: 12, fat: 23, carbs: 2, servingGrams: 100, keto: 1 },
-  { match: /korv\s*75\s*%?\s*(?:kött|kott)?/i, kcal: 250, protein: 11, fat: 22, carbs: 4, servingGrams: 100, keto: 0 },
-  { match: /gräddfil\s*12\s*%|graddfil\s*12\s*%/i, kcal: 135, protein: 3, fat: 12, carbs: 3.5, servingGrams: 100, keto: 1 },
-  { match: /grekisk\s+(?:yoghurt|youghurt|yogurt)\s*10\s*%/i, kcal: 121, protein: 4.6, fat: 10, carbs: 3.2, servingGrams: 100, keto: 1 },
+  { match: /korv\s*75\s*%?\s*(?:kött|kott)?/i, exclude: /falukorv/i, kcal: 250, protein: 11, fat: 22, carbs: 4, servingGrams: 100, keto: 0 },
+  { match: /gräddfil\s*12\s*%|graddfil\s*12\s*%/i, kcal: 135, protein: 3, fat: 12, carbs: 3.5, servingGrams: 100, dlGrams: 100, keto: 1 },
+  { match: /grekisk\s+(?:yoghurt|youghurt|yogurt)\s*10\s*%/i, kcal: 121, protein: 4.6, fat: 10, carbs: 3.2, servingGrams: 100, dlGrams: 100, keto: 1 },
   { match: /färskost|farskost|cream cheese/i, kcal: 252, protein: 4.5, fat: 25, carbs: 3, servingGrams: 100, keto: 2 },
   { match: /mozzarella/i, kcal: 150, protein: 10, fat: 11, carbs: 1.5, servingGrams: 60, keto: 2 },
   { match: /entrecote|entrecôte/i, kcal: 430, protein: 30, fat: 34, carbs: 0, servingGrams: 150, keto: 2 },
@@ -46,9 +46,9 @@ const foodSignals = [
   { match: /påläggsskinka|palaggsskinka|skinka|kalkonpålägg|kalkonpalagg|kycklingpålägg|kycklingpalagg/i, kcal: 30, protein: 5, fat: 1, carbs: 0.3, keto: 1 },
   { match: /pulled pork/i, kcal: 375, protein: 34, fat: 25, carbs: 3, servingGrams: 150, keto: 1 },
   { match: /falukorv/i, kcal: 260, protein: 10, fat: 23, carbs: 4, servingGrams: 100, keto: 0 },
-  { match: /gräddfil|graddfil/i, exclude: /gräddfil\s*12|graddfil\s*12/i, kcal: 70, protein: 1.5, fat: 6, carbs: 2, servingGrams: 50, keto: 1 },
-  { match: /yoghurt|youghurt|yogurt/i, exclude: /grekisk\s+(?:yoghurt|youghurt|yogurt)\s*10/i, kcal: 56, protein: 3.5, fat: 3, carbs: 3.7, servingGrams: 100, keto: -1 },
-  { match: /bär|bar|jordgubb|hallon|blåbär/i, kcal: 25, protein: 0.4, fat: 0.2, carbs: 5.5, keto: -1 },
+  { match: /gräddfil|graddfil/i, exclude: /gräddfil\s*12|graddfil\s*12/i, kcal: 70, protein: 1.5, fat: 6, carbs: 2, servingGrams: 50, dlGrams: 100, keto: 1 },
+  { match: /yoghurt|youghurt|yogurt/i, exclude: /grekisk\s+(?:yoghurt|youghurt|yogurt)\s*10/i, kcal: 56, protein: 3.5, fat: 3, carbs: 3.7, servingGrams: 100, dlGrams: 100, keto: -1 },
+  { match: /bär|bar|jordgubb|hallon|blåbär/i, kcal: 45, protein: 0.8, fat: 0.4, carbs: 8, servingGrams: 100, keto: -1 },
   { match: /äpple|apple/i, kcal: 70, protein: 0.3, fat: 0.2, carbs: 17, keto: -2 },
   { match: /apelsin/i, kcal: 62, protein: 1.2, fat: 0.2, carbs: 15, keto: -2 },
   { match: /spetskål|spetskal/i, kcal: 30, protein: 1.5, fat: 0.2, carbs: 5, servingGrams: 100, keto: 1 },
@@ -60,10 +60,10 @@ const foodSignals = [
   { match: /svamp|champinjon/i, kcal: 22, protein: 3, fat: 0.3, carbs: 3, servingGrams: 100, keto: 1 },
   { match: /bladgrönt|bladgront|spenat|sallad|ruccola/i, kcal: 20, protein: 2, fat: 0.3, carbs: 1.5, servingGrams: 100, keto: 1 },
   { match: /gurka/i, kcal: 15, protein: 0.7, fat: 0.1, carbs: 3, servingGrams: 100, keto: 1 },
-  { match: /balsamico/i, kcal: 18, protein: 0, fat: 0, carbs: 4, keto: -1 },
+  { match: /balsamico/i, kcal: 5, protein: 0, fat: 0, carbs: 1, servingGrams: 5, keto: -1 },
   { match: /osötad\s+ketchup|osotad\s+ketchup|felix\s+(?:tomat)?ketchup\s+osötad|felix\s+(?:tomat)?ketchup\s+osotad/i, kcal: 7.5, protein: 0.2, fat: 0, carbs: 1.5, servingGrams: 15, keto: 0 },
   { match: /ketchup/i, exclude: /osötad\s+ketchup|osotad\s+ketchup|felix\s+(?:tomat)?ketchup\s+osötad|felix\s+(?:tomat)?ketchup\s+osotad/i, kcal: 17, protein: 0.2, fat: 0, carbs: 4, servingGrams: 15, keto: -1 },
-  { match: /tomat|tomatsås|tomatsas/i, exclude: /ketchup/i, kcal: 20, protein: 0.7, fat: 0.1, carbs: 4, keto: -1 },
+  { match: /tomat|tomatsås|tomatsas/i, exclude: /ketchup|makrill/i, kcal: 20, protein: 0.7, fat: 0.1, carbs: 4, servingGrams: 100, keto: -1 },
 ];
 
 const form = document.querySelector("#entryForm");
@@ -181,6 +181,15 @@ function gramMultiplier(text, signal) {
     const end = start + match[0].length;
     const before = text.slice(Math.max(0, start - 24), start);
     const after = text.slice(end, Math.min(text.length, end + 24));
+    if (signal.dlGrams) {
+      const beforeDl = before.match(/(\d+(?:[,.]\d+)?)\s*dl(?:\s|[a-zåäö%])*$/i);
+      const afterDl = after.match(/^(?:\s|[a-zåäö%]){0,18}(\d+(?:[,.]\d+)?)\s*dl/i);
+      const dlAmount = beforeDl?.[1] || afterDl?.[1];
+      if (dlAmount) {
+        const dl = Number(dlAmount.replace(",", "."));
+        if (Number.isFinite(dl) && dl > 0) return (dl * signal.dlGrams) / signal.servingGrams;
+      }
+    }
     const beforeAmount = before.match(/(\d+(?:[,.]\d+)?)\s*g(?:ram)?(?:\s|[a-zåäö%])*$/i);
     const afterAmount = after.match(/^(?:\s|[a-zåäö%]){0,18}(\d+(?:[,.]\d+)?)\s*g(?:ram)?/i);
     const amount = beforeAmount?.[1] || afterAmount?.[1];
@@ -224,6 +233,7 @@ function signalLabel(signal) {
     [/salami/, "Salami"],
     [/hamburgare/, "Hamburgare"],
     [/grillkorv/, "Grillkorv 85%"],
+    [/falukorv/, "Falukorv"],
     [/korv/, "Korv 75%"],
     [/gräddfil|graddfil/, "Gräddfil"],
     [/grekisk/, "Grekisk yoghurt 10%"],
@@ -247,7 +257,6 @@ function signalLabel(signal) {
     [/nötter|notter|mandel|valnöt|valnot|macadamia/, "Nötter"],
     [/påläggsskinka|palaggsskinka|skinka|kalkon|kycklingpålägg|kycklingpalagg/, "Påläggsskinka"],
     [/pulled pork/, "Pulled pork"],
-    [/falukorv/, "Falukorv"],
     [/yoghurt|youghurt|yogurt/, "Yoghurt"],
     [/bär|bar|jordgubb|hallon|blåbär/, "Bär"],
     [/äpple|apple/, "Äpple"],
