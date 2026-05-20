@@ -181,6 +181,11 @@ main {
   line-height: 1.45;
 }
 
+.hero-sync-button {
+  margin-top: 12px;
+  min-width: 118px;
+}
+
 .status-ring {
   display: grid;
   place-items: center;
@@ -422,6 +427,15 @@ textarea {
 
 .data-actions {
   margin-top: 14px;
+}
+
+.sync-content,
+.history-content {
+  margin-top: 14px;
+}
+
+.sync-actions {
+  margin-top: 10px;
 }
 
 .secondary-button {

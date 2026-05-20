@@ -7,10 +7,10 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="BTK" />
     <title>Back to Keto</title>
-    <link rel="manifest" href="manifest.webmanifest?v=72" />
-    <link rel="icon" href="icon.svg?v=72" type="image/svg+xml" />
-    <link rel="apple-touch-icon" href="apple-touch-icon.png?v=72" />
-    <link rel="stylesheet" href="styles.css?v=72" />
+    <link rel="manifest" href="manifest.webmanifest?v=73" />
+    <link rel="icon" href="icon.svg?v=73" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png?v=73" />
+    <link rel="stylesheet" href="styles.css?v=73" />
   </head>
   <body>
     <div class="app-shell">
@@ -18,7 +18,7 @@
         <div>
           <p class="eyebrow">Back to Keto</p>
           <h1>Daglig keto-logg</h1>
-          <p class="version-pill">v72</p>
+          <p class="version-pill">v73</p>
         </div>
         <button class="icon-button" id="exportButton" type="button" aria-label="Exportera data">
           <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" /></svg>
@@ -31,6 +31,7 @@
             <p class="section-kicker" id="todayDate"></p>
             <h2 id="todayTitle">Dagens läge</h2>
             <p id="coachLine" class="coach-line"></p>
+            <button class="secondary-button hero-sync-button" id="quickSyncButton" type="button">Synka nu</button>
           </div>
           <div class="status-ring" aria-label="Progress mot mål">
             <span id="currentWeight">--</span>
@@ -48,11 +49,11 @@
             <strong id="toGoal">--</strong>
           </div>
           <div class="metric">
-            <span>Kolhydrater, uppsk.</span>
+            <span>Dagens kolhydratintag</span>
             <strong id="carbMetric">--</strong>
           </div>
           <div class="metric">
-            <span>Fettandel, uppsk.</span>
+            <span>Dagens fettintag som andel</span>
             <strong id="fatMetric">--</strong>
           </div>
         </section>
@@ -178,17 +179,21 @@
         </section>
 
         <section class="tools-panel sync-panel" aria-labelledby="syncTitle">
-          <h2 id="syncTitle">Synk</h2>
-          <label>
-            Synkkod
-            <input id="syncCodeInput" name="syncCode" type="password" autocomplete="off" placeholder="Välj en egen kod" />
-          </label>
-          <div class="button-row">
-            <button class="secondary-button" id="saveSyncCodeButton" type="button">Spara synkkod</button>
-            <button class="secondary-button" id="syncNowButton" type="button">Synka nu</button>
-            <button class="secondary-button" id="clearSyncCodeButton" type="button">Koppla bort</button>
-          </div>
-          <p class="note" id="syncStatus">Skriv samma synkkod på varje enhet som ska dela data.</p>
+          <details class="info-details">
+            <summary id="syncTitle">Synk</summary>
+            <div class="sync-content">
+              <label>
+                Synkkod
+                <input id="syncCodeInput" name="syncCode" type="password" autocomplete="off" placeholder="Välj en egen kod" />
+              </label>
+              <div class="button-row sync-actions">
+                <button class="secondary-button" id="saveSyncCodeButton" type="button">Spara synkkod</button>
+                <button class="secondary-button" id="syncNowButton" type="button">Synka nu</button>
+                <button class="secondary-button" id="clearSyncCodeButton" type="button">Koppla bort</button>
+              </div>
+              <p class="note" id="syncStatus">Skriv samma synkkod på varje enhet som ska dela data.</p>
+            </div>
+          </details>
         </section>
 
         <section class="macro-panel" aria-labelledby="macroTitle">
@@ -370,12 +375,16 @@
         </section>
 
         <section class="history-panel" aria-labelledby="historyTitle">
-          <h2 id="historyTitle">Senaste dagar</h2>
-          <div id="historyList" class="history-list"></div>
+          <details class="info-details">
+            <summary id="historyTitle">Sömn och vikt, dag för dag</summary>
+            <div class="history-content">
+              <div id="historyList" class="history-list"></div>
+            </div>
+          </details>
         </section>
       </main>
     </div>
 
-    <script src="app.js?v=72" type="module"></script>
+    <script src="app.js?v=73" type="module"></script>
   </body>
 </html>

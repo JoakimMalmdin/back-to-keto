@@ -1,7 +1,7 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
-const appVersion = "72";
+const appVersion = "73";
 let activeDate = "";
 let supabaseClient = null;
 let cloudSyncTimer = null;
@@ -90,6 +90,7 @@ const syncStatus = document.querySelector("#syncStatus");
 const saveSyncCodeButton = document.querySelector("#saveSyncCodeButton");
 const clearSyncCodeButton = document.querySelector("#clearSyncCodeButton");
 const syncNowButton = document.querySelector("#syncNowButton");
+const quickSyncButton = document.querySelector("#quickSyncButton");
 let autosaveTimer = null;
 
 function stableAppUrl() {
@@ -818,6 +819,7 @@ clearSyncCodeButton?.addEventListener("click", () => {
 });
 
 syncNowButton?.addEventListener("click", syncNow);
+quickSyncButton?.addEventListener("click", syncNow);
 
 document.querySelector("#importButton").addEventListener("click", () => {
   const input = document.querySelector("#importInput");
