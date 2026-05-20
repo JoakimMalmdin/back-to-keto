@@ -847,3 +847,15 @@ textarea {
     text-align: left;
   }
 }
+
+@media (hover: none) and (pointer: coarse) {
+  .day-row {
+    grid-template-columns: 102px minmax(0, 1fr) auto;
+    gap: 8px;
+    font-size: 0.82rem;
+  }
+
+  .day-row strong {
+    font-size: 0.9rem;
+  }
+}
