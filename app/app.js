@@ -1,7 +1,7 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
-const appVersion = "50";
+const appVersion = "51";
 let activeDate = "";
 let supabaseClient = null;
 let cloudSyncTimer = null;
@@ -23,7 +23,7 @@ const foodSignals = [
   { match: /grillkorv\s*85\s*%?\s*(?:kött|kott)?/i, kcal: 260, protein: 12, fat: 23, carbs: 2, servingGrams: 100, keto: 1 },
   { match: /korv\s*75\s*%?\s*(?:kött|kott)?/i, kcal: 250, protein: 11, fat: 22, carbs: 4, servingGrams: 100, keto: 0 },
   { match: /gräddfil\s*12\s*%|graddfil\s*12\s*%/i, kcal: 135, protein: 3, fat: 12, carbs: 3.5, servingGrams: 100, keto: 1 },
-  { match: /grekisk\s+(?:yoghurt|youghurt|yogurt)\s*10\s*%/i, kcal: 130, protein: 4, fat: 10, carbs: 4, servingGrams: 100, keto: 1 },
+  { match: /grekisk\s+(?:yoghurt|youghurt|yogurt)\s*10\s*%/i, kcal: 121, protein: 4.6, fat: 10, carbs: 3.2, servingGrams: 100, keto: 1 },
   { match: /färskost|farskost|cream cheese/i, kcal: 252, protein: 4.5, fat: 25, carbs: 3, servingGrams: 100, keto: 2 },
   { match: /mozzarella/i, kcal: 150, protein: 10, fat: 11, carbs: 1.5, servingGrams: 60, keto: 2 },
   { match: /entrecote|entrecôte/i, kcal: 430, protein: 30, fat: 34, carbs: 0, servingGrams: 150, keto: 2 },
@@ -47,7 +47,7 @@ const foodSignals = [
   { match: /pulled pork/i, kcal: 375, protein: 34, fat: 25, carbs: 3, servingGrams: 150, keto: 1 },
   { match: /falukorv/i, kcal: 260, protein: 10, fat: 23, carbs: 4, servingGrams: 100, keto: 0 },
   { match: /gräddfil|graddfil/i, exclude: /gräddfil\s*12|graddfil\s*12/i, kcal: 70, protein: 1.5, fat: 6, carbs: 2, servingGrams: 50, keto: 1 },
-  { match: /yoghurt|youghurt|yogurt/i, exclude: /grekisk\s+(?:yoghurt|youghurt|yogurt)\s*10/i, kcal: 90, protein: 5, fat: 4.5, carbs: 7, servingGrams: 150, keto: -1 },
+  { match: /yoghurt|youghurt|yogurt/i, exclude: /grekisk\s+(?:yoghurt|youghurt|yogurt)\s*10/i, kcal: 84, protein: 5.3, fat: 4.5, carbs: 5.6, servingGrams: 150, keto: -1 },
   { match: /bär|bar|jordgubb|hallon|blåbär/i, kcal: 25, protein: 0.4, fat: 0.2, carbs: 5.5, keto: -1 },
   { match: /äpple|apple/i, kcal: 70, protein: 0.3, fat: 0.2, carbs: 17, keto: -2 },
   { match: /apelsin/i, kcal: 62, protein: 1.2, fat: 0.2, carbs: 15, keto: -2 },
