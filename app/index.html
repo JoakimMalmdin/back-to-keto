@@ -7,10 +7,10 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="BTK" />
     <title>Back to Keto</title>
-    <link rel="manifest" href="manifest.webmanifest?v=70" />
-    <link rel="icon" href="icon.svg?v=70" type="image/svg+xml" />
-    <link rel="apple-touch-icon" href="apple-touch-icon.png?v=70" />
-    <link rel="stylesheet" href="styles.css?v=70" />
+    <link rel="manifest" href="manifest.webmanifest?v=71" />
+    <link rel="icon" href="icon.svg?v=71" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png?v=71" />
+    <link rel="stylesheet" href="styles.css?v=71" />
   </head>
   <body>
     <div class="app-shell">
@@ -18,7 +18,7 @@
         <div>
           <p class="eyebrow">Back to Keto</p>
           <h1>Daglig keto-logg</h1>
-          <p class="version-pill">v70</p>
+          <p class="version-pill">v71</p>
         </div>
         <button class="icon-button" id="exportButton" type="button" aria-label="Exportera data">
           <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" /></svg>
@@ -58,12 +58,10 @@
         </section>
 
         <section class="entry-panel" aria-labelledby="entryTitle">
-          <div class="section-heading">
-            <h2 id="entryTitle">Lägg in dag</h2>
-            <button class="text-button" id="todayButton" type="button">Idag</button>
-          </div>
-
-          <form id="entryForm" class="entry-form">
+          <details class="info-details">
+            <summary id="entryTitle">Lägg in dag</summary>
+            <button class="text-button today-inline-button" id="todayButton" type="button">Idag</button>
+            <form id="entryForm" class="entry-form">
             <label>
               Datum
               <input id="dateInput" name="date" type="date" />
@@ -162,7 +160,8 @@
               Spara dag
             </button>
             <p id="saveStatus" class="save-status" role="status" aria-live="polite"></p>
-          </form>
+            </form>
+          </details>
         </section>
 
         <section class="tools-panel" aria-labelledby="toolsTitle">
@@ -193,60 +192,68 @@
         </section>
 
         <section class="macro-panel" aria-labelledby="macroTitle">
-          <div class="section-heading">
-            <h2 id="macroTitle">Makrobild</h2>
-            <span id="strictnessBadge" class="badge">keto-ish</span>
-          </div>
-          <h3 class="subhead">Energifördelning</h3>
-          <div class="macro-bars energy-bars">
-            <div>
-              <span>Fett</span>
-              <div class="bar"><i id="fatBar"></i></div>
-              <strong id="fatText">60%</strong>
+          <details class="info-details">
+            <summary id="macroTitle">
+              <span>Makrobild</span>
+              <span id="strictnessBadge" class="badge">keto-ish</span>
+            </summary>
+            <div class="macro-content">
+              <h3 class="subhead">Energifördelning</h3>
+              <div class="macro-bars energy-bars">
+                <div>
+                  <span>Fett</span>
+                  <div class="bar"><i id="fatBar"></i></div>
+                  <strong id="fatText">60%</strong>
+                </div>
+                <div>
+                  <span>Protein</span>
+                  <div class="bar"><i id="proteinBar"></i></div>
+                  <strong id="proteinText">25%</strong>
+                </div>
+                <div>
+                  <span>Kolhydrater</span>
+                  <div class="bar"><i id="carbBar"></i></div>
+                  <strong id="carbText">15%</strong>
+                </div>
+              </div>
+              <h3 class="subhead target-subhead">Dagsmål i gram</h3>
+              <div class="target-bars">
+                <div>
+                  <span>Fett mot 200 g</span>
+                  <div class="target-bar"><i id="fatGramBar"></i><b></b></div>
+                  <strong id="fatGramText">0 g</strong>
+                </div>
+                <div>
+                  <span>Kolhydrater mot 20 g</span>
+                  <div class="target-bar carb-target"><i id="carbGramBar"></i><b></b></div>
+                  <strong id="carbGramText">0 g</strong>
+                </div>
+              </div>
+              <p id="macroNote" class="note"></p>
+              <details class="macro-breakdown">
+                <summary>Beräknat från</summary>
+                <div id="macroBreakdown"></div>
+              </details>
             </div>
-            <div>
-              <span>Protein</span>
-              <div class="bar"><i id="proteinBar"></i></div>
-              <strong id="proteinText">25%</strong>
-            </div>
-            <div>
-              <span>Kolhydrater</span>
-              <div class="bar"><i id="carbBar"></i></div>
-              <strong id="carbText">15%</strong>
-            </div>
-          </div>
-          <h3 class="subhead target-subhead">Dagsmål i gram</h3>
-          <div class="target-bars">
-            <div>
-              <span>Fett mot 200 g</span>
-              <div class="target-bar"><i id="fatGramBar"></i><b></b></div>
-              <strong id="fatGramText">0 g</strong>
-            </div>
-            <div>
-              <span>Kolhydrater mot 20 g</span>
-              <div class="target-bar carb-target"><i id="carbGramBar"></i><b></b></div>
-              <strong id="carbGramText">0 g</strong>
-            </div>
-          </div>
-          <p id="macroNote" class="note"></p>
-          <details class="macro-breakdown">
-            <summary>Beräknat från</summary>
-            <div id="macroBreakdown"></div>
           </details>
         </section>
 
         <section class="trend-panel" aria-labelledby="trendTitle">
-          <div class="section-heading">
-            <h2 id="trendTitle">Tidsserie</h2>
-            <span class="badge">dag för dag</span>
-          </div>
-          <div class="chart-legend" aria-label="Diagramförklaring">
-            <span><i class="legend-weight"></i>Vikt, kg</span>
-            <span><i class="legend-fat"></i>Fett, g</span>
-            <span><i class="legend-carbs"></i>Kolhydrater, g</span>
-          </div>
-          <div id="trendChart" class="trend-chart" role="img" aria-label="Tidsseriediagram med vikt, fett och kolhydrater"></div>
-          <p id="trendNote" class="note"></p>
+          <details class="info-details">
+            <summary id="trendTitle">
+              <span>Tidsserie</span>
+              <span class="badge">dag för dag</span>
+            </summary>
+            <div class="trend-content">
+              <div class="chart-legend" aria-label="Diagramförklaring">
+                <span><i class="legend-weight"></i>Vikt, kg</span>
+                <span><i class="legend-fat"></i>Fett, g</span>
+                <span><i class="legend-carbs"></i>Kolhydrater, g</span>
+              </div>
+              <div id="trendChart" class="trend-chart" role="img" aria-label="Tidsseriediagram med vikt, fett och kolhydrater"></div>
+              <p id="trendNote" class="note"></p>
+            </div>
+          </details>
         </section>
 
         <section class="rules-panel" aria-labelledby="rulesTitle">
@@ -369,6 +376,6 @@
       </main>
     </div>
 
-    <script src="app.js?v=70" type="module"></script>
+    <script src="app.js?v=71" type="module"></script>
   </body>
 </html>
