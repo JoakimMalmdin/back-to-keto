@@ -461,14 +461,8 @@ textarea {
   color: var(--leaf-strong);
 }
 
-.food-list-panel details {
-  margin-top: 12px;
-}
-
-.food-list-panel summary {
-  color: var(--leaf-strong);
-  cursor: pointer;
-  font-weight: 850;
+.food-list-panel .note {
+  margin-bottom: 12px;
 }
 
 .food-list-grid {
