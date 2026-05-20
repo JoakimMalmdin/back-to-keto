@@ -1,7 +1,7 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
-const appVersion = "53";
+const appVersion = "54";
 let activeDate = "";
 let supabaseClient = null;
 let cloudSyncTimer = null;
@@ -417,19 +417,9 @@ function renderTrendChart(entries) {
   const plotHeight = height - pad.top - pad.bottom;
   const xFor = (index) => pad.left + (rows.length === 1 ? plotWidth / 2 : (index / (rows.length - 1)) * plotWidth);
 
-  const weights = rows.map((row) => row.weight).filter(Number.isFinite);
-  const grams = rows.flatMap((row) => [row.fat, row.carbs]).filter(Number.isFinite);
-  let weightMin = weights.length ? Math.min(...weights) : 0;
-  let weightMax = weights.length ? Math.max(...weights) : 1;
-  if (weightMin === weightMax) {
-    weightMin -= 1;
-    weightMax += 1;
-  } else {
-    const padding = Math.max((weightMax - weightMin) * 0.15, 0.4);
-    weightMin -= padding;
-    weightMax += padding;
-  }
-  const gramMax = Math.max(20, Math.ceil(Math.max(...grams, 0) / 10) * 10);
+  const weightMin = 82;
+  const weightMax = 92;
+  const gramMax = 200;
   const yWeight = (value) => pad.top + ((weightMax - value) / (weightMax - weightMin)) * plotHeight;
   const yGram = (value) => pad.top + ((gramMax - value) / gramMax) * plotHeight;
 
@@ -470,9 +460,9 @@ function renderTrendChart(entries) {
       <path class="chart-line weight-line" d="${chartPath(weightPoints)}"></path>
       <path class="chart-line fat-line" d="${chartPath(fatPoints)}"></path>
       <path class="chart-line carb-line" d="${chartPath(carbPoints)}"></path>
-      ${weightPoints.map((point) => `<circle class="weight-dot" cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="3.4"></circle>`).join("")}
-      ${fatPoints.map((point) => `<circle class="fat-dot" cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="3.2"></circle>`).join("")}
-      ${carbPoints.map((point) => `<circle class="carb-dot" cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="3.2"></circle>`).join("")}
+      ${weightPoints.map((point) => `<circle class="weight-dot" cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="2.6"></circle>`).join("")}
+      ${fatPoints.map((point) => `<circle class="fat-dot" cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="2.4"></circle>`).join("")}
+      ${carbPoints.map((point) => `<circle class="carb-dot" cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="2.4"></circle>`).join("")}
       ${labelIndexes
         .map(
           (index) =>

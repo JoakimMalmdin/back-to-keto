@@ -500,15 +500,15 @@ textarea {
 }
 
 .legend-weight {
-  background: var(--leaf-strong);
+  background: var(--ink);
 }
 
 .legend-fat {
-  background: var(--gold);
+  background: var(--leaf-strong);
 }
 
 .legend-carbs {
-  background: var(--berry);
+  background: var(--gold);
 }
 
 .trend-chart {
@@ -548,31 +548,33 @@ textarea {
   fill: none;
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-width: 3.4;
+  stroke-width: 2.4;
 }
 
 .weight-line {
-  stroke: var(--leaf-strong);
+  stroke: var(--ink);
 }
 
 .fat-line {
-  stroke: var(--gold);
+  stroke: var(--leaf-strong);
+  stroke-dasharray: 7 5;
 }
 
 .carb-line {
-  stroke: var(--berry);
+  stroke: var(--gold);
+  stroke-dasharray: 7 5;
 }
 
 .weight-dot {
-  fill: var(--leaf-strong);
+  fill: var(--ink);
 }
 
 .fat-dot {
-  fill: var(--gold);
+  fill: var(--leaf-strong);
 }
 
 .carb-dot {
-  fill: var(--berry);
+  fill: var(--gold);
 }
 
 .empty-chart {
