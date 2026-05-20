@@ -792,9 +792,11 @@ textarea {
 }
 
 .day-row time,
+.day-row span,
 .day-row small {
   color: var(--muted);
   font-weight: 750;
+  white-space: nowrap;
 }
 
 .day-row strong {
