@@ -1,7 +1,7 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
-const appVersion = "88";
+const appVersion = "89";
 let activeDate = "";
 let supabaseClient = null;
 let cloudSyncTimer = null;
@@ -368,11 +368,14 @@ function classify(entry, macros) {
 
 function coach(entry, macros, kind) {
   const notes = [];
+  const isToday = entry.date === todayIso();
   if (kind === "strikt keto") notes.push("Stark keto-dag: låg kolhydratnivå och bra fettbas.");
   if (kind === "keto-ish") notes.push("Bra riktning, men håll koll på yoghurt, bär, tomat och processat.");
   if (kind === "riskzon") notes.push("Här behöver nästa måltid bli enklare: protein plus tydlig fettkälla, minimalt med kolhydrater.");
   if (entry.sleep === "-6 timmar") notes.push("Kort sömn kan öka hunger, så prioritera salt, vatten och enkel mat idag.");
-  if (/1 liter/i.test(entry.water || "")) notes.push("Vattenintaget var lågt; sikta hellre runt 2,5-3 liter.");
+  if (/1 liter/i.test(entry.water || "")) {
+    notes.push(isToday ? "Vatten hittills: fyll gärna på mot 2,5-3 liter under dagen." : "Vattenintaget var lågt; sikta hellre runt 2,5-3 liter.");
+  }
   if (entry.walk === "+60 min") notes.push("Stark promenadbonus idag: bra stöd för blodsocker, energi och fettförbränning.");
   if (entry.walk === "+30 min") notes.push("Promenad registrerad: snyggt stöd för rutinen utan att behöva krångla till maten.");
   return notes.join(" ");
