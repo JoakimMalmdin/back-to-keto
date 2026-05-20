@@ -652,18 +652,21 @@ textarea {
 }
 
 .weight-dot {
-  fill: var(--blue);
-  opacity: 0.72;
+  fill: transparent;
+  stroke: var(--blue);
+  stroke-width: 1.15;
 }
 
 .fat-dot {
-  fill: var(--leaf-strong);
-  opacity: 0.72;
+  fill: transparent;
+  stroke: var(--leaf-strong);
+  stroke-width: 1.05;
 }
 
 .carb-dot {
-  fill: var(--gold);
-  opacity: 0.72;
+  fill: transparent;
+  stroke: var(--gold);
+  stroke-width: 1.05;
 }
 
 .empty-chart {
