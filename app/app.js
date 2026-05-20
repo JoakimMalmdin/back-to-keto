@@ -1,7 +1,7 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
-const appVersion = "90";
+const appVersion = "91";
 let activeDate = "";
 let supabaseClient = null;
 let cloudSyncTimer = null;
@@ -178,6 +178,7 @@ function mealText(entry) {
 function gramMultiplier(text, signal) {
   if (!signal.servingGrams) return null;
   const matcher = new RegExp(signal.match.source, signal.match.flags.includes("g") ? signal.match.flags : `${signal.match.flags}g`);
+  let total = 0;
   for (const match of text.matchAll(matcher)) {
     const start = match.index ?? 0;
     const end = start + match[0].length;
@@ -189,7 +190,10 @@ function gramMultiplier(text, signal) {
       const dlAmount = beforeDl?.[1] || afterDl?.[1];
       if (dlAmount) {
         const dl = Number(dlAmount.replace(",", "."));
-        if (Number.isFinite(dl) && dl > 0) return (dl * signal.dlGrams) / signal.servingGrams;
+        if (Number.isFinite(dl) && dl > 0) {
+          total += (dl * signal.dlGrams) / signal.servingGrams;
+          continue;
+        }
       }
     }
     if (signal.mskGrams) {
@@ -198,7 +202,10 @@ function gramMultiplier(text, signal) {
       const mskAmount = beforeMsk?.[1] || afterMsk?.[1];
       if (mskAmount) {
         const msk = Number(mskAmount.replace(",", "."));
-        if (Number.isFinite(msk) && msk > 0) return (msk * signal.mskGrams) / signal.servingGrams;
+        if (Number.isFinite(msk) && msk > 0) {
+          total += (msk * signal.mskGrams) / signal.servingGrams;
+          continue;
+        }
       }
     }
     const beforeAmount = before.match(/(\d+(?:[,.]\d+)?)\s*g(?:ram)?(?:\s|[a-zåäö%])*$/i);
@@ -206,9 +213,9 @@ function gramMultiplier(text, signal) {
     const amount = beforeAmount?.[1] || afterAmount?.[1];
     if (!amount) continue;
     const grams = Number(amount.replace(",", "."));
-    if (Number.isFinite(grams) && grams > 0) return grams / signal.servingGrams;
+    if (Number.isFinite(grams) && grams > 0) total += grams / signal.servingGrams;
   }
-  return null;
+  return total > 0 ? total : null;
 }
 
 function countSignal(text, signal) {
@@ -235,7 +242,6 @@ function signalLabel(signal) {
     [/ägg|agg/, "Ägg"],
     [/makrill/, "Makrill"],
     [/majonn/, "Majonnäs"],
-    [/ost|cheddar|brie|gouda|gruyere|parmesan/, "Ost"],
     [/smör|smor/, "Smör"],
     [/grädde|gradde/, "Grädde"],
     [/baconlindad/, "Baconlindad köttfärsbit"],
@@ -255,6 +261,7 @@ function signalLabel(signal) {
     [/fläskfil|flaskfil/, "Fläskfilé"],
     [/nötfärs|notfars|köttfärs|kottfars/, "Köttfärs/nötfärs"],
     [/kyckling/, "Kycklingfilé"],
+    [/^(?:ost|cheddar|brie|gouda|gruyere|parmesan)/, "Ost"],
     [/torsk/, "Torsk"],
     [/leverpastej/, "Leverpastej"],
     [/blodpudding/, "Blodpudding"],
