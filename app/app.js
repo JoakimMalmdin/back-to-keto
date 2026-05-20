@@ -1,7 +1,7 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
-const appVersion = "82";
+const appVersion = "83";
 let activeDate = "";
 let supabaseClient = null;
 let cloudSyncTimer = null;
@@ -451,6 +451,15 @@ function renderTrendChart(entries) {
   });
   const carbLimitY = yGram(20);
   const labelIndexes = rows.length <= 5 ? rows.map((_, index) => index) : [0, Math.floor((rows.length - 1) / 2), rows.length - 1];
+  const chartDateLabel = (index, labelPosition) => {
+    const [, , monthText, dayText] = rows[index].date.match(/^(\d{4})-(\d{2})-(\d{2})$/) || [];
+    if (!monthText || !dayText) return rows[index].date.slice(5);
+    const month = Number(monthText);
+    const day = Number(dayText);
+    const previousLabelIndex = labelIndexes[labelPosition - 1];
+    const previousLabelMonth = Number(rows[previousLabelIndex]?.date.slice(5, 7));
+    return labelPosition === 0 || month !== previousLabelMonth ? `${day}/${month}` : `${day}`;
+  };
   const latest = rows.at(-1);
 
   chart.innerHTML = `
@@ -479,12 +488,12 @@ function renderTrendChart(entries) {
       ${carbPoints.map((point) => `<circle class="carb-dot" cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="2"></circle>`).join("")}
       ${labelIndexes
         .map(
-          (index) =>
-            `<text class="chart-date" x="${xFor(index).toFixed(1)}" y="${height - 14}" text-anchor="${index === 0 ? "start" : index === rows.length - 1 ? "end" : "middle"}">${rows[index].date.slice(5)}</text>`
+          (index, labelPosition) =>
+            `<text class="chart-date" x="${xFor(index).toFixed(1)}" y="${height - 14}" text-anchor="${index === 0 ? "start" : index === rows.length - 1 ? "end" : "middle"}">${chartDateLabel(index, labelPosition)}</text>`
         )
         .join("")}
-      <text class="axis-label" x="${pad.left}" y="22">kg</text>
-      <text class="axis-label" x="${width - pad.right}" y="22" text-anchor="end">gram</text>
+      <text class="axis-label" x="${pad.left - 8}" y="22" text-anchor="end">kg</text>
+      <text class="axis-label" x="${width - pad.right + 8}" y="22">gram</text>
     </svg>
   `;
   note.textContent = `Senast: ${latest.weight ? `${decimal(latest.weight)} kg, ` : ""}${decimal(latest.fat || 0)} g fett, ${decimal(latest.carbs || 0)} g kolhydrater.`;
