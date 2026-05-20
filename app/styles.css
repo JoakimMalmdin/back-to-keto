@@ -615,7 +615,7 @@ textarea {
 .axis-label {
   fill: var(--muted);
   font-size: 13px;
-  font-weight: 750;
+  font-weight: 400;
   stroke: none;
 }
 
