@@ -1,7 +1,7 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
-const appVersion = "71";
+const appVersion = "72";
 let activeDate = "";
 let supabaseClient = null;
 let cloudSyncTimer = null;
@@ -788,6 +788,25 @@ async function initSync() {
   }
 }
 
+async function checkForAppUpdate() {
+  try {
+    const response = await fetch(`./version.json?ts=${Date.now()}`, { cache: "no-store" });
+    if (!response.ok) return;
+    const latest = await response.json();
+    const latestVersion = Number(latest?.version);
+    const currentVersion = Number(appVersion);
+    if (!latestVersion || latestVersion <= currentVersion) return;
+    const target = new URL("./", window.location.href);
+    target.searchParams.set("cache", String(latestVersion));
+    document.querySelector(".version-pill").textContent = `v${appVersion} -> v${latestVersion}`;
+    window.setTimeout(() => {
+      window.location.replace(target.toString());
+    }, 700);
+  } catch {
+    // Version checks should never interrupt logging.
+  }
+}
+
 saveSyncCodeButton?.addEventListener("click", () => {
   saveSyncCode(syncCodeInput?.value || "");
 });
@@ -844,3 +863,4 @@ const initialEntry = getEntries().at(-1) || emptyEntry();
 fillForm(initialEntry);
 render(initialEntry.date);
 initSync();
+checkForAppUpdate();

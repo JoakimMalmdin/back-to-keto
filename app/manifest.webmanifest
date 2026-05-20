@@ -1,7 +1,7 @@
 {
   "name": "Back to Keto",
   "short_name": "BTK",
-  "start_url": "/back-to-keto/app/?cache=71",
+  "start_url": "/back-to-keto/app/?cache=72",
   "scope": "/back-to-keto/app/",
   "display": "standalone",
   "background_color": "#fbf7ef",
