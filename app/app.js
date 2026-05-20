@@ -1,7 +1,7 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
-const appVersion = "92";
+const appVersion = "93";
 let activeDate = "";
 let supabaseClient = null;
 let cloudSyncTimer = null;
@@ -555,6 +555,7 @@ function render(selectedDate = activeDate) {
   const marker = macros.source === "manual" ? "" : "~";
   document.querySelector("#carbMetric").textContent = hasContent ? `${marker}${decimal(macros.carbs)} g` : "--";
   document.querySelector("#fatMetric").textContent = hasContent ? `${marker}${macros.fatPct}%` : "--";
+  document.querySelector("#energyMetric").textContent = hasContent ? `${marker}${Math.round(macros.kcal)} kcal` : "--";
   document.querySelector("#coachLine").textContent = hasContent
     ? coach(latest, macros, kind)
     : "Fyll i dagens mat, vikt, sömn och vätska så börjar coachningen.";
