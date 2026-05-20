@@ -440,6 +440,27 @@ textarea {
   line-height: 1.42;
 }
 
+.info-details summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--ink);
+  cursor: pointer;
+  font-size: 1.05rem;
+  font-weight: 850;
+  letter-spacing: 0;
+  list-style-position: outside;
+}
+
+.info-details summary::marker {
+  color: var(--leaf-strong);
+}
+
+.info-details summary::-webkit-details-marker {
+  color: var(--leaf-strong);
+}
+
 .food-list-panel details {
   margin-top: 12px;
 }
