@@ -532,12 +532,19 @@ textarea {
 }
 
 .chart-grid text,
+.carb-limit-label,
 .chart-date,
 .axis-label {
   fill: var(--muted);
   font-size: 13px;
   font-weight: 750;
   stroke: none;
+}
+
+.carb-limit-line {
+  stroke: #d9cfbf;
+  stroke-width: 1;
+  stroke-dasharray: 4 5;
 }
 
 .chart-axis {

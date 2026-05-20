@@ -1,7 +1,7 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
-const appVersion = "57";
+const appVersion = "58";
 let activeDate = "";
 let supabaseClient = null;
 let cloudSyncTimer = null;
@@ -447,6 +447,7 @@ function renderTrendChart(entries) {
     const rightValue = gramMax - ratio * gramMax;
     return { y, leftValue, rightValue };
   });
+  const carbLimitY = yGram(20);
   const labelIndexes = rows.length <= 5 ? rows.map((_, index) => index) : [0, Math.floor((rows.length - 1) / 2), rows.length - 1];
   const latest = rows.at(-1);
 
@@ -463,6 +464,8 @@ function renderTrendChart(entries) {
           )
           .join("")}
       </g>
+      <line class="carb-limit-line" x1="${pad.left}" y1="${carbLimitY.toFixed(1)}" x2="${width - pad.right}" y2="${carbLimitY.toFixed(1)}"></line>
+      <text class="carb-limit-label" x="${width - pad.right + 8}" y="${(carbLimitY + 4).toFixed(1)}">20</text>
       <line class="chart-axis" x1="${pad.left}" y1="${pad.top}" x2="${pad.left}" y2="${height - pad.bottom}"></line>
       <line class="chart-axis" x1="${width - pad.right}" y1="${pad.top}" x2="${width - pad.right}" y2="${height - pad.bottom}"></line>
       <line class="chart-axis" x1="${pad.left}" y1="${height - pad.bottom}" x2="${width - pad.right}" y2="${height - pad.bottom}"></line>
