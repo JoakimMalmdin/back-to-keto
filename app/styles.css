@@ -854,12 +854,13 @@ textarea {
 .day-row span,
 .day-row small {
   color: var(--muted);
-  font-weight: 750;
+  font-weight: 400;
   white-space: nowrap;
 }
 
 .day-row strong {
   font-size: 1.05rem;
+  font-weight: 400;
 }
 
 @media (max-width: 520px) {
