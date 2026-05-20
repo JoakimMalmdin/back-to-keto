@@ -1,7 +1,7 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
-const appVersion = "73";
+const appVersion = "74";
 let activeDate = "";
 let supabaseClient = null;
 let cloudSyncTimer = null;
@@ -87,6 +87,7 @@ const fields = {
 const goalInput = document.querySelector("#goalInput");
 const syncCodeInput = document.querySelector("#syncCodeInput");
 const syncStatus = document.querySelector("#syncStatus");
+const quickSyncStatus = document.querySelector("#quickSyncStatus");
 const saveSyncCodeButton = document.querySelector("#saveSyncCodeButton");
 const clearSyncCodeButton = document.querySelector("#clearSyncCodeButton");
 const syncNowButton = document.querySelector("#syncNowButton");
@@ -661,9 +662,14 @@ document.querySelector("#blankLinkButton").addEventListener("click", async () =>
 });
 
 function setSyncStatus(message, isError = false) {
-  if (!syncStatus) return;
-  syncStatus.textContent = message;
-  syncStatus.classList.toggle("error", isError);
+  if (syncStatus) {
+    syncStatus.textContent = message;
+    syncStatus.classList.toggle("error", isError);
+  }
+  if (quickSyncStatus) {
+    quickSyncStatus.textContent = message;
+    quickSyncStatus.classList.toggle("error", isError);
+  }
 }
 
 function getSyncCode() {
@@ -766,7 +772,6 @@ async function syncNow() {
 }
 
 async function initSync() {
-  if (!syncStatus) return;
   try {
     const { supabaseConfig } = await import(`./supabase-config.js?v=${appVersion}`);
     if (!supabaseConfig?.url || !supabaseConfig?.anonKey) {

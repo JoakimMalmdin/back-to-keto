@@ -186,6 +186,18 @@ main {
   min-width: 118px;
 }
 
+.quick-sync-status {
+  min-height: 1.25em;
+  margin: 8px 0 0;
+  color: var(--leaf-strong);
+  font-size: 0.82rem;
+  font-weight: 750;
+}
+
+.quick-sync-status.error {
+  color: var(--warn);
+}
+
 .status-ring {
   display: grid;
   place-items: center;

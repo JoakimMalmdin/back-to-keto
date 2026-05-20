@@ -7,10 +7,10 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="BTK" />
     <title>Back to Keto</title>
-    <link rel="manifest" href="manifest.webmanifest?v=73" />
-    <link rel="icon" href="icon.svg?v=73" type="image/svg+xml" />
-    <link rel="apple-touch-icon" href="apple-touch-icon.png?v=73" />
-    <link rel="stylesheet" href="styles.css?v=73" />
+    <link rel="manifest" href="manifest.webmanifest?v=74" />
+    <link rel="icon" href="icon.svg?v=74" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png?v=74" />
+    <link rel="stylesheet" href="styles.css?v=74" />
   </head>
   <body>
     <div class="app-shell">
@@ -18,7 +18,7 @@
         <div>
           <p class="eyebrow">Back to Keto</p>
           <h1>Daglig keto-logg</h1>
-          <p class="version-pill">v73</p>
+          <p class="version-pill">v74</p>
         </div>
         <button class="icon-button" id="exportButton" type="button" aria-label="Exportera data">
           <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" /></svg>
@@ -32,6 +32,7 @@
             <h2 id="todayTitle">Dagens läge</h2>
             <p id="coachLine" class="coach-line"></p>
             <button class="secondary-button hero-sync-button" id="quickSyncButton" type="button">Synka nu</button>
+            <p class="quick-sync-status" id="quickSyncStatus" role="status" aria-live="polite"></p>
           </div>
           <div class="status-ring" aria-label="Progress mot mål">
             <span id="currentWeight">--</span>
@@ -162,37 +163,6 @@
             </button>
             <p id="saveStatus" class="save-status" role="status" aria-live="polite"></p>
             </form>
-          </details>
-        </section>
-
-        <section class="tools-panel" aria-labelledby="toolsTitle">
-          <details class="info-details">
-            <summary id="toolsTitle">Data</summary>
-            <div class="button-row data-actions">
-              <button class="secondary-button" id="blankLinkButton" type="button">Kopiera app-länk</button>
-              <button class="secondary-button" id="importButton" type="button">Importera data</button>
-              <button class="secondary-button" id="resetButton" type="button">Rensa min lokala data</button>
-            </div>
-            <textarea id="importInput" class="import-box" rows="4" placeholder="Klistra in exporterad data här"></textarea>
-            <p class="note" id="toolsNote">Loggar och inställningar sparas lokalt i den webbläsare där appen används.</p>
-          </details>
-        </section>
-
-        <section class="tools-panel sync-panel" aria-labelledby="syncTitle">
-          <details class="info-details">
-            <summary id="syncTitle">Synk</summary>
-            <div class="sync-content">
-              <label>
-                Synkkod
-                <input id="syncCodeInput" name="syncCode" type="password" autocomplete="off" placeholder="Välj en egen kod" />
-              </label>
-              <div class="button-row sync-actions">
-                <button class="secondary-button" id="saveSyncCodeButton" type="button">Spara synkkod</button>
-                <button class="secondary-button" id="syncNowButton" type="button">Synka nu</button>
-                <button class="secondary-button" id="clearSyncCodeButton" type="button">Koppla bort</button>
-              </div>
-              <p class="note" id="syncStatus">Skriv samma synkkod på varje enhet som ska dela data.</p>
-            </div>
           </details>
         </section>
 
@@ -382,9 +352,40 @@
             </div>
           </details>
         </section>
+
+        <section class="tools-panel" aria-labelledby="toolsTitle">
+          <details class="info-details">
+            <summary id="toolsTitle">Data</summary>
+            <div class="button-row data-actions">
+              <button class="secondary-button" id="blankLinkButton" type="button">Kopiera app-länk</button>
+              <button class="secondary-button" id="importButton" type="button">Importera data</button>
+              <button class="secondary-button" id="resetButton" type="button">Rensa min lokala data</button>
+            </div>
+            <textarea id="importInput" class="import-box" rows="4" placeholder="Klistra in exporterad data här"></textarea>
+            <p class="note" id="toolsNote">Loggar och inställningar sparas lokalt i den webbläsare där appen används.</p>
+          </details>
+        </section>
+
+        <section class="tools-panel sync-panel" aria-labelledby="syncTitle">
+          <details class="info-details">
+            <summary id="syncTitle">Synk</summary>
+            <div class="sync-content">
+              <label>
+                Synkkod
+                <input id="syncCodeInput" name="syncCode" type="password" autocomplete="off" placeholder="Välj en egen kod" />
+              </label>
+              <div class="button-row sync-actions">
+                <button class="secondary-button" id="saveSyncCodeButton" type="button">Spara synkkod</button>
+                <button class="secondary-button" id="syncNowButton" type="button">Synka nu</button>
+                <button class="secondary-button" id="clearSyncCodeButton" type="button">Koppla bort</button>
+              </div>
+              <p class="note" id="syncStatus">Skriv samma synkkod på varje enhet som ska dela data.</p>
+            </div>
+          </details>
+        </section>
       </main>
     </div>
 
-    <script src="app.js?v=73" type="module"></script>
+    <script src="app.js?v=74" type="module"></script>
   </body>
 </html>
