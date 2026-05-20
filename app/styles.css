@@ -661,6 +661,11 @@ textarea {
   text-align: right;
 }
 
+#macroBreakdown .macro-count,
+#macroBreakdown .macro-value {
+  white-space: nowrap;
+}
+
 .party-panel {
   background:
     linear-gradient(125deg, rgb(141 55 86 / 9%), transparent 60%),
@@ -844,10 +849,16 @@ textarea {
   }
 
   #macroBreakdown > div {
-    grid-template-columns: 1fr 44px;
+    grid-template-columns: 1fr auto auto auto;
+    gap: 4px 8px;
   }
 
-  #macroBreakdown span:nth-child(n + 3) {
+  #macroBreakdown strong {
+    grid-column: 1 / -1;
+  }
+
+  #macroBreakdown .macro-count,
+  #macroBreakdown .macro-value {
     text-align: left;
   }
 }

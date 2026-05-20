@@ -1,7 +1,7 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
-const appVersion = "68";
+const appVersion = "69";
 let activeDate = "";
 let supabaseClient = null;
 let cloudSyncTimer = null;
@@ -386,7 +386,7 @@ function renderMacroBreakdown(macros, hasContent) {
     .sort((a, b) => b.fat - a.fat)
     .map((item) => {
       const count = Number.isInteger(item.count) ? item.count : decimal(item.count);
-      return `<div><strong>${item.label}</strong><span>x ${count}</span><span>${decimal(item.fat)} g F</span><span>${decimal(item.protein)} g P</span><span>${decimal(item.carbs)} g K</span></div>`;
+      return `<div><strong>${item.label}</strong><span class="macro-count">x ${count}</span><span class="macro-value">${decimal(item.fat)} g F</span><span class="macro-value">${decimal(item.protein)} g P</span><span class="macro-value">${decimal(item.carbs)} g K</span></div>`;
     })
     .join("");
   breakdown.innerHTML = rows;
