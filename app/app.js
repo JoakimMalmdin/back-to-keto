@@ -1,7 +1,7 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
-const appVersion = "115";
+const appVersion = "116";
 const appDisplayVersion = `v1.0 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -100,6 +100,8 @@ const syncNowButton = document.querySelector("#syncNowButton");
 const quickSyncButton = document.querySelector("#quickSyncButton");
 const reportButton = document.querySelector("#reportButton");
 const weekReportButton = document.querySelector("#weekReportButton");
+const printTrendButton = document.querySelector("#printTrendButton");
+const saveTrendPngButton = document.querySelector("#saveTrendPngButton");
 let autosaveTimer = null;
 
 function stableAppUrl() {
@@ -985,6 +987,73 @@ function openWeekReport() {
 
 reportButton?.addEventListener("click", openDailyReport);
 weekReportButton?.addEventListener("click", openWeekReport);
+
+function printTrendChart() {
+  document.querySelector(".trend-panel details")?.setAttribute("open", "");
+  document.body.classList.add("print-trend");
+  const cleanup = () => document.body.classList.remove("print-trend");
+  window.addEventListener("afterprint", cleanup, { once: true });
+  window.print();
+  window.setTimeout(cleanup, 1500);
+}
+
+async function saveTrendPng() {
+  const svg = document.querySelector("#trendChart svg");
+  if (!svg) {
+    setSaveStatus("Det finns inget tidsseriediagram att spara ännu.", true);
+    return;
+  }
+  const clone = svg.cloneNode(true);
+  const style = document.createElementNS("http://www.w3.org/2000/svg", "style");
+  style.textContent = `
+    .chart-grid line{stroke:#e9dfcf;stroke-width:1}
+    .chart-grid text,.carb-limit-label,.chart-date,.axis-label{fill:#69736d;font-size:13px;font-weight:400;stroke:none}
+    .carb-limit-line{stroke:#d9cfbf;stroke-width:1;stroke-dasharray:4 5}
+    .chart-axis{stroke:#d5cabb;stroke-width:1.4}
+    .chart-line{fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-width:2.4}
+    .weight-line{stroke:#2563eb}.fat-line{stroke:#274a3c;stroke-dasharray:7 5}.protein-line{stroke:#8d3756;stroke-dasharray:7 5}.carb-line{stroke:#c9953d;stroke-dasharray:7 5}
+    .weight-dot{fill:transparent;stroke:#2563eb;stroke-width:1.15}.fat-dot{fill:transparent;stroke:#274a3c;stroke-width:1.05}.protein-dot{fill:transparent;stroke:#8d3756;stroke-width:1.05}.carb-dot{fill:transparent;stroke:#c9953d;stroke-width:1.05}
+  `;
+  clone.insertBefore(style, clone.firstChild);
+  const serialized = new XMLSerializer().serializeToString(clone);
+  const blob = new Blob([serialized], { type: "image/svg+xml;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const image = new Image();
+  const width = Number(svg.viewBox.baseVal.width || 640);
+  const height = Number(svg.viewBox.baseVal.height || 276);
+  image.onload = () => {
+    const canvas = document.createElement("canvas");
+    canvas.width = width * 2;
+    canvas.height = height * 2;
+    const context = canvas.getContext("2d");
+    context.fillStyle = "#fffaf2";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.scale(2, 2);
+    context.drawImage(image, 0, 0, width, height);
+    canvas.toBlob((pngBlob) => {
+      URL.revokeObjectURL(url);
+      if (!pngBlob) {
+        setSaveStatus("PNG-exporten fungerade inte i den här browsern.", true);
+        return;
+      }
+      const link = document.createElement("a");
+      const datePart = activeDate || todayIso();
+      link.href = URL.createObjectURL(pngBlob);
+      link.download = `btk-tidsserie-${datePart}.png`;
+      link.click();
+      window.setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+      setSaveStatus("Tidsseriediagram sparat som PNG.");
+    }, "image/png");
+  };
+  image.onerror = () => {
+    URL.revokeObjectURL(url);
+    setSaveStatus("PNG-exporten fungerade inte i den här browsern.", true);
+  };
+  image.src = url;
+}
+
+printTrendButton?.addEventListener("click", printTrendChart);
+saveTrendPngButton?.addEventListener("click", saveTrendPng);
 
 fields.date.addEventListener("change", () => {
   const date = fields.date.value || todayIso();

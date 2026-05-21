@@ -602,6 +602,19 @@ textarea {
   border-radius: 999px;
 }
 
+.chart-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 10px;
+}
+
+.chart-actions .secondary-button {
+  min-height: 38px;
+  padding: 8px 12px;
+  font-size: 0.82rem;
+}
+
 .legend-weight {
   background: var(--blue);
 }
@@ -717,6 +730,42 @@ textarea {
   color: var(--muted);
   text-align: center;
   font-weight: 800;
+}
+
+@media print {
+  body.print-trend {
+    background: white;
+  }
+
+  body.print-trend .topbar,
+  body.print-trend main > section:not(.trend-panel),
+  body.print-trend .chart-actions {
+    display: none !important;
+  }
+
+  body.print-trend .app-shell {
+    width: 100%;
+    max-width: none;
+    padding: 0;
+  }
+
+  body.print-trend main {
+    display: block;
+  }
+
+  body.print-trend .trend-panel {
+    border: 0;
+    box-shadow: none;
+    background: white;
+  }
+
+  body.print-trend .info-details {
+    padding: 0;
+  }
+
+  body.print-trend .trend-chart {
+    break-inside: avoid;
+  }
 }
 
 .macro-breakdown summary {
