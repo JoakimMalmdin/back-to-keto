@@ -1,4 +1,6 @@
-const report = JSON.parse(sessionStorage.getItem("btk.dailyReport.v1") || "null");
+const report = JSON.parse(
+  sessionStorage.getItem("btk.dailyReport.v1") || localStorage.getItem("btk.dailyReport.v1") || "null"
+);
 
 function decimal(value) {
   return Number(value || 0).toLocaleString("sv-SE", { maximumFractionDigits: 1 });

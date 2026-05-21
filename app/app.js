@@ -1,7 +1,7 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
-const appVersion = "108";
+const appVersion = "109";
 const appDisplayVersion = `v1.0 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -823,7 +823,9 @@ function dailyReportData(entry) {
 
 function openDailyReport() {
   const entry = formEntry();
-  sessionStorage.setItem("btk.dailyReport.v1", JSON.stringify(dailyReportData(entry)));
+  const reportPayload = JSON.stringify(dailyReportData(entry));
+  localStorage.setItem("btk.dailyReport.v1", reportPayload);
+  sessionStorage.setItem("btk.dailyReport.v1", reportPayload);
   const reportUrl = new URL("report.html", window.location.href);
   reportUrl.searchParams.set("date", entry.date);
   reportUrl.searchParams.set("v", appVersion);
