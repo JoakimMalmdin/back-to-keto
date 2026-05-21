@@ -1,7 +1,7 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
-const appVersion = "117";
+const appVersion = "118";
 const appDisplayVersion = `v1.0 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -30,6 +30,7 @@ const foodSignals = [
   { match: /entrecote|entrecôte/i, kcal: 430, protein: 30, fat: 34, carbs: 0, servingGrams: 150, keto: 2 },
   { match: /oxfil[eé]/i, kcal: 170, protein: 26, fat: 7, carbs: 0, servingGrams: 100, keto: 2 },
   { match: /fläskfil[eé]|flaskfil[eé]/i, kcal: 120, protein: 22, fat: 3, carbs: 0, servingGrams: 100, keto: 1 },
+  { match: /(?:benfria?\s*)?fläskkotlett(?:er)?|(?:benfria?\s*)?flaskkotlett(?:er)?/i, kcal: 256, protein: 33.8, fat: 13.8, carbs: 0, servingGrams: 125, keto: 1 },
   { label: "Köttfärsbit", match: /köttfärs\s*(?:bit|bitar|biff|biffar)|kottfars\s*(?:bit|bitar|biff|biffar)/i, skipBefore: /baconlindad(?:e)?\s*$/i, quantity: /(\d+(?:[,.]\d+)?)\s*(?:st\s*)?(?:köttfärs\s*(?:bit|bitar|biff|biffar)|kottfars\s*(?:bit|bitar|biff|biffar))/gi, kcal: 196, protein: 15.2, fat: 14.4, carbs: 0, keto: 2 },
   { match: /nötfärs|notfars|köttfärs|kottfars/i, skipBefore: /baconlindad(?:e)?\s*$/i, skipAfter: /^\s*(?:bit|bitar|biff|biffar)/i, kcal: 245, protein: 19, fat: 18, carbs: 0, servingGrams: 100, keto: 2 },
   { match: /kycklingfil[eé]|kyckling\s*\(?\s*fil[eé](?:\s+utan\s+skinn)?\s*\)?|kycklingbröst|kycklingbrost/i, kcal: 165, protein: 31, fat: 3.6, carbs: 0, servingGrams: 100, keto: 1 },
@@ -437,6 +438,7 @@ function signalLabel(signal) {
     [/entrecote|entrecôte/, "Entrecote"],
     [/oxfil/, "Oxfilé"],
     [/fläskfil|flaskfil/, "Fläskfilé"],
+    [/fläskkotlett|flaskkotlett/, "Benfri fläskkotlett"],
     [/köttfärs\s*(?:bit|biff)|kottfars\s*(?:bit|biff)/, "Köttfärsbit"],
     [/nötfärs|notfars|köttfärs|kottfars/, "Köttfärs/nötfärs"],
     [/påläggsskinka|palaggsskinka|skinka|kalkon|kycklingpålägg|kycklingpalagg/, "Påläggsskinka"],
