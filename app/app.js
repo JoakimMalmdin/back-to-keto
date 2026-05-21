@@ -1,7 +1,7 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
-const appVersion = "119";
+const appVersion = "120";
 const appDisplayVersion = `v1.0 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -11,8 +11,14 @@ let applyingRemoteData = false;
 const foodSignals = [
   { match: /(^|[^a-zåäö])(?:ägg|agg)(?:[^a-zåäö]|$)/i, quantity: /(\d+(?:[,.]\d+)?)\s*(?:st\s*)?(?:(?:stekta?|kokta?|pocherade?|äggröra|aggrora)\s+){0,3}(?:ägg|agg)/gi, kcal: 70, protein: 6.2, fat: 5, carbs: 0.5, keto: 2 },
   { match: /makrill/i, kcal: 238, protein: 15, fat: 17.5, carbs: 4.9, servingGrams: 125, keto: 2 },
+  { match: /aioli/i, kcal: 105, protein: 0.2, fat: 11.5, carbs: 0.4, servingGrams: 15, mskGrams: 15, keto: 2 },
+  { match: /hollandaise(?:sås|sas)?/i, kcal: 80, protein: 0.2, fat: 8.5, carbs: 0.5, servingGrams: 15, mskGrams: 15, keto: 2 },
   { match: /majonnäs|majonnas/i, kcal: 108, protein: 0.2, fat: 11.9, carbs: 0.2, servingGrams: 15, mskGrams: 15, keto: 2 },
-  { match: /ost|cheddar|brie|gouda|gruyere|parmesan/i, kcal: 120, protein: 7, fat: 10, carbs: 0.5, servingGrams: 30, sliceGrams: 10, keto: 2 },
+  { match: /pesto/i, kcal: 70, protein: 0.8, fat: 7, carbs: 1, servingGrams: 15, mskGrams: 15, keto: 1 },
+  { match: /brie/i, kcal: 100, protein: 6, fat: 8, carbs: 0.1, servingGrams: 30, sliceGrams: 10, keto: 2 },
+  { match: /cheddar/i, kcal: 120, protein: 7.5, fat: 10, carbs: 0.4, servingGrams: 30, sliceGrams: 10, keto: 2 },
+  { match: /gouda/i, kcal: 110, protein: 7.5, fat: 8.5, carbs: 0.7, servingGrams: 30, sliceGrams: 10, keto: 2 },
+  { match: /(^|[^a-zåäö])ost(?:[a-zåäö]*)?|gruyere|parmesan/i, kcal: 120, protein: 7, fat: 10, carbs: 0.5, servingGrams: 30, sliceGrams: 10, keto: 2 },
   { match: /smör|smor/i, kcal: 75, protein: 0.1, fat: 8.2, carbs: 0.1, servingGrams: 10, mskGrams: 14, keto: 2 },
   { match: /grädde|gradde/i, kcal: 100, protein: 0.6, fat: 10, carbs: 0.9, servingGrams: 30, dlGrams: 100, mskGrams: 15, keto: 2 },
   { match: /baconlindad(?:e)?\s+(?:köttfärs|kottfars)?(?:bit|bitar|biff|biffar)/i, quantity: /(\d+(?:[,.]\d+)?)\s*(?:st\s*)?baconlindad(?:e)?\s+(?:köttfärs|kottfars)?(?:bit|bitar|biff|biffar)/gi, kcal: 220, protein: 16.5, fat: 17.5, carbs: 0.8, keto: 2 },
@@ -24,8 +30,10 @@ const foodSignals = [
   { match: /grillkorv\s*85\s*%?\s*(?:kött|kott)?/i, kcal: 260, protein: 12, fat: 23, carbs: 2, servingGrams: 100, keto: 1 },
   { match: /korv\s*75\s*%?\s*(?:kött|kott)?/i, exclude: /falukorv/i, kcal: 250, protein: 11, fat: 22, carbs: 4, servingGrams: 100, keto: 0 },
   { match: /gräddfil\s*12\s*%|graddfil\s*12\s*%/i, kcal: 135, protein: 3, fat: 12, carbs: 3.5, servingGrams: 100, dlGrams: 100, mskGrams: 15, keto: 1 },
+  { match: /cr[eèé]me\s*fraiche|creme\s*fraiche|cr[eèé]mefraiche|cremefraiche/i, kcal: 340, protein: 2.4, fat: 34, carbs: 2.8, servingGrams: 100, dlGrams: 100, mskGrams: 15, keto: 2 },
   { match: /grekisk\s+(?:yoghurt|youghurt|yogurt)(?:\s*10\s*%|\s*10\s*procent)?/i, kcal: 121, protein: 4.6, fat: 10, carbs: 3.2, servingGrams: 100, dlGrams: 100, keto: 1 },
   { match: /färskost|farskost|cream cheese/i, kcal: 252, protein: 4.5, fat: 25, carbs: 3, servingGrams: 100, mskGrams: 15, keto: 2 },
+  { match: /keso|cottage cheese/i, kcal: 90, protein: 12, fat: 4, carbs: 2.7, servingGrams: 100, dlGrams: 100, keto: 1 },
   { match: /mozzarella/i, kcal: 150, protein: 10, fat: 11, carbs: 1.5, servingGrams: 60, keto: 2 },
   { match: /entrecote|entrecôte/i, kcal: 430, protein: 30, fat: 34, carbs: 0, servingGrams: 150, keto: 2 },
   { match: /oxfil[eé]/i, kcal: 170, protein: 26, fat: 7, carbs: 0, servingGrams: 100, keto: 2 },
@@ -34,6 +42,7 @@ const foodSignals = [
   { label: "Köttfärsbit", match: /köttfärs\s*(?:bit|bitar|biff|biffar)|kottfars\s*(?:bit|bitar|biff|biffar)/i, skipBefore: /baconlindad(?:e)?\s*$/i, quantity: /(\d+(?:[,.]\d+)?)\s*(?:st\s*)?(?:köttfärs\s*(?:bit|bitar|biff|biffar)|kottfars\s*(?:bit|bitar|biff|biffar))/gi, kcal: 196, protein: 15.2, fat: 14.4, carbs: 0, keto: 2 },
   { match: /nötfärs|notfars|köttfärs|kottfars/i, skipBefore: /baconlindad(?:e)?\s*$/i, skipAfter: /^\s*(?:bit|bitar|biff|biffar)/i, kcal: 245, protein: 19, fat: 18, carbs: 0, servingGrams: 100, keto: 2 },
   { match: /kycklingfil[eé]|kyckling\s*\(?\s*fil[eé](?:\s+utan\s+skinn)?\s*\)?|kycklingbröst|kycklingbrost/i, kcal: 165, protein: 31, fat: 3.6, carbs: 0, servingGrams: 100, keto: 1 },
+  { match: /tonfisk/i, kcal: 116, protein: 26, fat: 1, carbs: 0, servingGrams: 100, keto: 1 },
   { match: /torsk/i, kcal: 82, protein: 18, fat: 0.7, carbs: 0, servingGrams: 100, keto: 1 },
   { match: /leverpastej/i, kcal: 95, protein: 3, fat: 8, carbs: 2.5, servingGrams: 30, keto: 0 },
   { match: /blodpudding/i, kcal: 215, protein: 9, fat: 8, carbs: 27, servingGrams: 100, keto: -2 },
@@ -420,7 +429,13 @@ function signalLabel(signal) {
   const labels = [
     [/(^|[^a-zåäö])(?:ägg|agg)(?:[^a-zåäö]|$)/, "Ägg"],
     [/makrill/, "Makrill"],
+    [/aioli/, "Aioli"],
+    [/hollandaise/, "Hollandaise"],
     [/majonn/, "Majonnäs"],
+    [/pesto/, "Pesto"],
+    [/brie/, "Brie"],
+    [/cheddar/, "Cheddar"],
+    [/gouda/, "Gouda"],
     [/smör|smor/, "Smör"],
     [/grädde|gradde/, "Grädde"],
     [/baconlindad/, "Baconlindad köttfärsbit"],
@@ -432,8 +447,10 @@ function signalLabel(signal) {
     [/falukorv/, "Falukorv"],
     [/korv/, "Korv 75%"],
     [/gräddfil|graddfil/, "Gräddfil"],
+    [/fraiche/, "Crème fraiche"],
     [/grekisk/, "Grekisk yoghurt 10%"],
     [/färskost|farskost|cream cheese/, "Färskost"],
+    [/keso|cottage cheese/, "Keso"],
     [/mozzarella/, "Mozzarella"],
     [/entrecote|entrecôte/, "Entrecote"],
     [/oxfil/, "Oxfilé"],
@@ -443,7 +460,8 @@ function signalLabel(signal) {
     [/nötfärs|notfars|köttfärs|kottfars/, "Köttfärs/nötfärs"],
     [/påläggsskinka|palaggsskinka|skinka|kalkon|kycklingpålägg|kycklingpalagg/, "Påläggsskinka"],
     [/kyckling/, "Kycklingfilé"],
-    [/^(?:ost|cheddar|brie|gouda|gruyere|parmesan)/, "Ost"],
+    [/tonfisk/, "Tonfisk"],
+    [/ost|gruyere|parmesan/, "Ost"],
     [/torsk/, "Torsk"],
     [/leverpastej/, "Leverpastej"],
     [/blodpudding/, "Blodpudding"],
