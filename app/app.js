@@ -1,7 +1,7 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
-const appVersion = "113";
+const appVersion = "114";
 const appDisplayVersion = `v1.0 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -962,11 +962,7 @@ function openReport(data, params = {}) {
     reportUrl.searchParams.set(key, value);
   }
   reportUrl.searchParams.set("v", appVersion);
-  const reportWindow = window.open(reportUrl.toString(), "_blank", "noopener,noreferrer");
-  if (!reportWindow) {
-    window.location.assign(reportUrl.toString());
-    return;
-  }
+  window.location.assign(reportUrl.toString());
 }
 
 function openWeekReport() {
