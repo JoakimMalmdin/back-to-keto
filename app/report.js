@@ -1,0 +1,123 @@
+const report = JSON.parse(sessionStorage.getItem("btk.dailyReport.v1") || "null");
+
+function decimal(value) {
+  return Number(value || 0).toLocaleString("sv-SE", { maximumFractionDigits: 1 });
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function css() {
+  return `
+    :root { color-scheme: light; --ink: #26342b; --muted: #667166; --line: #d9decd; --leaf: #2f6f4e; --paper: #fffdf7; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #f7f2e8; color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.45; }
+    main { width: min(980px, calc(100% - 32px)); margin: 28px auto; background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 24px; }
+    header { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; border-bottom: 1px solid var(--line); padding-bottom: 18px; margin-bottom: 20px; }
+    h1 { margin: 0; font-size: 1.8rem; }
+    h2 { margin: 24px 0 10px; font-size: 1.15rem; }
+    .meta { margin: 6px 0 0; color: var(--muted); }
+    button { border: 0; border-radius: 8px; background: var(--leaf); color: white; padding: 10px 14px; font-weight: 700; cursor: pointer; }
+    .summary { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+    .summary div { border: 1px solid var(--line); border-radius: 10px; padding: 12px; background: #fbfaf3; }
+    .summary span { display: block; color: var(--muted); font-size: .82rem; }
+    .summary strong { display: block; margin-top: 4px; font-size: 1rem; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border-bottom: 1px solid var(--line); padding: 10px 8px; text-align: left; vertical-align: top; }
+    thead th, tfoot th, tfoot td { font-weight: 700; background: #f2f0e7; }
+    tbody th { width: 140px; }
+    td:nth-child(n+3), th:nth-child(n+3) { text-align: right; white-space: nowrap; }
+    .note, .empty { color: var(--muted); font-size: .9rem; margin-top: 14px; }
+    @media (max-width: 720px) {
+      main { width: min(100% - 20px, 980px); margin: 10px auto; padding: 16px; }
+      header { display: block; }
+      button { margin-top: 12px; width: 100%; }
+      .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      table { font-size: .86rem; }
+    }
+    @media print {
+      body { background: white; }
+      main { width: 100%; margin: 0; border: 0; border-radius: 0; padding: 0; }
+      button { display: none; }
+    }`;
+}
+
+function render() {
+  const style = document.createElement("style");
+  style.textContent = css();
+  document.head.append(style);
+
+  const root = document.querySelector("#reportRoot");
+  if (!report?.entry || !Array.isArray(report.rows)) {
+    root.innerHTML = `<p class="empty">Ingen rapportdata hittades. Gå tillbaka till appen och tryck på rapportknappen igen.</p>`;
+    return;
+  }
+
+  const { entry, rows, totals } = report;
+  document.title = `Keto-rapport ${entry.date}`;
+  const mealRows = rows
+    .map(
+      (row) => `
+        <tr>
+          <th scope="row">${escapeHtml(row.label)}</th>
+          <td>${escapeHtml(row.text || "Ej angivet")}</td>
+          <td>${decimal(row.fat)}</td>
+          <td>${decimal(row.carbs)}</td>
+          <td>${decimal(row.protein)}</td>
+          <td>${Math.round(row.kcal || 0)}</td>
+        </tr>`
+    )
+    .join("");
+
+  root.innerHTML = `
+    <header>
+      <div>
+        <h1>Keto-rapport ${escapeHtml(entry.date)}</h1>
+        <p class="meta">Genererad ${escapeHtml(report.generatedAt || "")}</p>
+      </div>
+      <button type="button" id="printButton">Skriv ut / spara som PDF</button>
+    </header>
+    <section class="summary" aria-label="Dagens basdata">
+      <div><span>Dagens vikt</span><strong>${entry.weight ? `${decimal(entry.weight)} kg` : "--"}</strong></div>
+      <div><span>Sömn</span><strong>${escapeHtml(entry.sleep || "--")}</strong></div>
+      <div><span>Vatten</span><strong>${escapeHtml(entry.water || "--")}</strong></div>
+      <div><span>Kaffe</span><strong>${escapeHtml(entry.coffee || "--")}</strong></div>
+      <div><span>Promenad</span><strong>${escapeHtml(entry.walk || "--")}</strong></div>
+    </section>
+    <section>
+      <h2>Måltider och makron</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Måltid</th>
+            <th>Text</th>
+            <th>Fett g</th>
+            <th>Kolh. g</th>
+            <th>Protein g</th>
+            <th>kcal</th>
+          </tr>
+        </thead>
+        <tbody>${mealRows}</tbody>
+        <tfoot>
+          <tr>
+            <th scope="row" colspan="2">Summa uppskattat</th>
+            <td>${decimal(totals?.fat)}</td>
+            <td>${decimal(totals?.carbs)}</td>
+            <td>${decimal(totals?.protein)}</td>
+            <td>${Math.round(totals?.kcal || 0)}</td>
+          </tr>
+        </tfoot>
+      </table>
+      <p class="note">Makron är appens schablonberäkning utifrån den text som står i respektive måltidsfält.</p>
+    </section>`;
+
+  document.querySelector("#printButton").addEventListener("click", () => window.print());
+}
+
+render();

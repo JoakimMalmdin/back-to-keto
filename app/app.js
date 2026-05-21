@@ -1,7 +1,7 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
-const appVersion = "105";
+const appVersion = "108";
 const appDisplayVersion = `v1.0 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -216,6 +216,20 @@ function baselineWeight(entries) {
 
 function mealText(entry) {
   return [entry.breakfast, entry.lunch, entry.dinner, entry.extras, entry.notes].filter(Boolean).join(" ");
+}
+
+function formEntry() {
+  const entry = {};
+  for (const [key, input] of Object.entries(fields)) {
+    if (!input) continue;
+    const value =
+      input instanceof NodeList
+        ? [...input].find((option) => option.checked)?.value || ""
+        : input.value.trim();
+    entry[key] = ["weight", "fat", "protein", "carbs"].includes(key) && value ? Number(value) : value;
+  }
+  entry.date ||= todayIso();
+  return entry;
 }
 
 function measuredAmount(text, signal) {
@@ -734,17 +748,8 @@ function setSaveStatus(message, isError = false) {
 }
 
 function saveCurrentEntry(options = {}) {
-  const entry = {};
-  for (const [key, input] of Object.entries(fields)) {
-    if (!input) continue;
-    const value =
-      input instanceof NodeList
-        ? [...input].find((option) => option.checked)?.value || ""
-        : input.value.trim();
-    entry[key] = ["weight", "fat", "protein", "carbs"].includes(key) && value ? Number(value) : value;
-  }
+  const entry = formEntry();
   if (goalInput) saveGoalWeight(goalInput.value.trim());
-  entry.date ||= todayIso();
   activeDate = entry.date;
   const entries = getEntries().filter((item) => item.date !== entry.date);
   entries.push(entry);
@@ -779,13 +784,58 @@ window.addEventListener("error", (event) => {
   setSaveStatus(`Appfel: ${event.message}`, true);
 });
 
-document.querySelector("#todayButton").addEventListener("click", () => {
-  const today = todayIso();
-  const existing = findEntry(today);
-  fillForm(existing || emptyEntry(today));
-  render(today);
-  setSaveStatus(existing ? `Visar sparad rad för ${today}` : `Ny rad för ${today}`);
-});
+function mealReportRows(entry) {
+  const meals = [
+    ["Frukost", "breakfast"],
+    ["Lunch", "lunch"],
+    ["Middag", "dinner"],
+    ["Övrigt matintag", "extras"],
+  ];
+  return meals.map(([label, key]) => {
+    const text = entry[key] || "";
+    const mealEntry = emptyEntry(entry.date);
+    mealEntry[key] = text;
+    const macros = text.trim() ? estimateMacros(mealEntry) : { kcal: 0, fat: 0, carbs: 0, protein: 0 };
+    return { label, text, macros };
+  });
+}
+
+function dailyReportData(entry) {
+  const rows = mealReportRows(entry).map((row) => ({
+    label: row.label,
+    text: row.text,
+    kcal: row.macros.kcal,
+    fat: row.macros.fat,
+    carbs: row.macros.carbs,
+    protein: row.macros.protein,
+  }));
+  const totals = rows.reduce(
+    (sum, row) => ({
+      kcal: sum.kcal + row.kcal,
+      fat: sum.fat + row.fat,
+      carbs: sum.carbs + row.carbs,
+      protein: sum.protein + row.protein,
+    }),
+    { kcal: 0, fat: 0, carbs: 0, protein: 0 }
+  );
+  return { entry, rows, totals, generatedAt: nowStamp(), version: appDisplayVersion };
+}
+
+function openDailyReport() {
+  const entry = formEntry();
+  sessionStorage.setItem("btk.dailyReport.v1", JSON.stringify(dailyReportData(entry)));
+  const reportUrl = new URL("report.html", window.location.href);
+  reportUrl.searchParams.set("date", entry.date);
+  reportUrl.searchParams.set("v", appVersion);
+  const reportWindow = window.open(reportUrl.toString(), "_blank", "noopener,noreferrer");
+  if (!reportWindow) {
+    window.location.assign(reportUrl.toString());
+    return;
+  }
+  setSaveStatus(`Rapport skapad för ${entry.date}`);
+}
+
+document.querySelector("#reportButton").addEventListener("click", openDailyReport);
 
 fields.date.addEventListener("change", () => {
   const date = fields.date.value || todayIso();

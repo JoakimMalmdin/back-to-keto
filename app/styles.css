@@ -303,8 +303,9 @@ main {
   font-weight: 800;
 }
 
-.today-inline-button {
+.report-inline-button {
   margin-top: 14px;
+  justify-self: start;
 }
 
 .entry-form {
