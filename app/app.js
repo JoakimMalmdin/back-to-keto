@@ -1,14 +1,14 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
-const appVersion = "96";
+const appVersion = "97";
 let activeDate = "";
 let supabaseClient = null;
 let cloudSyncTimer = null;
 let applyingRemoteData = false;
 
 const foodSignals = [
-  { match: /(^|[^a-zåäö])(?:ägg|agg)(?:[^a-zåäö]|$)/i, quantity: /(\d+(?:[,.]\d+)?)\s*(?:st\s*)?(?:ägg|agg)/gi, kcal: 70, protein: 6.2, fat: 5, carbs: 0.5, keto: 2 },
+  { match: /(^|[^a-zåäö])(?:ägg|agg)(?:[^a-zåäö]|$)/i, quantity: /(\d+(?:[,.]\d+)?)\s*(?:st\s*)?(?:(?:stekta?|kokta?|pocherade?|äggröra|aggrora)\s+){0,3}(?:ägg|agg)/gi, kcal: 70, protein: 6.2, fat: 5, carbs: 0.5, keto: 2 },
   { match: /makrill/i, kcal: 238, protein: 15, fat: 17.5, carbs: 4.9, servingGrams: 125, keto: 2 },
   { match: /majonnäs|majonnas/i, kcal: 108, protein: 0.2, fat: 11.9, carbs: 0.2, servingGrams: 15, mskGrams: 15, keto: 2 },
   { match: /ost|cheddar|brie|gouda|gruyere|parmesan/i, kcal: 120, protein: 7, fat: 10, carbs: 0.5, servingGrams: 30, keto: 2 },
@@ -43,7 +43,7 @@ const foodSignals = [
   { match: /avokado|avocado/i, kcal: 160, protein: 2, fat: 15, carbs: 2, servingGrams: 100, keto: 2 },
   { match: /olivolja|olive oil/i, kcal: 120, protein: 0, fat: 13.5, carbs: 0, servingGrams: 15, mskGrams: 15, keto: 2 },
   { match: /(^|[^a-zåäö])(?:nötter|notter|mandel|valnöt|valnot|macadamia)(?:[^a-zåäö]|$)/i, kcal: 180, protein: 5, fat: 17, carbs: 3, servingGrams: 30, keto: 1 },
-  { match: /påläggsskinka|palaggsskinka|skinka|kalkonpålägg|kalkonpalagg|kycklingpålägg|kycklingpalagg/i, kcal: 30, protein: 5, fat: 1, carbs: 0.3, keto: 1 },
+  { match: /påläggsskinka|palaggsskinka|skinka|kalkonpålägg|kalkonpalagg|kycklingpålägg|kycklingpalagg/i, quantity: [/(\d+(?:[,.]\d+)?)\s*(?:skivor?|skiva|st)\s*(?:påläggsskinka|palaggsskinka|skinka|kalkonpålägg|kalkonpalagg|kycklingpålägg|kycklingpalagg)/gi, /(?:påläggsskinka|palaggsskinka|skinka|kalkonpålägg|kalkonpalagg|kycklingpålägg|kycklingpalagg)\s*(\d+(?:[,.]\d+)?)\s*(?:skivor?|skiva|st)/gi], kcal: 30, protein: 5, fat: 1, carbs: 0.3, keto: 1 },
   { match: /pulled pork/i, kcal: 375, protein: 34, fat: 25, carbs: 3, servingGrams: 150, keto: 1 },
   { match: /falukorv/i, kcal: 260, protein: 10, fat: 23, carbs: 4, servingGrams: 100, sliceGrams: 20, keto: 0 },
   { match: /gräddfil|graddfil/i, exclude: /gräddfil\s*12|graddfil\s*12/i, kcal: 70, protein: 1.5, fat: 6, carbs: 2, servingGrams: 50, dlGrams: 100, mskGrams: 15, keto: 1 },
@@ -63,7 +63,8 @@ const foodSignals = [
   { match: /balsamico/i, kcal: 5, protein: 0, fat: 0, carbs: 1, servingGrams: 5, mskGrams: 15, keto: -1 },
   { match: /osötad\s+ketchup|osotad\s+ketchup|felix\s+(?:tomat)?ketchup\s+osötad|felix\s+(?:tomat)?ketchup\s+osotad/i, kcal: 7.5, protein: 0.2, fat: 0, carbs: 1.5, servingGrams: 15, mskGrams: 15, keto: 0 },
   { match: /ketchup/i, exclude: /osötad\s+ketchup|osotad\s+ketchup|felix\s+(?:tomat)?ketchup\s+osötad|felix\s+(?:tomat)?ketchup\s+osotad/i, kcal: 17, protein: 0.2, fat: 0, carbs: 4, servingGrams: 15, mskGrams: 15, keto: -1 },
-  { match: /tomat|tomatsås|tomatsas/i, exclude: /ketchup|makrill/i, kcal: 20, protein: 0.7, fat: 0.1, carbs: 4, servingGrams: 100, keto: -1 },
+  { match: /plommontomater?|plommon\s*tomater?/i, quantity: /(\d+(?:[,.]\d+)?)\s*(?:st\s*)?(?:plommontomater?|plommon\s*tomater?)/gi, kcal: 4, protein: 0.1, fat: 0, carbs: 0.8, keto: -1 },
+  { match: /tomat|tomatsås|tomatsas/i, exclude: /ketchup|makrill|plommontomat|plommon\s*tomat/i, kcal: 20, protein: 0.7, fat: 0.1, carbs: 4, servingGrams: 100, keto: -1 },
 ];
 
 const form = document.querySelector("#entryForm");
@@ -286,7 +287,7 @@ function countSignal(text, signal) {
 function signalLabel(signal) {
   const source = signal.match.source;
   const labels = [
-    [/ägg|agg/, "Ägg"],
+    [/(^|[^a-zåäö])(?:ägg|agg)(?:[^a-zåäö]|$)/, "Ägg"],
     [/makrill/, "Makrill"],
     [/majonn/, "Majonnäs"],
     [/smör|smor/, "Smör"],
@@ -307,6 +308,7 @@ function signalLabel(signal) {
     [/oxfil/, "Oxfilé"],
     [/fläskfil|flaskfil/, "Fläskfilé"],
     [/nötfärs|notfars|köttfärs|kottfars/, "Köttfärs/nötfärs"],
+    [/påläggsskinka|palaggsskinka|skinka|kalkon|kycklingpålägg|kycklingpalagg/, "Påläggsskinka"],
     [/kyckling/, "Kycklingfilé"],
     [/^(?:ost|cheddar|brie|gouda|gruyere|parmesan)/, "Ost"],
     [/torsk/, "Torsk"],
@@ -320,10 +322,10 @@ function signalLabel(signal) {
     [/avokado|avocado/, "Avokado"],
     [/olivolja|olive oil/, "Olivolja"],
     [/nötter|notter|mandel|valnöt|valnot|macadamia/, "Nötter"],
-    [/påläggsskinka|palaggsskinka|skinka|kalkon|kycklingpålägg|kycklingpalagg/, "Påläggsskinka"],
     [/pulled pork/, "Pulled pork"],
     [/yoghurt|youghurt|yogurt/, "Yoghurt"],
     [/bär|bar|jordgubb|hallon|blåbär/, "Bär"],
+    [/plommontomat|plommon\s*tomat/, "Plommontomat"],
     [/äpple|apple/, "Äpple"],
     [/apelsin/, "Apelsin"],
     [/spetskål|spetskal/, "Spetskål"],
