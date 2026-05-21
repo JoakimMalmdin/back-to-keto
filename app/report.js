@@ -133,6 +133,15 @@ function renderDaily(root) {
 
 function renderWeekly(root) {
   document.title = `Keto-veckorapport ${report.year}-v${String(report.week).padStart(2, "0")}`;
+  const totals = report.totals || report.rows.reduce(
+    (sum, row) => ({
+      kcal: sum.kcal + (row.kcal || 0),
+      fat: sum.fat + (row.fat || 0),
+      carbs: sum.carbs + (row.carbs || 0),
+      protein: sum.protein + (row.protein || 0),
+    }),
+    { kcal: 0, fat: 0, carbs: 0, protein: 0 }
+  );
   const mealRows = report.rows
     .map(
       (row) => `
@@ -176,6 +185,16 @@ function renderWeekly(root) {
           </tr>
         </thead>
         <tbody>${mealRows}</tbody>
+        <tfoot>
+          <tr>
+            <th scope="row">Veckomedel</th>
+            <td></td>
+            <td>${decimal(totals.fat)}</td>
+            <td>${decimal(totals.carbs)}</td>
+            <td>${decimal(totals.protein)}</td>
+            <td>${Math.round(totals.kcal || 0)}</td>
+          </tr>
+        </tfoot>
       </table>
       <p class="note">Måltidsmedelvärden räknas på de dagar i veckan där respektive måltidsfält har text. Vatten och kaffe räknas som medel per dag där värde är angivet.</p>
     </section>`;

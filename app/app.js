@@ -1,7 +1,7 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
-const appVersion = "110";
+const appVersion = "111";
 const appDisplayVersion = `v1.0 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -927,6 +927,15 @@ function weeklyReportData(year, week) {
   });
   const waterAverage = average(entries.map((entry) => numberFromFreeText(entry.water)));
   const coffeeAverage = average(entries.map((entry) => numberFromFreeText(entry.coffee)));
+  const totals = rows.reduce(
+    (sum, row) => ({
+      kcal: sum.kcal + (row.kcal || 0),
+      fat: sum.fat + (row.fat || 0),
+      carbs: sum.carbs + (row.carbs || 0),
+      protein: sum.protein + (row.protein || 0),
+    }),
+    { kcal: 0, fat: 0, carbs: 0, protein: 0 }
+  );
   return {
     kind: "weekly",
     year,
@@ -934,6 +943,7 @@ function weeklyReportData(year, week) {
     range,
     days: entries.length,
     rows,
+    totals,
     sleepMode: mode(entries.map((entry) => entry.sleep)),
     walkMode: mode(entries.map((entry) => entry.walk || "Ingen")),
     waterAverage,
