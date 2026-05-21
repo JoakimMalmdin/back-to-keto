@@ -1,7 +1,7 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
-const appVersion = "97";
+const appVersion = "98";
 let activeDate = "";
 let supabaseClient = null;
 let cloudSyncTimer = null;
@@ -11,7 +11,7 @@ const foodSignals = [
   { match: /(^|[^a-zåäö])(?:ägg|agg)(?:[^a-zåäö]|$)/i, quantity: /(\d+(?:[,.]\d+)?)\s*(?:st\s*)?(?:(?:stekta?|kokta?|pocherade?|äggröra|aggrora)\s+){0,3}(?:ägg|agg)/gi, kcal: 70, protein: 6.2, fat: 5, carbs: 0.5, keto: 2 },
   { match: /makrill/i, kcal: 238, protein: 15, fat: 17.5, carbs: 4.9, servingGrams: 125, keto: 2 },
   { match: /majonnäs|majonnas/i, kcal: 108, protein: 0.2, fat: 11.9, carbs: 0.2, servingGrams: 15, mskGrams: 15, keto: 2 },
-  { match: /ost|cheddar|brie|gouda|gruyere|parmesan/i, kcal: 120, protein: 7, fat: 10, carbs: 0.5, servingGrams: 30, keto: 2 },
+  { match: /ost|cheddar|brie|gouda|gruyere|parmesan/i, kcal: 120, protein: 7, fat: 10, carbs: 0.5, servingGrams: 30, sliceGrams: 10, keto: 2 },
   { match: /smör|smor/i, kcal: 75, protein: 0.1, fat: 8.2, carbs: 0.1, servingGrams: 10, mskGrams: 14, keto: 2 },
   { match: /grädde|gradde/i, kcal: 100, protein: 0.6, fat: 10, carbs: 0.9, servingGrams: 30, dlGrams: 100, mskGrams: 15, keto: 2 },
   { match: /baconlindad(?:e)?\s+(?:köttfärs|kottfars)?(?:bit|bitar|biff|biffar)/i, quantity: /(\d+(?:[,.]\d+)?)\s*(?:st\s*)?baconlindad(?:e)?\s+(?:köttfärs|kottfars)?(?:bit|bitar|biff|biffar)/gi, kcal: 220, protein: 16.5, fat: 17.5, carbs: 0.8, keto: 2 },
@@ -105,6 +105,28 @@ function decimal(value) {
 
 function decimalMeasure(value) {
   return Number(value).toLocaleString("sv-SE", { maximumFractionDigits: 2 });
+}
+
+function numberFromText(value) {
+  const normalized = String(value || "").trim().toLowerCase().replace(",", ".");
+  const words = {
+    en: 1,
+    ett: 1,
+    två: 2,
+    tva: 2,
+    tre: 3,
+    fyra: 4,
+    fem: 5,
+    sex: 6,
+    sju: 7,
+    åtta: 8,
+    atta: 8,
+    nio: 9,
+    tio: 10,
+  };
+  if (Object.prototype.hasOwnProperty.call(words, normalized)) return words[normalized];
+  const numeric = Number(normalized);
+  return Number.isFinite(numeric) ? numeric : NaN;
 }
 
 function todayIso() {
@@ -217,12 +239,12 @@ function measuredAmount(text, signal) {
       }
     }
     if (signal.sliceGrams) {
-      const beforeSlice = before.match(/(\d+(?:[,.]\d+)?)\s*(?:skivor?|skiva)\s*$/i);
-      const beforeNumber = before.match(/(\d+(?:[,.]\d+)?)\s*$/i);
+      const beforeSlice = before.match(/(\d+(?:[,.]\d+)?|en|ett|två|tva|tre|fyra|fem|sex|sju|åtta|atta|nio|tio)\s*(?:[a-zåäö]*skivor?|[a-zåäö]*skiva)\s*$/i);
+      const beforeNumber = before.match(/(\d+(?:[,.]\d+)?|en|ett|två|tva|tre|fyra|fem|sex|sju|åtta|atta|nio|tio)\s*$/i);
       const afterSlice = after.match(/^\s*s?(?:skivor?|skiva)/i);
       const sliceAmount = beforeSlice?.[1] || (afterSlice ? beforeNumber?.[1] : null);
       if (sliceAmount) {
-        const slices = Number(sliceAmount.replace(",", "."));
+        const slices = numberFromText(sliceAmount);
         if (Number.isFinite(slices) && slices > 0) {
           count += (slices * signal.sliceGrams) / signal.servingGrams;
           amounts.skivor += slices;
@@ -254,11 +276,11 @@ function multiplierAmount(text, signal) {
     const end = start + match[0].length;
     const before = text.slice(Math.max(0, start - 18), start);
     const after = text.slice(end, Math.min(text.length, end + 18));
-    const beforeAmount = before.match(/(\d+(?:[,.]\d+)?)\s*(?:x|st|stycken)?\s*$/i);
-    const afterAmount = after.match(/^\s*(?:x|st|stycken)?\s*(\d+(?:[,.]\d+)?)(?!\s*(?:g|gram|dl|msk|%))/i);
+    const beforeAmount = before.match(/(\d+(?:[,.]\d+)?|en|ett|två|tva|tre|fyra|fem|sex|sju|åtta|atta|nio|tio)\s*(?:x|st|stycken)?\s*$/i);
+    const afterAmount = after.match(/^\s*(?:x|st|stycken)?\s*(\d+(?:[,.]\d+)?|en|ett|två|tva|tre|fyra|fem|sex|sju|åtta|atta|nio|tio)(?!\s*(?:g|gram|dl|msk|%))/i);
     const amount = beforeAmount?.[1] || afterAmount?.[1];
     if (!amount) continue;
-    const value = Number(amount.replace(",", "."));
+    const value = numberFromText(amount);
     if (Number.isFinite(value) && value > 0) count += value;
   }
   return count > 0 ? { count, amountLabel: null } : null;
