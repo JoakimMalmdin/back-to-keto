@@ -7,10 +7,10 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="BTK" />
     <title>Back to Keto</title>
-    <link rel="manifest" href="manifest.webmanifest?v=99" />
-    <link rel="icon" href="icon.svg?v=99" type="image/svg+xml" />
-    <link rel="apple-touch-icon" href="apple-touch-icon.png?v=99" />
-    <link rel="stylesheet" href="styles.css?v=99" />
+    <link rel="manifest" href="manifest.webmanifest?v=100" />
+    <link rel="icon" href="icon.svg?v=100" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png?v=100" />
+    <link rel="stylesheet" href="styles.css?v=100" />
   </head>
   <body>
     <div class="app-shell">
@@ -18,7 +18,7 @@
         <div>
           <p class="eyebrow">Back to Keto</p>
           <h1>Daglig keto-logg</h1>
-          <p class="version-pill">v99</p>
+          <p class="version-pill">v1.0 beta · build 100</p>
         </div>
         <button class="icon-button" id="exportButton" type="button" aria-label="Exportera data">
           <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" /></svg>
@@ -227,9 +227,10 @@
               <div class="chart-legend" aria-label="Diagramförklaring">
                 <span><i class="legend-weight"></i>Vikt, kg</span>
                 <span><i class="legend-fat"></i>Fett, g</span>
+                <span><i class="legend-protein"></i>Protein, g</span>
                 <span><i class="legend-carbs"></i>Kolhydrater, g</span>
               </div>
-              <div id="trendChart" class="trend-chart" role="img" aria-label="Tidsseriediagram med vikt, fett och kolhydrater"></div>
+              <div id="trendChart" class="trend-chart" role="img" aria-label="Tidsseriediagram med vikt, fett, protein och kolhydrater"></div>
               <p id="trendNote" class="note"></p>
             </div>
           </details>
@@ -394,6 +395,6 @@
       </main>
     </div>
 
-    <script src="app.js?v=99" type="module"></script>
+    <script src="app.js?v=100" type="module"></script>
   </body>
 </html>

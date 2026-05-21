@@ -603,6 +603,10 @@ textarea {
   background: var(--leaf-strong);
 }
 
+.legend-protein {
+  background: var(--berry);
+}
+
 .legend-carbs {
   background: var(--gold);
 }
@@ -663,6 +667,11 @@ textarea {
   stroke-dasharray: 7 5;
 }
 
+.protein-line {
+  stroke: var(--berry);
+  stroke-dasharray: 7 5;
+}
+
 .carb-line {
   stroke: var(--gold);
   stroke-dasharray: 7 5;
@@ -677,6 +686,12 @@ textarea {
 .fat-dot {
   fill: transparent;
   stroke: var(--leaf-strong);
+  stroke-width: 1.05;
+}
+
+.protein-dot {
+  fill: transparent;
+  stroke: var(--berry);
   stroke-width: 1.05;
 }
 

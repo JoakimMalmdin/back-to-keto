@@ -1,7 +1,8 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
-const appVersion = "99";
+const appVersion = "100";
+const appDisplayVersion = `v1.0 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
 let cloudSyncTimer = null;
@@ -507,10 +508,11 @@ function renderTrendChart(entries) {
         date: entry.date,
         weight: Number(entry.weight),
         fat: hasEntryContent(entry) ? macros.fat : null,
+        protein: hasEntryContent(entry) ? macros.protein : null,
         carbs: hasEntryContent(entry) ? macros.carbs : null,
       };
     })
-    .filter((row) => Number.isFinite(row.weight) || Number.isFinite(row.fat) || Number.isFinite(row.carbs));
+    .filter((row) => Number.isFinite(row.weight) || Number.isFinite(row.fat) || Number.isFinite(row.protein) || Number.isFinite(row.carbs));
 
   if (rows.length < 2) {
     chart.innerHTML = '<p class="empty-chart">Diagrammet visas när minst två dagar har data.</p>';
@@ -536,6 +538,9 @@ function renderTrendChart(entries) {
     .filter(Boolean);
   const fatPoints = rows
     .map((row, index) => (Number.isFinite(row.fat) ? { x: xFor(index), y: yGram(row.fat), value: row.fat } : null))
+    .filter(Boolean);
+  const proteinPoints = rows
+    .map((row, index) => (Number.isFinite(row.protein) ? { x: xFor(index), y: yGram(row.protein), value: row.protein } : null))
     .filter(Boolean);
   const carbPoints = rows
     .map((row, index) => (Number.isFinite(row.carbs) ? { x: xFor(index), y: yGram(row.carbs), value: row.carbs } : null))
@@ -579,9 +584,11 @@ function renderTrendChart(entries) {
       <line class="chart-axis" x1="${pad.left}" y1="${height - pad.bottom}" x2="${width - pad.right}" y2="${height - pad.bottom}"></line>
       <path class="chart-line weight-line" d="${chartPath(weightPoints)}"></path>
       <path class="chart-line fat-line" d="${chartPath(fatPoints)}"></path>
+      <path class="chart-line protein-line" d="${chartPath(proteinPoints)}"></path>
       <path class="chart-line carb-line" d="${chartPath(carbPoints)}"></path>
       ${weightPoints.map((point) => `<circle class="weight-dot" cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="2.2"></circle>`).join("")}
       ${fatPoints.map((point) => `<circle class="fat-dot" cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="2"></circle>`).join("")}
+      ${proteinPoints.map((point) => `<circle class="protein-dot" cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="2"></circle>`).join("")}
       ${carbPoints.map((point) => `<circle class="carb-dot" cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="2"></circle>`).join("")}
       ${labelIndexes
         .map(
@@ -593,7 +600,7 @@ function renderTrendChart(entries) {
       <text class="axis-label" x="${width - pad.right + 8}" y="22">gram</text>
     </svg>
   `;
-  note.textContent = `Senast: ${latest.weight ? `${decimal(latest.weight)} kg, ` : ""}${decimal(latest.fat || 0)} g fett, ${decimal(latest.carbs || 0)} g kolhydrater.`;
+  note.textContent = `Senast: ${latest.weight ? `${decimal(latest.weight)} kg, ` : ""}${decimal(latest.fat || 0)} g fett, ${decimal(latest.protein || 0)} g protein, ${decimal(latest.carbs || 0)} g kolhydrater.`;
 }
 
 function render(selectedDate = activeDate) {
@@ -913,7 +920,7 @@ async function checkForAppUpdate() {
     if (!latestVersion || latestVersion <= currentVersion) return;
     const target = new URL("./", window.location.href);
     target.searchParams.set("cache", String(latestVersion));
-    document.querySelector(".version-pill").textContent = `v${appVersion} -> v${latestVersion}`;
+    document.querySelector(".version-pill").textContent = `${appDisplayVersion} -> build ${latestVersion}`;
     window.setTimeout(() => {
       window.location.replace(target.toString());
     }, 700);
