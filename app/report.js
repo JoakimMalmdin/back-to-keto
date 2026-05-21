@@ -187,8 +187,7 @@ function renderWeekly(root) {
         <tbody>${mealRows}</tbody>
         <tfoot>
           <tr>
-            <th scope="row">Veckomedel</th>
-            <td></td>
+            <th scope="row" colspan="2">Veckomedel för makro/kcal per dag</th>
             <td>${decimal(totals.fat)}</td>
             <td>${decimal(totals.carbs)}</td>
             <td>${decimal(totals.protein)}</td>
