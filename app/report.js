@@ -35,6 +35,12 @@ function css() {
     thead th, tfoot th, tfoot td { font-weight: 700; background: #f2f0e7; }
     tbody th { width: 140px; }
     td:nth-child(n+3), th:nth-child(n+3) { text-align: right; white-space: nowrap; }
+    .weekly-table { table-layout: fixed; }
+    .weekly-table col:first-child { width: 28%; }
+    .weekly-table col:nth-child(2) { width: 13%; }
+    .weekly-table col:nth-child(n+3) { width: 14.75%; }
+    .weekly-table .num { text-align: right; white-space: nowrap; }
+    .weekly-table .summary-label { text-align: left; }
     .note, .empty { color: var(--muted); font-size: .9rem; margin-top: 14px; }
     @media (max-width: 720px) {
       main { width: min(100% - 20px, 980px); margin: 10px auto; padding: 16px; }
@@ -147,11 +153,11 @@ function renderWeekly(root) {
       (row) => `
         <tr>
           <th scope="row">${escapeHtml(row.label)}</th>
-          <td>${row.count || 0}</td>
-          <td>${row.fat === null ? "--" : decimal(row.fat)}</td>
-          <td>${row.carbs === null ? "--" : decimal(row.carbs)}</td>
-          <td>${row.protein === null ? "--" : decimal(row.protein)}</td>
-          <td>${row.kcal === null ? "--" : Math.round(row.kcal || 0)}</td>
+          <td class="num">${row.count || 0}</td>
+          <td class="num">${row.fat === null ? "--" : decimal(row.fat)}</td>
+          <td class="num">${row.carbs === null ? "--" : decimal(row.carbs)}</td>
+          <td class="num">${row.protein === null ? "--" : decimal(row.protein)}</td>
+          <td class="num">${row.kcal === null ? "--" : Math.round(row.kcal || 0)}</td>
         </tr>`
     )
     .join("");
@@ -173,25 +179,33 @@ function renderWeekly(root) {
     </section>
     <section>
       <h2>Medelvärde per måltid</h2>
-      <table>
+      <table class="weekly-table">
+        <colgroup>
+          <col />
+          <col />
+          <col />
+          <col />
+          <col />
+          <col />
+        </colgroup>
         <thead>
           <tr>
             <th>Måltid</th>
-            <th>Antal</th>
-            <th>Fett g</th>
-            <th>Kolh. g</th>
-            <th>Protein g</th>
-            <th>kcal</th>
+            <th class="num">Antal</th>
+            <th class="num">Fett g</th>
+            <th class="num">Kolh. g</th>
+            <th class="num">Protein g</th>
+            <th class="num">kcal</th>
           </tr>
         </thead>
         <tbody>${mealRows}</tbody>
         <tfoot>
           <tr>
-            <th scope="row" colspan="2">Veckomedel för makro/kcal per dag</th>
-            <td>${decimal(totals.fat)}</td>
-            <td>${decimal(totals.carbs)}</td>
-            <td>${decimal(totals.protein)}</td>
-            <td>${Math.round(totals.kcal || 0)}</td>
+            <th class="summary-label" scope="row" colspan="2">Veckomedel för makro/kcal per dag</th>
+            <td class="num">${decimal(totals.fat)}</td>
+            <td class="num">${decimal(totals.carbs)}</td>
+            <td class="num">${decimal(totals.protein)}</td>
+            <td class="num">${Math.round(totals.kcal || 0)}</td>
           </tr>
         </tfoot>
       </table>
