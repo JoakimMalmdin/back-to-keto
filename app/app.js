@@ -1,7 +1,7 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
-const appVersion = "104";
+const appVersion = "105";
 const appDisplayVersion = `v1.0 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -30,8 +30,8 @@ const foodSignals = [
   { match: /entrecote|entrecôte/i, kcal: 430, protein: 30, fat: 34, carbs: 0, servingGrams: 150, keto: 2 },
   { match: /oxfil[eé]/i, kcal: 170, protein: 26, fat: 7, carbs: 0, servingGrams: 100, keto: 2 },
   { match: /fläskfil[eé]|flaskfil[eé]/i, kcal: 120, protein: 22, fat: 3, carbs: 0, servingGrams: 100, keto: 1 },
-  { label: "Köttfärsbit", match: /köttfärs\s*(?:bit|bitar|biff|biffar)|kottfars\s*(?:bit|bitar|biff|biffar)/i, exclude: /baconlindad/i, quantity: /(\d+(?:[,.]\d+)?)\s*(?:st\s*)?(?:köttfärs\s*(?:bit|bitar|biff|biffar)|kottfars\s*(?:bit|bitar|biff|biffar))/gi, kcal: 196, protein: 15.2, fat: 14.4, carbs: 0, keto: 2 },
-  { match: /nötfärs|notfars|köttfärs|kottfars/i, exclude: /baconlindad|köttfärs\s*(?:bit|bitar|biff|biffar)|kottfars\s*(?:bit|bitar|biff|biffar)/i, kcal: 245, protein: 19, fat: 18, carbs: 0, servingGrams: 100, keto: 2 },
+  { label: "Köttfärsbit", match: /köttfärs\s*(?:bit|bitar|biff|biffar)|kottfars\s*(?:bit|bitar|biff|biffar)/i, skipBefore: /baconlindad(?:e)?\s*$/i, quantity: /(\d+(?:[,.]\d+)?)\s*(?:st\s*)?(?:köttfärs\s*(?:bit|bitar|biff|biffar)|kottfars\s*(?:bit|bitar|biff|biffar))/gi, kcal: 196, protein: 15.2, fat: 14.4, carbs: 0, keto: 2 },
+  { match: /nötfärs|notfars|köttfärs|kottfars/i, skipBefore: /baconlindad(?:e)?\s*$/i, skipAfter: /^\s*(?:bit|bitar|biff|biffar)/i, kcal: 245, protein: 19, fat: 18, carbs: 0, servingGrams: 100, keto: 2 },
   { match: /kycklingfil[eé]|kyckling\s*\(?\s*fil[eé](?:\s+utan\s+skinn)?\s*\)?|kycklingbröst|kycklingbrost/i, kcal: 165, protein: 31, fat: 3.6, carbs: 0, servingGrams: 100, keto: 1 },
   { match: /torsk/i, kcal: 82, protein: 18, fat: 0.7, carbs: 0, servingGrams: 100, keto: 1 },
   { match: /leverpastej/i, kcal: 95, protein: 3, fat: 8, carbs: 2.5, servingGrams: 30, keto: 0 },
@@ -226,6 +226,7 @@ function measuredAmount(text, signal) {
   for (const match of text.matchAll(matcher)) {
     const start = match.index ?? 0;
     const end = start + match[0].length;
+    if (shouldSkipSignalMatch(text, signal, start, end)) continue;
     const before = text.slice(Math.max(0, start - 24), start);
     const after = text.slice(end, Math.min(text.length, end + 24));
     if (signal.dlGrams) {
@@ -297,12 +298,20 @@ function measuredAmount(text, signal) {
   return { count, amountLabel };
 }
 
+function shouldSkipSignalMatch(text, signal, start, end = start) {
+  if (!signal.skipBefore && !signal.skipAfter) return false;
+  const before = text.slice(Math.max(0, start - 32), start);
+  const after = text.slice(end, Math.min(text.length, end + 32));
+  return Boolean(signal.skipBefore?.test(before) || signal.skipAfter?.test(after));
+}
+
 function multiplierAmount(text, signal) {
   const matcher = new RegExp(signal.match.source, signal.match.flags.includes("g") ? signal.match.flags : `${signal.match.flags}g`);
   let count = 0;
   for (const match of text.matchAll(matcher)) {
     const start = match.index ?? 0;
     const end = start + match[0].length;
+    if (shouldSkipSignalMatch(text, signal, start, end)) continue;
     const before = text.slice(Math.max(0, start - 18), start);
     const after = text.slice(end, Math.min(text.length, end + 18));
     const beforeAmount = before.match(/(\d+(?:[,.]\d+)?|en|ett|två|tva|tre|fyra|fem|sex|sju|åtta|atta|nio|tio)\s*(?:x|st|stycken)?\s*$/i);
@@ -319,12 +328,16 @@ function countSignal(text, signal) {
   if (signal.exclude?.test(text)) return { count: 0, amountLabel: null };
   if (signal.quantity) {
     const quantityPatterns = Array.isArray(signal.quantity) ? signal.quantity : [signal.quantity];
-    const quantities = quantityPatterns.flatMap((pattern) =>
-      [...text.matchAll(pattern)].map((match) => {
+    const quantities = [];
+    for (const pattern of quantityPatterns) {
+      for (const match of text.matchAll(pattern)) {
+        const start = match.index ?? 0;
+        const end = start + match[0].length;
+        if (shouldSkipSignalMatch(text, signal, start, end)) continue;
         const amount = match.find((part, index) => index > 0 && part);
-        return Number(amount?.replace(",", "."));
-      })
-    );
+        quantities.push(Number(amount?.replace(",", ".")));
+      }
+    }
     const total = quantities.reduce((sum, value) => sum + (Number.isFinite(value) ? value : 0), 0);
     if (total > 0) return { count: total, amountLabel: null };
   }
@@ -332,7 +345,12 @@ function countSignal(text, signal) {
   if (measured) return measured;
   const multiplier = multiplierAmount(text, signal);
   if (multiplier) return multiplier;
-  return { count: (text.match(new RegExp(signal.match.source, "gi")) || []).length, amountLabel: null };
+  const matcher = new RegExp(signal.match.source, "gi");
+  const matches = [...text.matchAll(matcher)].filter((match) => {
+    const start = match.index ?? 0;
+    return !shouldSkipSignalMatch(text, signal, start, start + match[0].length);
+  });
+  return { count: matches.length, amountLabel: null };
 }
 
 function signalLabel(signal) {
