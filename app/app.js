@@ -1,7 +1,7 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
-const appVersion = "103";
+const appVersion = "104";
 const appDisplayVersion = `v1.0 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -30,8 +30,8 @@ const foodSignals = [
   { match: /entrecote|entrecôte/i, kcal: 430, protein: 30, fat: 34, carbs: 0, servingGrams: 150, keto: 2 },
   { match: /oxfil[eé]/i, kcal: 170, protein: 26, fat: 7, carbs: 0, servingGrams: 100, keto: 2 },
   { match: /fläskfil[eé]|flaskfil[eé]/i, kcal: 120, protein: 22, fat: 3, carbs: 0, servingGrams: 100, keto: 1 },
-  { match: /köttfärsbit|kottfarsbit|köttfärsbitar|kottfarsbitar|köttfärsbiff|kottfarsbiff|köttfärsbiffar|kottfarsbiffar/i, exclude: /baconlindad/i, quantity: /(\d+(?:[,.]\d+)?)\s*(?:st\s*)?(?:köttfärsbit|kottfarsbit|köttfärsbitar|kottfarsbitar|köttfärsbiff|kottfarsbiff|köttfärsbiffar|kottfarsbiffar)/gi, kcal: 196, protein: 15.2, fat: 14.4, carbs: 0, keto: 2 },
-  { match: /nötfärs|notfars|köttfärs|kottfars/i, exclude: /baconlindad|köttfärsbit|kottfarsbit|köttfärsbitar|kottfarsbitar|köttfärsbiff|kottfarsbiff|köttfärsbiffar|kottfarsbiffar/i, kcal: 245, protein: 19, fat: 18, carbs: 0, servingGrams: 100, keto: 2 },
+  { label: "Köttfärsbit", match: /köttfärs\s*(?:bit|bitar|biff|biffar)|kottfars\s*(?:bit|bitar|biff|biffar)/i, exclude: /baconlindad/i, quantity: /(\d+(?:[,.]\d+)?)\s*(?:st\s*)?(?:köttfärs\s*(?:bit|bitar|biff|biffar)|kottfars\s*(?:bit|bitar|biff|biffar))/gi, kcal: 196, protein: 15.2, fat: 14.4, carbs: 0, keto: 2 },
+  { match: /nötfärs|notfars|köttfärs|kottfars/i, exclude: /baconlindad|köttfärs\s*(?:bit|bitar|biff|biffar)|kottfars\s*(?:bit|bitar|biff|biffar)/i, kcal: 245, protein: 19, fat: 18, carbs: 0, servingGrams: 100, keto: 2 },
   { match: /kycklingfil[eé]|kyckling\s*\(?\s*fil[eé](?:\s+utan\s+skinn)?\s*\)?|kycklingbröst|kycklingbrost/i, kcal: 165, protein: 31, fat: 3.6, carbs: 0, servingGrams: 100, keto: 1 },
   { match: /torsk/i, kcal: 82, protein: 18, fat: 0.7, carbs: 0, servingGrams: 100, keto: 1 },
   { match: /leverpastej/i, kcal: 95, protein: 3, fat: 8, carbs: 2.5, servingGrams: 30, keto: 0 },
@@ -336,6 +336,7 @@ function countSignal(text, signal) {
 }
 
 function signalLabel(signal) {
+  if (signal.label) return signal.label;
   const source = signal.match.source;
   const labels = [
     [/(^|[^a-zåäö])(?:ägg|agg)(?:[^a-zåäö]|$)/, "Ägg"],
@@ -358,7 +359,7 @@ function signalLabel(signal) {
     [/entrecote|entrecôte/, "Entrecote"],
     [/oxfil/, "Oxfilé"],
     [/fläskfil|flaskfil/, "Fläskfilé"],
-    [/köttfärsbit|kottfarsbit|köttfärsbiff|kottfarsbiff/, "Köttfärsbit"],
+    [/köttfärs\s*(?:bit|biff)|kottfars\s*(?:bit|biff)/, "Köttfärsbit"],
     [/nötfärs|notfars|köttfärs|kottfars/, "Köttfärs/nötfärs"],
     [/påläggsskinka|palaggsskinka|skinka|kalkon|kycklingpålägg|kycklingpalagg/, "Påläggsskinka"],
     [/kyckling/, "Kycklingfilé"],
