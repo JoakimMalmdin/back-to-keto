@@ -1,7 +1,7 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
-const appVersion = "94";
+const appVersion = "95";
 let activeDate = "";
 let supabaseClient = null;
 let cloudSyncTimer = null;
@@ -231,6 +231,24 @@ function measuredAmount(text, signal) {
   return { count, amountLabel };
 }
 
+function multiplierAmount(text, signal) {
+  const matcher = new RegExp(signal.match.source, signal.match.flags.includes("g") ? signal.match.flags : `${signal.match.flags}g`);
+  let count = 0;
+  for (const match of text.matchAll(matcher)) {
+    const start = match.index ?? 0;
+    const end = start + match[0].length;
+    const before = text.slice(Math.max(0, start - 18), start);
+    const after = text.slice(end, Math.min(text.length, end + 18));
+    const beforeAmount = before.match(/(\d+(?:[,.]\d+)?)\s*(?:x|st|stycken)?\s*$/i);
+    const afterAmount = after.match(/^\s*(?:x|st|stycken)?\s*(\d+(?:[,.]\d+)?)(?!\s*(?:g|gram|dl|msk|%))/i);
+    const amount = beforeAmount?.[1] || afterAmount?.[1];
+    if (!amount) continue;
+    const value = Number(amount.replace(",", "."));
+    if (Number.isFinite(value) && value > 0) count += value;
+  }
+  return count > 0 ? { count, amountLabel: null } : null;
+}
+
 function countSignal(text, signal) {
   if (signal.exclude?.test(text)) return { count: 0, amountLabel: null };
   if (signal.quantity) {
@@ -246,6 +264,8 @@ function countSignal(text, signal) {
   }
   const measured = measuredAmount(text, signal);
   if (measured) return measured;
+  const multiplier = multiplierAmount(text, signal);
+  if (multiplier) return multiplier;
   return { count: (text.match(new RegExp(signal.match.source, "gi")) || []).length, amountLabel: null };
 }
 
