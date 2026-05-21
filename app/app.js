@@ -1,7 +1,7 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
-const appVersion = "100";
+const appVersion = "101";
 const appDisplayVersion = `v1.0 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -45,7 +45,7 @@ const foodSignals = [
   { match: /olivolja|olive oil/i, kcal: 120, protein: 0, fat: 13.5, carbs: 0, servingGrams: 15, mskGrams: 15, keto: 2 },
   { match: /(^|[^a-zåäö])(?:nötter|notter|mandel|valnöt|valnot|macadamia)(?:[^a-zåäö]|$)/i, kcal: 180, protein: 5, fat: 17, carbs: 3, servingGrams: 30, keto: 1 },
   { match: /påläggsskinka|palaggsskinka|skinka|kalkonpålägg|kalkonpalagg|kycklingpålägg|kycklingpalagg/i, quantity: [/(\d+(?:[,.]\d+)?)\s*(?:skivor?|skiva|st)\s*(?:påläggsskinka|palaggsskinka|skinka|kalkonpålägg|kalkonpalagg|kycklingpålägg|kycklingpalagg)/gi, /(?:påläggsskinka|palaggsskinka|skinka|kalkonpålägg|kalkonpalagg|kycklingpålägg|kycklingpalagg)\s*(\d+(?:[,.]\d+)?)\s*(?:skivor?|skiva|st)/gi], kcal: 30, protein: 5, fat: 1, carbs: 0.3, keto: 1 },
-  { match: /kaviar/i, kcal: 55, protein: 1.3, fat: 4.8, carbs: 2.4, servingGrams: 15, mskGrams: 15, keto: 0 },
+  { match: /kaviar/i, kcal: 18, protein: 0.4, fat: 1.6, carbs: 0.8, servingGrams: 5, tskGrams: 5, mskGrams: 15, keto: 0 },
   { match: /collagen|kollagen/i, kcal: 55, protein: 13.7, fat: 0, carbs: 0, servingGrams: 15, mskGrams: 15, keto: 1 },
   { match: /pulled pork/i, kcal: 375, protein: 34, fat: 25, carbs: 3, servingGrams: 150, keto: 1 },
   { match: /falukorv/i, kcal: 260, protein: 10, fat: 23, carbs: 4, servingGrams: 100, sliceGrams: 20, keto: 0 },
@@ -137,6 +137,17 @@ function todayIso() {
   return new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Stockholm" });
 }
 
+function nowStamp() {
+  const now = new Date();
+  const date = now.toLocaleDateString("sv-SE", { timeZone: "Europe/Stockholm" });
+  const time = now.toLocaleTimeString("sv-SE", {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Europe/Stockholm",
+  });
+  return `${date} kl. ${time}`;
+}
+
 function emptyEntry(date = todayIso()) {
   return {
     date,
@@ -210,7 +221,7 @@ function measuredAmount(text, signal) {
   if (!signal.servingGrams) return null;
   const matcher = new RegExp(signal.match.source, signal.match.flags.includes("g") ? signal.match.flags : `${signal.match.flags}g`);
   let count = 0;
-  const amounts = { g: 0, dl: 0, msk: 0, skivor: 0 };
+  const amounts = { g: 0, dl: 0, msk: 0, tsk: 0, skivor: 0 };
   for (const match of text.matchAll(matcher)) {
     const start = match.index ?? 0;
     const end = start + match[0].length;
@@ -238,6 +249,19 @@ function measuredAmount(text, signal) {
         if (Number.isFinite(msk) && msk > 0) {
           count += (msk * signal.mskGrams) / signal.servingGrams;
           amounts.msk += msk;
+          continue;
+        }
+      }
+    }
+    if (signal.tskGrams) {
+      const beforeTsk = before.match(/(\d+(?:[,.]\d+)?)\s*tsk(?:\s|[a-zåäö%])*$/i);
+      const afterTsk = after.match(/^(?:\s|[a-zåäö%]){0,18}(\d+(?:[,.]\d+)?)\s*tsk/i);
+      const tskAmount = beforeTsk?.[1] || afterTsk?.[1];
+      if (tskAmount) {
+        const tsk = Number(tskAmount.replace(",", "."));
+        if (Number.isFinite(tsk) && tsk > 0) {
+          count += (tsk * signal.tskGrams) / signal.servingGrams;
+          amounts.tsk += tsk;
           continue;
         }
       }
@@ -707,17 +731,14 @@ function saveCurrentEntry(options = {}) {
   render(entry.date);
   fillForm(entry);
   if (options.silent) return;
-  setSaveStatus(`Sparat ${entry.date} kl. ${new Date().toLocaleTimeString("sv-SE", {
-    hour: "2-digit",
-    minute: "2-digit",
-  })}`);
+  setSaveStatus(`Sparat ${nowStamp()} · dag ${entry.date}`);
 }
 
 function queueAutosave() {
   window.clearTimeout(autosaveTimer);
   autosaveTimer = window.setTimeout(() => {
     saveCurrentEntry({ silent: true });
-    setSaveStatus(`Autosparat ${activeDate || todayIso()}`);
+    setSaveStatus(`Autosparat ${nowStamp()} · dag ${activeDate || todayIso()}`);
   }, 800);
 }
 
