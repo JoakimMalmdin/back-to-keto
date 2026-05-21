@@ -590,6 +590,27 @@ textarea {
   font-weight: 800;
 }
 
+.trend-filter {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr;
+  gap: 8px;
+  margin: 0 0 10px;
+}
+
+.trend-filter label {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.trend-filter input,
+.trend-filter select {
+  min-height: 38px;
+  margin-top: 4px;
+  padding: 8px 10px;
+  font-size: 0.86rem;
+}
+
 .chart-legend span {
   display: inline-flex;
   align-items: center;
@@ -765,6 +786,12 @@ textarea {
 
   body.print-trend .trend-chart {
     break-inside: avoid;
+  }
+}
+
+@media (max-width: 560px) {
+  .trend-filter {
+    grid-template-columns: 1fr;
   }
 }
 

@@ -1,7 +1,7 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
-const appVersion = "116";
+const appVersion = "117";
 const appDisplayVersion = `v1.0 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -102,6 +102,9 @@ const reportButton = document.querySelector("#reportButton");
 const weekReportButton = document.querySelector("#weekReportButton");
 const printTrendButton = document.querySelector("#printTrendButton");
 const saveTrendPngButton = document.querySelector("#saveTrendPngButton");
+const trendModeInput = document.querySelector("#trendModeInput");
+const trendStartWeekInput = document.querySelector("#trendStartWeekInput");
+const trendEndWeekInput = document.querySelector("#trendEndWeekInput");
 let autosaveTimer = null;
 
 function stableAppUrl() {
@@ -598,12 +601,45 @@ function chartPath(points) {
   return points.map((point, index) => `${index === 0 ? "M" : "L"} ${point.x.toFixed(1)} ${point.y.toFixed(1)}`).join(" ");
 }
 
+function trendSelection(entries) {
+  const mode = trendModeInput?.value || "all";
+  const sorted = entries.sort((a, b) => a.date.localeCompare(b.date));
+  if (mode === "all") {
+    return {
+      entries: sorted,
+      badge: `${sorted[0]?.date || todayIso()}--${todayIso()}`,
+      notePrefix: "",
+    };
+  }
+  const startWeek = parseWeekInput(trendStartWeekInput?.value || weekInputFromDate(fields.date.value || todayIso()));
+  const endWeek = mode === "weeks" ? parseWeekInput(trendEndWeekInput?.value || trendStartWeekInput?.value) : startWeek;
+  if (!startWeek || !endWeek) {
+    return { entries: [], badge: "Välj vecka", notePrefix: "Ange vecka som ÅÅÅÅ-VV." };
+  }
+  const startRange = weekRange(startWeek.year, startWeek.week);
+  const endRange = weekRange(endWeek.year, endWeek.week);
+  const start = startRange.start <= endRange.start ? startRange.start : endRange.start;
+  const end = startRange.start <= endRange.start ? endRange.end : startRange.end;
+  const label =
+    mode === "week"
+      ? `${startWeek.year} v${String(startWeek.week).padStart(2, "0")}`
+      : `${startWeek.year} v${String(startWeek.week).padStart(2, "0")}--${endWeek.year} v${String(endWeek.week).padStart(2, "0")}`;
+  return {
+    entries: sorted.filter((entry) => entry.date >= start && entry.date <= end),
+    badge: label,
+    notePrefix: `${start}--${end}. `,
+  };
+}
+
 function renderTrendChart(entries) {
   const chart = document.querySelector("#trendChart");
   const note = document.querySelector("#trendNote");
   if (!chart || !note) return;
 
-  const rows = entries
+  const selection = trendSelection(entries);
+  document.querySelector("#trendRange").textContent = selection.badge;
+
+  const rows = selection.entries
     .map((entry) => {
       const macros = estimateMacros(entry);
       return {
@@ -618,7 +654,7 @@ function renderTrendChart(entries) {
 
   if (rows.length < 2) {
     chart.innerHTML = '<p class="empty-chart">Diagrammet visas när minst två dagar har data.</p>';
-    note.textContent = "Spara minst två dagar med vikt eller matposter för att se utvecklingen.";
+    note.textContent = selection.notePrefix || "Spara minst två dagar med vikt eller matposter för att se utvecklingen.";
     return;
   }
 
@@ -702,7 +738,7 @@ function renderTrendChart(entries) {
       <text class="axis-label" x="${width - pad.right + 8}" y="22">gram</text>
     </svg>
   `;
-  note.textContent = `Senast: ${latest.weight ? `${decimal(latest.weight)} kg, ` : ""}${decimal(latest.fat || 0)} g fett, ${decimal(latest.protein || 0)} g protein, ${decimal(latest.carbs || 0)} g kolhydrater.`;
+  note.textContent = `${selection.notePrefix}Senast i urvalet: ${latest.weight ? `${decimal(latest.weight)} kg, ` : ""}${decimal(latest.fat || 0)} g fett, ${decimal(latest.protein || 0)} g protein, ${decimal(latest.carbs || 0)} g kolhydrater.`;
 }
 
 function render(selectedDate = activeDate) {
@@ -736,8 +772,6 @@ function render(selectedDate = activeDate) {
   const badge = document.querySelector("#strictnessBadge");
   badge.textContent = kind;
   badge.className = `badge ${kind === "strikt keto" ? "strict" : kind === "riskzon" ? "risk" : ""}`;
-  document.querySelector("#trendRange").textContent = `${startDate}--${todayIso()}`;
-
   document.querySelector("#fatBar").style.width = `${Math.min(macros.fatPct, 100)}%`;
   document.querySelector("#proteinBar").style.width = `${Math.min(macros.proteinPct, 100)}%`;
   document.querySelector("#carbBar").style.width = `${Math.min(macros.carbPct, 100)}%`;
@@ -1055,10 +1089,29 @@ async function saveTrendPng() {
 printTrendButton?.addEventListener("click", printTrendChart);
 saveTrendPngButton?.addEventListener("click", saveTrendPng);
 
+function updateTrendFilterState() {
+  const suggestedWeek = weekInputFromDate(fields.date.value || activeDate || todayIso());
+  if (trendStartWeekInput && !trendStartWeekInput.value) trendStartWeekInput.value = suggestedWeek;
+  if (trendEndWeekInput && !trendEndWeekInput.value) trendEndWeekInput.value = suggestedWeek;
+  if (trendEndWeekInput) {
+    trendEndWeekInput.disabled = trendModeInput?.value !== "weeks";
+  }
+}
+
+function rerenderTrendFilter() {
+  updateTrendFilterState();
+  render(activeDate);
+}
+
+trendModeInput?.addEventListener("change", rerenderTrendFilter);
+trendStartWeekInput?.addEventListener("change", rerenderTrendFilter);
+trendEndWeekInput?.addEventListener("change", rerenderTrendFilter);
+
 fields.date.addEventListener("change", () => {
   const date = fields.date.value || todayIso();
   const existing = findEntry(date);
   fillForm(existing || emptyEntry(date));
+  updateTrendFilterState();
   render(date);
   setSaveStatus(existing ? `Visar sparad rad för ${date}` : `Ny tom rad för ${date}`);
 });
@@ -1294,6 +1347,7 @@ if ("serviceWorker" in navigator) {
 
 const initialEntry = getEntries().at(-1) || emptyEntry();
 fillForm(initialEntry);
+updateTrendFilterState();
 render(initialEntry.date);
 initSync();
 checkForAppUpdate();
