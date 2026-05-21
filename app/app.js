@@ -1,7 +1,7 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
-const appVersion = "95";
+const appVersion = "96";
 let activeDate = "";
 let supabaseClient = null;
 let cloudSyncTimer = null;
@@ -45,7 +45,7 @@ const foodSignals = [
   { match: /(^|[^a-zåäö])(?:nötter|notter|mandel|valnöt|valnot|macadamia)(?:[^a-zåäö]|$)/i, kcal: 180, protein: 5, fat: 17, carbs: 3, servingGrams: 30, keto: 1 },
   { match: /påläggsskinka|palaggsskinka|skinka|kalkonpålägg|kalkonpalagg|kycklingpålägg|kycklingpalagg/i, kcal: 30, protein: 5, fat: 1, carbs: 0.3, keto: 1 },
   { match: /pulled pork/i, kcal: 375, protein: 34, fat: 25, carbs: 3, servingGrams: 150, keto: 1 },
-  { match: /falukorv/i, kcal: 260, protein: 10, fat: 23, carbs: 4, servingGrams: 100, keto: 0 },
+  { match: /falukorv/i, kcal: 260, protein: 10, fat: 23, carbs: 4, servingGrams: 100, sliceGrams: 20, keto: 0 },
   { match: /gräddfil|graddfil/i, exclude: /gräddfil\s*12|graddfil\s*12/i, kcal: 70, protein: 1.5, fat: 6, carbs: 2, servingGrams: 50, dlGrams: 100, mskGrams: 15, keto: 1 },
   { match: /yoghurt|youghurt|yogurt/i, exclude: /grekisk\s+(?:yoghurt|youghurt|yogurt)/i, kcal: 56, protein: 3.5, fat: 3, carbs: 3.7, servingGrams: 100, dlGrams: 100, keto: -1 },
   { match: /bär|bar|jordgubb|hallon|blåbär/i, kcal: 45, protein: 0.8, fat: 0.4, carbs: 8, servingGrams: 100, keto: -1 },
@@ -183,7 +183,7 @@ function measuredAmount(text, signal) {
   if (!signal.servingGrams) return null;
   const matcher = new RegExp(signal.match.source, signal.match.flags.includes("g") ? signal.match.flags : `${signal.match.flags}g`);
   let count = 0;
-  const amounts = { g: 0, dl: 0, msk: 0 };
+  const amounts = { g: 0, dl: 0, msk: 0, skivor: 0 };
   for (const match of text.matchAll(matcher)) {
     const start = match.index ?? 0;
     const end = start + match[0].length;
@@ -211,6 +211,20 @@ function measuredAmount(text, signal) {
         if (Number.isFinite(msk) && msk > 0) {
           count += (msk * signal.mskGrams) / signal.servingGrams;
           amounts.msk += msk;
+          continue;
+        }
+      }
+    }
+    if (signal.sliceGrams) {
+      const beforeSlice = before.match(/(\d+(?:[,.]\d+)?)\s*(?:skivor?|skiva)\s*$/i);
+      const beforeNumber = before.match(/(\d+(?:[,.]\d+)?)\s*$/i);
+      const afterSlice = after.match(/^\s*s?(?:skivor?|skiva)/i);
+      const sliceAmount = beforeSlice?.[1] || (afterSlice ? beforeNumber?.[1] : null);
+      if (sliceAmount) {
+        const slices = Number(sliceAmount.replace(",", "."));
+        if (Number.isFinite(slices) && slices > 0) {
+          count += (slices * signal.sliceGrams) / signal.servingGrams;
+          amounts.skivor += slices;
           continue;
         }
       }
