@@ -1,7 +1,7 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
-const appVersion = "114";
+const appVersion = "115";
 const appDisplayVersion = `v1.0 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -881,6 +881,10 @@ function mode(values) {
   return [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0]?.[0] || "--";
 }
 
+function sleepMode(values) {
+  return mode(values.map((value) => (value === "-6 timmar" || value === "+6 timmar" ? "6 timmar" : value)));
+}
+
 function average(values) {
   const valid = values.filter((value) => Number.isFinite(value));
   if (valid.length === 0) return null;
@@ -944,7 +948,7 @@ function weeklyReportData(year, week) {
     days: entries.length,
     rows,
     totals,
-    sleepMode: mode(entries.map((entry) => entry.sleep)),
+    sleepMode: sleepMode(entries.map((entry) => entry.sleep)),
     walkMode: mode(entries.map((entry) => entry.walk || "Ingen")),
     waterAverage,
     coffeeAverage,
