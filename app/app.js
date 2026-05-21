@@ -1,7 +1,7 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
-const appVersion = "109";
+const appVersion = "110";
 const appDisplayVersion = `v1.0 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -98,6 +98,8 @@ const saveSyncCodeButton = document.querySelector("#saveSyncCodeButton");
 const clearSyncCodeButton = document.querySelector("#clearSyncCodeButton");
 const syncNowButton = document.querySelector("#syncNowButton");
 const quickSyncButton = document.querySelector("#quickSyncButton");
+const reportButton = document.querySelector("#reportButton");
+const weekReportButton = document.querySelector("#weekReportButton");
 let autosaveTimer = null;
 
 function stableAppUrl() {
@@ -147,6 +149,45 @@ function nowStamp() {
     timeZone: "Europe/Stockholm",
   });
   return `${date} kl. ${time}`;
+}
+
+function isoWeekInfo(dateText) {
+  const [year, month, day] = String(dateText || todayIso()).split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  const dayOfWeek = date.getUTCDay() || 7;
+  date.setUTCDate(date.getUTCDate() + 4 - dayOfWeek);
+  const weekYear = date.getUTCFullYear();
+  const yearStart = new Date(Date.UTC(weekYear, 0, 1));
+  const week = Math.ceil(((date - yearStart) / 86400000 + 1) / 7);
+  return { year: weekYear, week };
+}
+
+function isoDateFromUtc(date) {
+  return date.toISOString().slice(0, 10);
+}
+
+function weekRange(year, week) {
+  const jan4 = new Date(Date.UTC(year, 0, 4));
+  const jan4Day = jan4.getUTCDay() || 7;
+  const monday = new Date(jan4);
+  monday.setUTCDate(jan4.getUTCDate() - jan4Day + 1 + (week - 1) * 7);
+  const sunday = new Date(monday);
+  sunday.setUTCDate(monday.getUTCDate() + 6);
+  return { start: isoDateFromUtc(monday), end: isoDateFromUtc(sunday) };
+}
+
+function weekInputFromDate(dateText) {
+  const { year, week } = isoWeekInfo(dateText);
+  return `${year}-${String(week).padStart(2, "0")}`;
+}
+
+function parseWeekInput(value) {
+  const match = String(value || "").trim().match(/^(\d{4})\s*[- ]?\s*(?:v|vecka|w)?\s*(\d{1,2})$/i);
+  if (!match) return null;
+  const year = Number(match[1]);
+  const week = Number(match[2]);
+  if (!Number.isInteger(year) || !Number.isInteger(week) || week < 1 || week > 53) return null;
+  return { year, week };
 }
 
 function emptyEntry(date = todayIso()) {
@@ -818,26 +859,122 @@ function dailyReportData(entry) {
     }),
     { kcal: 0, fat: 0, carbs: 0, protein: 0 }
   );
-  return { entry, rows, totals, generatedAt: nowStamp(), version: appDisplayVersion };
+  return { kind: "daily", entry, rows, totals, generatedAt: nowStamp(), version: appDisplayVersion };
 }
 
 function openDailyReport() {
   const entry = formEntry();
-  const reportPayload = JSON.stringify(dailyReportData(entry));
+  openReport(dailyReportData(entry), { date: entry.date });
+  setSaveStatus(`Rapport skapad för ${entry.date}`);
+}
+
+function numberFromFreeText(text) {
+  const match = String(text || "").replace(",", ".").match(/(\d+(?:\.\d+)?)/);
+  return match ? Number(match[1]) : NaN;
+}
+
+function mode(values) {
+  const counts = new Map();
+  for (const value of values.filter(Boolean)) {
+    counts.set(value, (counts.get(value) || 0) + 1);
+  }
+  return [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0]?.[0] || "--";
+}
+
+function average(values) {
+  const valid = values.filter((value) => Number.isFinite(value));
+  if (valid.length === 0) return null;
+  return valid.reduce((sum, value) => sum + value, 0) / valid.length;
+}
+
+function entriesForWeek(year, week) {
+  const range = weekRange(year, week);
+  const current = formEntry();
+  const entries = getEntries().filter((entry) => entry.date !== current.date);
+  entries.push(current);
+  return {
+    range,
+    entries: entries
+      .filter((entry) => entry.date >= range.start && entry.date <= range.end && hasEntryContent(entry))
+      .sort((a, b) => a.date.localeCompare(b.date)),
+  };
+}
+
+function weeklyReportData(year, week) {
+  const { range, entries } = entriesForWeek(year, week);
+  const meals = [
+    ["Frukost", "breakfast"],
+    ["Lunch", "lunch"],
+    ["Middag", "dinner"],
+    ["Övrigt matintag", "extras"],
+  ];
+  const rows = meals.map(([label, key]) => {
+    const macros = entries
+      .filter((entry) => (entry[key] || "").trim())
+      .map((entry) => {
+        const mealEntry = emptyEntry(entry.date);
+        mealEntry[key] = entry[key];
+        return estimateMacros(mealEntry);
+      });
+    return {
+      label,
+      count: macros.length,
+      kcal: average(macros.map((item) => item.kcal)),
+      fat: average(macros.map((item) => item.fat)),
+      carbs: average(macros.map((item) => item.carbs)),
+      protein: average(macros.map((item) => item.protein)),
+    };
+  });
+  const waterAverage = average(entries.map((entry) => numberFromFreeText(entry.water)));
+  const coffeeAverage = average(entries.map((entry) => numberFromFreeText(entry.coffee)));
+  return {
+    kind: "weekly",
+    year,
+    week,
+    range,
+    days: entries.length,
+    rows,
+    sleepMode: mode(entries.map((entry) => entry.sleep)),
+    walkMode: mode(entries.map((entry) => entry.walk || "Ingen")),
+    waterAverage,
+    coffeeAverage,
+    generatedAt: nowStamp(),
+    version: appDisplayVersion,
+  };
+}
+
+function openReport(data, params = {}) {
+  const reportPayload = JSON.stringify(data);
   localStorage.setItem("btk.dailyReport.v1", reportPayload);
   sessionStorage.setItem("btk.dailyReport.v1", reportPayload);
   const reportUrl = new URL("report.html", window.location.href);
-  reportUrl.searchParams.set("date", entry.date);
+  for (const [key, value] of Object.entries(params)) {
+    reportUrl.searchParams.set(key, value);
+  }
   reportUrl.searchParams.set("v", appVersion);
   const reportWindow = window.open(reportUrl.toString(), "_blank", "noopener,noreferrer");
   if (!reportWindow) {
     window.location.assign(reportUrl.toString());
     return;
   }
-  setSaveStatus(`Rapport skapad för ${entry.date}`);
 }
 
-document.querySelector("#reportButton").addEventListener("click", openDailyReport);
+function openWeekReport() {
+  const suggested = weekInputFromDate(fields.date.value || todayIso());
+  const answer = window.prompt("Ange vecka som ÅÅÅÅ-VV, t.ex. 2026-21", suggested);
+  if (answer === null) return;
+  const parsed = parseWeekInput(answer);
+  if (!parsed) {
+    setSaveStatus("Veckan kunde inte tolkas. Använd formatet ÅÅÅÅ-VV, t.ex. 2026-21.", true);
+    return;
+  }
+  const report = weeklyReportData(parsed.year, parsed.week);
+  openReport(report, { week: `${parsed.year}-${String(parsed.week).padStart(2, "0")}` });
+  setSaveStatus(`Veckorapport skapad för vecka ${parsed.week}, ${parsed.year}`);
+}
+
+reportButton?.addEventListener("click", openDailyReport);
+weekReportButton?.addEventListener("click", openWeekReport);
 
 fields.date.addEventListener("change", () => {
   const date = fields.date.value || todayIso();

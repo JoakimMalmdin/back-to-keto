@@ -303,8 +303,14 @@ main {
   font-weight: 800;
 }
 
-.report-inline-button {
+.report-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
   margin-top: 14px;
+}
+
+.report-inline-button {
   justify-self: start;
 }
 

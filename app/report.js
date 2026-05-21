@@ -56,11 +56,20 @@ function render() {
   document.head.append(style);
 
   const root = document.querySelector("#reportRoot");
-  if (!report?.entry || !Array.isArray(report.rows)) {
+  if (!report || !Array.isArray(report.rows)) {
     root.innerHTML = `<p class="empty">Ingen rapportdata hittades. Gå tillbaka till appen och tryck på rapportknappen igen.</p>`;
     return;
   }
 
+  if (report.kind === "weekly") {
+    renderWeekly(root);
+    return;
+  }
+
+  renderDaily(root);
+}
+
+function renderDaily(root) {
   const { entry, rows, totals } = report;
   document.title = `Keto-rapport ${entry.date}`;
   const mealRows = rows
@@ -117,6 +126,58 @@ function render() {
         </tfoot>
       </table>
       <p class="note">Makron är appens schablonberäkning utifrån den text som står i respektive måltidsfält.</p>
+    </section>`;
+
+  document.querySelector("#printButton").addEventListener("click", () => window.print());
+}
+
+function renderWeekly(root) {
+  document.title = `Keto-veckorapport ${report.year}-v${String(report.week).padStart(2, "0")}`;
+  const mealRows = report.rows
+    .map(
+      (row) => `
+        <tr>
+          <th scope="row">${escapeHtml(row.label)}</th>
+          <td>${row.count || 0}</td>
+          <td>${row.fat === null ? "--" : decimal(row.fat)}</td>
+          <td>${row.carbs === null ? "--" : decimal(row.carbs)}</td>
+          <td>${row.protein === null ? "--" : decimal(row.protein)}</td>
+          <td>${row.kcal === null ? "--" : Math.round(row.kcal || 0)}</td>
+        </tr>`
+    )
+    .join("");
+
+  root.innerHTML = `
+    <header>
+      <div>
+        <h1>Keto-veckorapport v${String(report.week).padStart(2, "0")}, ${report.year}</h1>
+        <p class="meta">${escapeHtml(report.range?.start || "")} till ${escapeHtml(report.range?.end || "")} · genererad ${escapeHtml(report.generatedAt || "")}</p>
+      </div>
+      <button type="button" id="printButton">Skriv ut / spara som PDF</button>
+    </header>
+    <section class="summary" aria-label="Veckans basdata">
+      <div><span>Loggade dagar</span><strong>${report.days || 0}</strong></div>
+      <div><span>Typvärde sömn</span><strong>${escapeHtml(report.sleepMode || "--")}</strong></div>
+      <div><span>Typvärde promenad</span><strong>${escapeHtml(report.walkMode || "--")}</strong></div>
+      <div><span>Vatten/dag</span><strong>${report.waterAverage === null ? "--" : `${decimal(report.waterAverage)} liter`}</strong></div>
+      <div><span>Kaffe/dag</span><strong>${report.coffeeAverage === null ? "--" : `${decimal(report.coffeeAverage)} koppar`}</strong></div>
+    </section>
+    <section>
+      <h2>Medelvärde per måltid</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Måltid</th>
+            <th>Antal</th>
+            <th>Fett g</th>
+            <th>Kolh. g</th>
+            <th>Protein g</th>
+            <th>kcal</th>
+          </tr>
+        </thead>
+        <tbody>${mealRows}</tbody>
+      </table>
+      <p class="note">Måltidsmedelvärden räknas på de dagar i veckan där respektive måltidsfält har text. Vatten och kaffe räknas som medel per dag där värde är angivet.</p>
     </section>`;
 
   document.querySelector("#printButton").addEventListener("click", () => window.print());
