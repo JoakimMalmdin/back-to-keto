@@ -3,7 +3,7 @@ const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
 const macroTargetsKey = "btk.keto.macroTargets.v1";
 const defaultMacroTargets = { proteinMin: 140, proteinMax: 140, fatMin: 140, fatMax: 150, carbsMin: 16, carbsMax: 16 };
-const appVersion = "141";
+const appVersion = "142";
 const appDisplayVersion = `v1.0 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -112,7 +112,7 @@ const foodSignals = [
   { label: "Köttfärsbit", match: /köttfärs\s*(?:bit|bitar|biff|biffar)|kottfars\s*(?:bit|bitar|biff|biffar)/i, skipBefore: /baconlindad(?:e)?\s*$/i, quantity: /(\d+(?:[,.]\d+)?)\s*(?:st\s*)?(?:köttfärs\s*(?:bit|bitar|biff|biffar)|kottfars\s*(?:bit|bitar|biff|biffar))/gi, kcal: 196, protein: 15.2, fat: 14.4, carbs: 0, servingGrams: 80, keto: 2 },
   { match: /nötfärs|notfars|köttfärs|kottfars/i, skipBefore: /baconlindad(?:e)?\s*$/i, skipAfter: /^\s*(?:bit|bitar|biff|biffar)/i, kcal: 245, protein: 19, fat: 18, carbs: 0, servingGrams: 100, keto: 2 },
   { match: /kycklingfil[eé]|kyckling\s*\(?\s*fil[eé](?:\s+utan\s+skinn)?\s*\)?|kycklingbröst|kycklingbrost/i, kcal: 165, protein: 31, fat: 3.6, carbs: 0, potassiumMg: 256, magnesiumMg: 29, servingGrams: 100, keto: 1 },
-  { label: "Tonfisk i vatten", match: /tonfisk(?:bitar)?\s+i\s+vatten|tonfisk.*vatten/i, kcal: 132, protein: 28.8, fat: 1.2, carbs: 0, sodiumMg: 470, potassiumMg: 300, magnesiumMg: 38, servingGrams: 120, keto: 1 },
+  { label: "Tonfisk i vatten", match: /tonfisk(?:bitar)?\s+i\s+vatten|tonfisk.*vatten/i, quantity: [/(\d+(?:[,.]\d+)?)\s*(?:burkar?|st)\s*tonfisk(?:bitar)?\s+i\s+vatten/gi, /tonfisk(?:bitar)?\s+i\s+vatten\s*(\d+(?:[,.]\d+)?)\s*(?:burkar?|st)?/gi], kcal: 132, protein: 28.8, fat: 1.2, carbs: 0, sodiumMg: 470, potassiumMg: 300, magnesiumMg: 38, servingGrams: 120, keto: 1 },
   { match: /tonfisk/i, exclude: /tonfisk(?:bitar)?\s+i\s+vatten|tonfisk.*vatten/i, kcal: 116, protein: 26, fat: 1, carbs: 0, potassiumMg: 250, magnesiumMg: 32, servingGrams: 100, keto: 1 },
   { match: /torsk/i, kcal: 82, protein: 18, fat: 0.7, carbs: 0, servingGrams: 100, keto: 1 },
   { match: /leverpastej/i, kcal: 95, protein: 3, fat: 8, carbs: 2.5, servingGrams: 30, keto: 0 },
@@ -197,7 +197,7 @@ const electrolyteSignalUpdates = [
   { label: "Kaviar", test: /kaviar/, sodiumMg: 90, potassiumMg: 10, magnesiumMg: 1 },
   { label: "Korv 75%", test: /korv/, sodiumMg: 1000, potassiumMg: 170, magnesiumMg: 13 },
   { label: "Kycklingfilé", test: /kyckling/, sodiumMg: 70, potassiumMg: 370, magnesiumMg: 28 },
-  { label: "Köttfärsbit", test: /bit|biff/, sodiumMg: 60, potassiumMg: 256, magnesiumMg: 18 },
+  { label: "Köttfärsbit", exactLabel: "Köttfärsbit", test: /köttfärs|kottfars/, sodiumMg: 60, potassiumMg: 256, magnesiumMg: 18 },
   { label: "Köttfärs/nötfärs", test: /nötfärs|notfars|köttfärs|kottfars/, sodiumMg: 75, potassiumMg: 320, magnesiumMg: 22 },
   { label: "Laxfilé", test: /laxfil/, sodiumMg: 56, potassiumMg: 500, magnesiumMg: 38 },
   { label: "Leverpastej", test: /leverpastej/, sodiumMg: 255, potassiumMg: 54, magnesiumMg: 5 },
@@ -295,7 +295,9 @@ const additionalFoodSignals = [
 
 for (const signal of foodSignals) {
   const source = signal.match.source;
-  const update = electrolyteSignalUpdates.find((candidate) => candidate.test.test(source));
+  const update = electrolyteSignalUpdates.find((candidate) =>
+    candidate.exactLabel ? signal.label === candidate.exactLabel : candidate.test.test(source)
+  );
   if (update) Object.assign(signal, update);
 }
 foodSignals.push(...additionalFoodSignals);
