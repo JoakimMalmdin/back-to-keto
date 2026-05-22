@@ -3,7 +3,7 @@ const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
 const macroTargetsKey = "btk.keto.macroTargets.v1";
 const defaultMacroTargets = { proteinMin: 140, proteinMax: 140, fatMin: 140, fatMax: 150, carbsMin: 16, carbsMax: 16 };
-const appVersion = "132";
+const appVersion = "133";
 const appDisplayVersion = `v1.0 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -319,6 +319,10 @@ function macroKcalRange(targets = getMacroTargets()) {
   const min = targets.proteinMin * 4 + targets.fatMin * 9 + targets.carbsMin * 4;
   const max = targets.proteinMax * 4 + targets.fatMax * 9 + targets.carbsMax * 4;
   return { min, max };
+}
+
+function roundedKcal(value) {
+  return Math.round(value / 10) * 10;
 }
 
 function targetRangeLabel(min, max) {
@@ -950,6 +954,11 @@ function render(selectedDate = activeDate) {
   if (macroTargetInputs.fatMax) macroTargetInputs.fatMax.value = targets.fatMax;
   if (macroTargetInputs.carbsMin) macroTargetInputs.carbsMin.value = targets.carbsMin;
   if (macroTargetInputs.carbsMax) macroTargetInputs.carbsMax.value = targets.carbsMax;
+  const macroTargetKcalNote = document.querySelector("#macroTargetKcalNote");
+  if (macroTargetKcalNote) {
+    macroTargetKcalNote.textContent =
+      `Dessa makron ger ett uppskattat kaloriintag på ${roundedKcal(kcalRange.min)} till ${roundedKcal(kcalRange.max)} kcal.`;
+  }
   const marker = macros.source === "manual" ? "" : "~";
   document.querySelector("#carbMetric").textContent = hasContent ? `${marker}${decimal(macros.carbs)} g` : "--";
   document.querySelector("#fatMetric").textContent = hasContent ? `${marker}${macros.fatPct}%` : "--";
@@ -988,7 +997,7 @@ function render(selectedDate = activeDate) {
       ? "Makron bygger på manuellt inmatade gram för fett, protein och kolhydrater."
       : macros.alcohol > 0
         ? "Övre staplarna visar kaloriprocent. Alkohol ger energi men visas inte som fett, protein eller kolhydrater."
-        : `Automatisk uppskattning. Personligt mål: ${targetRangeLabel(targets.proteinMin, targets.proteinMax)} g protein, ${targetRangeLabel(targets.fatMin, targets.fatMax)} g fett, ${targetRangeLabel(targets.carbsMin, targets.carbsMax)} g kolhydrater (${Math.round(kcalRange.min / 10) * 10}-${Math.round(kcalRange.max / 10) * 10} kcal).`;
+        : `Automatisk uppskattning. Personligt mål: ${targetRangeLabel(targets.proteinMin, targets.proteinMax)} g protein, ${targetRangeLabel(targets.fatMin, targets.fatMax)} g fett, ${targetRangeLabel(targets.carbsMin, targets.carbsMax)} g kolhydrater (${roundedKcal(kcalRange.min)}-${roundedKcal(kcalRange.max)} kcal).`;
   renderMacroBreakdown(macros, hasContent);
   renderTrendChart(entries);
 
