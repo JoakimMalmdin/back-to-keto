@@ -7,10 +7,10 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="BTK" />
     <title>Back to Keto</title>
-    <link rel="manifest" href="manifest.webmanifest?v=137" />
-    <link rel="icon" href="icon.svg?v=137" type="image/svg+xml" />
-    <link rel="apple-touch-icon" href="apple-touch-icon.png?v=137" />
-    <link rel="stylesheet" href="styles.css?v=137" />
+    <link rel="manifest" href="manifest.webmanifest?v=138" />
+    <link rel="icon" href="icon.svg?v=138" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png?v=138" />
+    <link rel="stylesheet" href="styles.css?v=138" />
   </head>
   <body>
     <div class="app-shell">
@@ -18,7 +18,7 @@
         <div>
           <p class="eyebrow">Back to Keto</p>
           <h1>Daglig keto-logg</h1>
-          <p class="version-pill">v1.0 beta · build 137</p>
+          <p class="version-pill">v1.0 beta · build 138</p>
         </div>
         <button class="icon-button" id="exportButton" type="button" aria-label="Exportera data">
           <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" /></svg>
@@ -266,6 +266,36 @@
           </details>
         </section>
 
+        <section class="electrolyte-panel macro-panel" aria-labelledby="electrolyteTitle">
+          <details class="info-details">
+            <summary id="electrolyteTitle">
+              <span>Aktuell elektrolytbild</span>
+              <span class="badge">mg</span>
+            </summary>
+            <div class="macro-content">
+              <h3 class="subhead">Dagsmål i mg</h3>
+              <div class="target-bars electrolyte-bars">
+                <div>
+                  <span>Natrium mot 4000 mg</span>
+                  <div class="target-bar sodium-target"><i id="sodiumBar"></i><b></b></div>
+                  <strong id="sodiumText">0 mg</strong>
+                </div>
+                <div>
+                  <span>Kalium mot 3500 mg</span>
+                  <div class="target-bar potassium-target"><i id="potassiumBar"></i><b></b></div>
+                  <strong id="potassiumText">0 mg</strong>
+                </div>
+                <div>
+                  <span>Magnesium mot 400 mg</span>
+                  <div class="target-bar magnesium-target"><i id="magnesiumBar"></i><b></b></div>
+                  <strong id="magnesiumText">0 mg</strong>
+                </div>
+              </div>
+              <p id="electrolyteNote" class="note"></p>
+            </div>
+          </details>
+        </section>
+
         <section class="trend-panel" aria-labelledby="trendTitle">
           <details class="info-details">
             <summary id="trendTitle">
@@ -336,6 +366,8 @@
                   <li>Mozzarella: 250 kcal, P 16.7 g, F 18.3 g, K 2.5 g. Standard: 60 g.</li>
                   <li>Ost/gruyere/parmesan: 400 kcal, P 23.3 g, F 33.3 g, K 1.7 g. Standard: 30 g. En ostskiva räknas som 10 g.</li>
                   <li>Olivolja: 800 kcal, P 0 g, F 90 g, K 0 g. Standard: 1 msk/15 g.</li>
+                  <li>Salt: 0 kcal. Standard: 1 tsk, ca 2300 mg natrium.</li>
+                  <li>Seltin: 0 kcal. Standard: 1 tsk, ca 500 mg kalium.</li>
                   <li>Smör: 750 kcal, P 1 g, F 82 g, K 1 g. Standard: 10 g.</li>
                   <li>Yoghurt 3%: 56 kcal, P 3.5 g, F 3 g, K 3.7 g.</li>
                 </ul>
@@ -368,7 +400,7 @@
                   <li>Påläggsskinka/kalkon/kycklingpålägg: ca 150 kcal, P 25 g, F 5 g, K 1.5 g. Standard: 1 skiva.</li>
                   <li>Salami: 400 kcal, P 23.3 g, F 33.3 g, K 1.7 g. Standard: 30 g.</li>
                   <li>Tonfisk: 116 kcal, P 26 g, F 1 g, K 0 g.</li>
-                  <li>Tonfisk i vatten: 110 kcal, P 24 g, F 1 g, K 0 g. Standard: hel burk/ca 120 g avrunnen vikt.</li>
+                  <li>Tonfisk i vatten: 110 kcal, P 24 g, F 1 g, K 0 g. Standard: hel burk/ca 120 g avrunnen vikt. Elektrolyter per burk: ca 470 mg natrium, 300 mg kalium, 38 mg magnesium.</li>
                   <li>Torsk: 82 kcal, P 18 g, F 0.7 g, K 0 g.</li>
                   <li>Ägg: 70 kcal, P 6.2 g, F 5 g, K 0.5 g per ägg.</li>
                 </ul>
@@ -376,16 +408,16 @@
               <div>
                 <h3>Grönt, nötter och annat</h3>
                 <ul>
-                  <li>Avokado: 160 kcal, P 2 g, F 15 g, K 2 g.</li>
+                  <li>Avokado: 160 kcal, P 2 g, F 15 g, K 2 g. Elektrolyter: ca 970 mg kalium och 58 mg magnesium per avokado.</li>
                   <li>Balsamico: 100 kcal, P 0 g, F 0 g, K 20 g. Standard: liten skvätt/tsk, ca 5 g.</li>
                   <li>Bladgrönt/sallad/ruccola: 20 kcal, P 2 g, F 0.3 g, K 1.5 g.</li>
                   <li>Blomkål: 25 kcal, P 2 g, F 0.3 g, K 3 g.</li>
                   <li>Broccoli: 35 kcal, P 3 g, F 0.4 g, K 4 g.</li>
-                  <li>Buljong: ca 318 kcal, P 7.1 g, F 22 g, K 23 g per 100 g torr tärning. Standard: 1 tärning/10 g i ett glas med 3,5 dl vatten.</li>
+                  <li>Buljong: ca 318 kcal, P 7.1 g, F 22 g, K 23 g per 100 g torr tärning. Standard: 1 tärning/10 g i ett glas med 3,5 dl vatten. Elektrolyter: ca 1100 mg natrium.</li>
                   <li>Cashewnötter: 583 kcal, P 18.3 g, F 43.3 g, K 30 g. Standard: 30 g.</li>
                   <li>Gurka: 15 kcal, P 0.7 g, F 0.1 g, K 3 g.</li>
                   <li>Jordnötter: 600 kcal, P 26.7 g, F 50 g, K 15 g. Standard: 30 g.</li>
-                  <li>Kalamataoliver: 271 kcal, P 1.6 g, F 28.7 g, K 0.6 g. Standard: 1 oliv/ca 4 g.</li>
+                  <li>Kalamataoliver: 271 kcal, P 1.6 g, F 28.7 g, K 0.6 g. Standard: 1 oliv/ca 4 g. Elektrolyter: ca 52 mg natrium per oliv.</li>
                   <li>Ketchup: 113 kcal, P 1.3 g, F 0 g, K 26.7 g. Standard: 1 msk/15 g.</li>
                   <li>Mandel: 600 kcal, P 21 g, F 50 g, K 9 g. Standard: 30 g.</li>
                   <li>Nötter/valnöt/macadamia: 600 kcal, P 16.7 g, F 56.7 g, K 10 g. Standard: 30 g.</li>
@@ -501,6 +533,6 @@
       </main>
     </div>
 
-    <script src="app.js?v=137" type="module"></script>
+    <script src="app.js?v=138" type="module"></script>
   </body>
 </html>

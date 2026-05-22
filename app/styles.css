@@ -1005,6 +1005,18 @@ textarea {
   background: var(--gold);
 }
 
+#sodiumBar {
+  background: #3b82f6;
+}
+
+#potassiumBar {
+  background: var(--leaf);
+}
+
+#magnesiumBar {
+  background: var(--berry);
+}
+
 .target-bars {
   display: grid;
   gap: 13px;
