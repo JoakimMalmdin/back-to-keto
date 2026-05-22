@@ -3,7 +3,7 @@ const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
 const macroTargetsKey = "btk.keto.macroTargets.v1";
 const defaultMacroTargets = { proteinMin: 140, proteinMax: 140, fatMin: 140, fatMax: 150, carbsMin: 16, carbsMax: 16 };
-const appVersion = "142";
+const appVersion = "143";
 const appDisplayVersion = `v1.0 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -156,6 +156,7 @@ const foodSignals = [
   { match: /gurka/i, kcal: 15, protein: 0.7, fat: 0.1, carbs: 3, servingGrams: 100, keto: 1 },
   { match: /surkål|surkal|sauerkraut/i, kcal: 20, protein: 1, fat: 0.1, carbs: 2, servingGrams: 100, keto: 1 },
   { match: /seltin/i, quantity: [/(\d+(?:[,.]\d+)?)\s*tsk\s*seltin/gi, /seltin\s*(\d+(?:[,.]\d+)?)\s*tsk/gi], kcal: 0, protein: 0, fat: 0, carbs: 0, potassiumMg: 500, keto: 1 },
+  { label: "Salt", match: /(?:\d+(?:[,.]\d+)?\s*)?krm\s+salt|salt\s*(?:\d+(?:[,.]\d+)?\s*)?krm/i, quantity: [/(\d+(?:[,.]\d+)?)\s*krm\s+salt/gi, /salt\s*(\d+(?:[,.]\d+)?)\s*krm/gi], kcal: 0, protein: 0, fat: 0, carbs: 0, sodiumMg: 460, keto: 1 },
   { label: "Salt", match: /(?:\d+(?:[,.]\d+)?\s*)?tsk\s+salt|salt\s*(?:\d+(?:[,.]\d+)?\s*)?tsk/i, quantity: [/(\d+(?:[,.]\d+)?)\s*tsk\s+salt/gi, /salt\s*(\d+(?:[,.]\d+)?)\s*tsk/gi], kcal: 0, protein: 0, fat: 0, carbs: 0, sodiumMg: 2300, keto: 1 },
   { match: /buljong(?:tärning|tarning)?|köttbuljong|kottbuljong/i, quantity: [/(\d+(?:[,.]\d+)?)\s*glas\s*(?:buljong|köttbuljong|kottbuljong)/gi, /(\d+(?:[,.]\d+)?)\s*(?:st\s*)?(?:buljong)?(?:tärningar?|tarningar?)/gi, /(?:buljong(?:tärning|tarning)?|köttbuljong|kottbuljong)\s*(\d+(?:[,.]\d+)?)\s*(?:st|tärningar?|tarningar?)?/gi], kcal: 32, protein: 0.7, fat: 2.2, carbs: 2.3, sodiumMg: 1100, keto: 1 },
   { match: /balsamico/i, kcal: 5, protein: 0, fat: 0, carbs: 1, servingGrams: 5, mskGrams: 15, keto: -1 },
@@ -987,6 +988,10 @@ function coach(entry, macros, kind) {
   return notes.join(" ");
 }
 
+function foodItemSort(a, b) {
+  return b.fat - a.fat || b.protein - a.protein || a.label.localeCompare(b.label, "sv");
+}
+
 function renderMacroBreakdown(macros, hasContent) {
   const breakdown = document.querySelector("#macroBreakdown");
   if (!breakdown) return;
@@ -1002,8 +1007,8 @@ function renderMacroBreakdown(macros, hasContent) {
     breakdown.textContent = "Inga kända livsmedel hittades i dagens text.";
     return;
   }
-  const rows = macros.items
-    .sort((a, b) => b.fat - a.fat)
+  const rows = [...macros.items]
+    .sort(foodItemSort)
     .map((item) => {
       const count = Number.isInteger(item.count) ? item.count : decimal(item.count);
       return `<div><strong>${item.label}</strong><span class="macro-count">${item.amountLabel || `x ${count}`}</span><span class="macro-value">${decimal(item.fat)} g F</span><span class="macro-value">${decimal(item.protein)} g P</span><span class="macro-value">${decimal(item.carbs)} g K</span></div>`;
@@ -1031,7 +1036,7 @@ function renderElectrolyteBreakdown(macros, hasContent) {
     return;
   }
   const rows = electrolyteItems
-    .sort((a, b) => b.sodiumMg + b.potassiumMg + b.magnesiumMg - (a.sodiumMg + a.potassiumMg + a.magnesiumMg))
+    .sort(foodItemSort)
     .map((item) => {
       const count = Number.isInteger(item.count) ? item.count : decimal(item.count);
       return `<div><strong>${item.label}</strong><span class="macro-count">${item.amountLabel || `x ${count}`}</span><span class="macro-value">Na ${Math.round(item.sodiumMg)}</span><span class="macro-value">Ka ${Math.round(item.potassiumMg)}</span><span class="macro-value">Mg ${Math.round(item.magnesiumMg)}</span></div>`;
