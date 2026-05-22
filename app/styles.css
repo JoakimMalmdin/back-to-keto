@@ -348,27 +348,33 @@ main {
 
 .entry-form {
   display: grid;
-  gap: 12px;
+  gap: 10px;
   min-width: 0;
-  margin-top: 14px;
+  margin-top: 12px;
+}
+
+.top-fields {
+  display: grid;
+  grid-template-columns: minmax(118px, 1.2fr) minmax(74px, 0.8fr) minmax(74px, 0.8fr);
+  gap: 8px;
 }
 
 .two-col {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
 }
 
 .three-col {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
 }
 
 .four-col {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
 }
 
 .macro-target-settings {
@@ -377,10 +383,10 @@ main {
 
 label {
   display: grid;
-  gap: 6px;
+  gap: 4px;
   min-width: 0;
   color: var(--muted);
-  font-size: 0.84rem;
+  font-size: 0.8rem;
   font-weight: 800;
 }
 
@@ -394,8 +400,8 @@ textarea {
   border-radius: 8px;
   background: #fffaf2;
   color: var(--ink);
-  min-height: 44px;
-  padding: 10px 11px;
+  min-height: 40px;
+  padding: 8px 9px;
   outline-color: var(--leaf);
 }
 
@@ -1035,6 +1041,11 @@ textarea {
 
   .two-col {
     grid-template-columns: 1fr;
+  }
+
+  .top-fields {
+    grid-template-columns: minmax(112px, 1.15fr) minmax(66px, 0.85fr) minmax(66px, 0.85fr);
+    gap: 6px;
   }
 
   .three-col {
