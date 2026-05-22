@@ -3,7 +3,7 @@ const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
 const macroTargetsKey = "btk.keto.macroTargets.v1";
 const defaultMacroTargets = { proteinMin: 140, proteinMax: 140, fatMin: 140, fatMax: 150, carbsMin: 16, carbsMax: 16 };
-const appVersion = "148";
+const appVersion = "149";
 const appDisplayVersion = `v1.0 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -128,7 +128,7 @@ const foodSignals = [
   { match: /avokado|avocado/i, kcal: 160, protein: 2, fat: 15, carbs: 2, potassiumMg: 970, magnesiumMg: 58, servingGrams: 100, keto: 2 },
   { match: /olivolja|olive oil/i, kcal: 120, protein: 0, fat: 13.5, carbs: 0, servingGrams: 15, mskGrams: 15, keto: 2 },
   { match: /kalamata(?:oliver)?|oliver|oliv(?!olja)/i, kcal: 11, protein: 0.1, fat: 1.1, carbs: 0, sodiumMg: 52, keto: 1 },
-  { match: /(^|[^a-zåäö])(?:nötter|notter|valnöt|valnot)(?:[^a-zåäö]|$)/i, kcal: 180, protein: 5, fat: 17, carbs: 3, servingGrams: 30, keto: 1 },
+  { match: /valnötter|valnotter|valnöt|valnot/i, kcal: 196, protein: 4.5, fat: 19.5, carbs: 4.2, sodiumMg: 1, potassiumMg: 132, magnesiumMg: 47, servingGrams: 30, keto: 1 },
   { match: /påläggsskinka|palaggsskinka|skinka|kalkonpålägg|kalkonpalagg|kycklingpålägg|kycklingpalagg/i, quantity: [/(\d+(?:[,.]\d+)?)\s*(?:skivor?|skiva|st)\s*(?:påläggsskinka|palaggsskinka|skinka|kalkonpålägg|kalkonpalagg|kycklingpålägg|kycklingpalagg)/gi, /(?:påläggsskinka|palaggsskinka|skinka|kalkonpålägg|kalkonpalagg|kycklingpålägg|kycklingpalagg)\s*(\d+(?:[,.]\d+)?)\s*(?:skivor?|skiva|st)/gi], kcal: 30, protein: 5, fat: 1, carbs: 0.3, sodiumMg: 250, potassiumMg: 70, magnesiumMg: 5, keto: 1 },
   { match: /kaviar/i, kcal: 18, protein: 0.4, fat: 1.6, carbs: 0.8, sodiumMg: 110, potassiumMg: 15, magnesiumMg: 2, servingGrams: 5, tskGrams: 5, mskGrams: 15, keto: 0 },
   { match: /collagen|kollagen/i, kcal: 55, protein: 13.7, fat: 0, carbs: 0, servingGrams: 15, mskGrams: 15, keto: 1 },
@@ -771,6 +771,8 @@ function signalLabel(signal) {
     [/cashewn/, "Cashewnötter"],
     [/jordn/, "Jordnötter"],
     [/mandel/, "Mandel"],
+    [/valnöt|valnot/, "Valnötter"],
+    [/macadamia/, "Macadamia"],
     [/pumpak/, "Pumpakärnor"],
     [/chianti/, "Chianti"],
     [/lätt|latt/, "Lättöl"],
