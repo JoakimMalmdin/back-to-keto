@@ -1110,6 +1110,16 @@ textarea {
     gap: 6px;
   }
 
+  .report-actions {
+    gap: 6px;
+  }
+
+  .report-inline-button {
+    padding-inline: 5px;
+    font-size: 0.72rem;
+    letter-spacing: 0;
+  }
+
   .one-third-field {
     grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
   }
