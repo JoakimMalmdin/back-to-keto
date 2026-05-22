@@ -1,7 +1,7 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
-const appVersion = "124";
+const appVersion = "125";
 const appDisplayVersion = `v1.0 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -589,6 +589,78 @@ function estimateMacros(entry) {
   };
 }
 
+function partialEntry(entry, keys) {
+  const partial = emptyEntry(entry.date || todayIso());
+  for (const key of keys) {
+    partial[key] = entry[key] || "";
+  }
+  return partial;
+}
+
+function fullProtein(macros) {
+  if (macros.source === "manual") return macros.protein || 0;
+  return (macros.items || [])
+    .filter((item) => item.label !== "Collagen")
+    .reduce((sum, item) => sum + item.protein, 0);
+}
+
+function collagenProtein(macros) {
+  if (macros.source === "manual") return 0;
+  return (macros.items || [])
+    .filter((item) => item.label === "Collagen")
+    .reduce((sum, item) => sum + item.protein, 0);
+}
+
+function parseLiters(text = "") {
+  const match = text.match(/(\d+(?:[,.]\d+)?)/);
+  if (!match) return null;
+  const value = Number(match[1].replace(",", "."));
+  return Number.isFinite(value) ? value : null;
+}
+
+function hasSymptomSignal(entry) {
+  return /huvudvärk|huvudvark|kramp|yrsel|trött|trott|seg|orkeslös|orkeslos/i.test(entry.notes || "");
+}
+
+function hasSodiumSignal(text) {
+  return /buljong|salt|seltin|pansalt|feta|halloumi|bacon|skinka|lax|sill|kaviar|salami|korv/i.test(text);
+}
+
+function dinnerCompass(entry) {
+  const beforeDinnerText = [entry.breakfast, entry.lunch, entry.extras].filter(Boolean).join(" ");
+  if (!beforeDinnerText.trim()) {
+    return "Logga frukost och/eller lunch så föreslår kompassen vad middagen bör komplettera med.";
+  }
+
+  const beforeDinnerEntry = partialEntry(entry, ["breakfast", "lunch", "extras"]);
+  const macros = estimateMacros(beforeDinnerEntry);
+  const completeProtein = fullProtein(macros);
+  const collagen = collagenProtein(macros);
+  const proteinTarget = 150;
+  const proteinNeeded = Math.max(0, proteinTarget - completeProtein);
+  const carbRoom = Math.max(0, 20 - macros.carbs);
+  const liters = parseLiters(entry.water || "");
+  const needsSodium = hasSymptomSignal(entry) || (Number.isFinite(liters) && liters < 1.5) || !hasSodiumSignal(beforeDinnerText);
+
+  const proteinAdvice =
+    proteinNeeded >= 75
+      ? `Middagen bör ge cirka ${Math.round(proteinNeeded)} g fullvärdigt protein.`
+      : proteinNeeded >= 35
+        ? `Middagen bör ge minst ${Math.round(proteinNeeded)} g fullvärdigt protein.`
+        : "Proteinläget är hyggligt; middagen kan vara mer fett- och elektrolytfokuserad.";
+  const carbAdvice =
+    macros.carbs >= 18
+      ? "Håll middagen mycket kolhydratsnål."
+      : `Kolhydratutrymme kvar: cirka ${decimal(carbRoom)} g.`;
+  const sodiumAdvice = needsSodium
+    ? "Lägg gärna till natrium: buljong, salt, feta, halloumi, bacon, skinka, lax eller sill."
+    : "Natriumsignaler finns redan, men salta efter smak.";
+  const foodAdvice = "Bra middagsval: fläskkotlett, kyckling, tonfisk, lax, nötfärs eller ägg.";
+  const collagenAdvice = collagen > 0 ? ` Kollagen räknas separat (${decimal(collagen)} g) och ersätter inte fullvärdigt protein.` : "";
+
+  return `<strong>Middagskompass</strong><span>Hittills: ${decimal(completeProtein)} g fullvärdigt protein, ${decimal(macros.carbs)} g kolhydrater, ca ${Math.round(macros.kcal)} kcal.${collagenAdvice} ${proteinAdvice} ${carbAdvice} ${sodiumAdvice} ${foodAdvice}</span>`;
+}
+
 function classify(entry, macros) {
   if (macros.carbs <= 20 && macros.fatPct >= 65) return "strikt keto";
   if (macros.carbs <= 30 && macros.fatPct >= 55) return "keto-ish";
@@ -806,6 +878,10 @@ function render(selectedDate = activeDate) {
   document.querySelector("#coachLine").textContent = hasContent
     ? coach(latest, macros, kind)
     : "Fyll i dagens mat, vikt, sömn och vätska så börjar coachningen.";
+  const compass = document.querySelector("#dinnerCompass");
+  if (compass) {
+    compass.innerHTML = hasContent ? dinnerCompass(latest) : "";
+  }
 
   const badge = document.querySelector("#strictnessBadge");
   badge.textContent = kind;

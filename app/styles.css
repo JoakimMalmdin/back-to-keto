@@ -181,6 +181,33 @@ main {
   line-height: 1.45;
 }
 
+.dinner-compass {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--leaf) 28%, var(--line));
+  border-radius: 8px;
+  background: color-mix(in srgb, #fffaf2 82%, var(--leaf) 8%);
+  color: var(--ink);
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.dinner-compass:empty {
+  display: none;
+}
+
+.dinner-compass strong {
+  font-size: 0.78rem;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.dinner-compass span {
+  color: var(--muted);
+}
+
 .hero-sync-button {
   margin-top: 12px;
   min-width: 118px;
