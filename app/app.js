@@ -3,7 +3,7 @@ const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
 const macroTargetsKey = "btk.keto.macroTargets.v1";
 const defaultMacroTargets = { proteinMin: 140, proteinMax: 140, fatMin: 140, fatMax: 150, carbsMin: 16, carbsMax: 16 };
-const appVersion = "143";
+const appVersion = "144";
 const appDisplayVersion = `v1.0 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -929,13 +929,33 @@ function hasElectrolyteSignal(text, type) {
   return hasKeywordSignal(text, electrolyteKeywords[type] || []);
 }
 
+function dinnerElectrolyteAdvice(macros, entry) {
+  const sodiumGap = Math.max(0, electrolyteTargets.sodiumMg - (macros.sodiumMg || 0));
+  const potassiumGap = Math.max(0, electrolyteTargets.potassiumMg - (macros.potassiumMg || 0));
+  const magnesiumGap = Math.max(0, electrolyteTargets.magnesiumMg - (macros.magnesiumMg || 0));
+  const liters = parseLiters(entry.water || "");
+  const symptoms = hasSymptomSignal(entry);
+  const advice = [];
+
+  if (sodiumGap > 600 || symptoms || (Number.isFinite(liters) && liters < 1.5)) {
+    advice.push("natrium: buljong eller salta maten");
+  }
+  if (potassiumGap >= 800) {
+    advice.push("uppmärksamma kalium inför middagen: avokado, spenat, lax, svamp eller broccoli");
+  }
+  if (magnesiumGap >= 120) {
+    advice.push("ta en magnesiumtablett om 200 mg");
+  }
+
+  return advice.length ? `Elektrolyter: ${advice.join("; ")}.` : "Elektrolyter: okej.";
+}
+
 function dinnerCompass(entry) {
   if (!entry.lunch?.trim()) {
     return null;
   }
 
   const targets = getMacroTargets();
-  const beforeDinnerText = [entry.breakfast, entry.lunch, entry.extras, entry.notes].filter(Boolean).join(" ");
   const beforeDinnerEntry = partialEntry(entry, ["breakfast", "lunch", "extras"]);
   const macros = estimateMacros(beforeDinnerEntry);
   const completeProtein = fullProtein(macros);
@@ -943,24 +963,10 @@ function dinnerCompass(entry) {
   const proteinTarget = targets.proteinMin;
   const proteinNeeded = Math.max(0, proteinTarget - completeProtein);
   const carbRoom = Math.max(0, targets.carbsMax - macros.carbs);
-  const liters = parseLiters(entry.water || "");
-  const symptoms = hasSymptomSignal(entry);
-  const electrolyteGaps = [];
-  if (symptoms || (Number.isFinite(liters) && liters < 1.5) || !hasElectrolyteSignal(beforeDinnerText, "sodium")) {
-    electrolyteGaps.push(electrolyteSuggestions.sodium);
-  }
-  if (!hasElectrolyteSignal(beforeDinnerText, "potassium")) {
-    electrolyteGaps.push(electrolyteSuggestions.potassium);
-  }
-  if (symptoms || !hasElectrolyteSignal(beforeDinnerText, "magnesium")) {
-    electrolyteGaps.push(electrolyteSuggestions.magnesium);
-  }
 
   const proteinAdvice = proteinNeeded >= 35 ? `Protein: ca ${Math.round(proteinNeeded)} g kvar.` : "Protein: läget är okej.";
   const carbAdvice = macros.carbs >= targets.carbsMax - 2 ? "Kolhydrater: håll middagen strikt." : `Kolhydrater: ca ${decimal(carbRoom)} g kvar.`;
-  const electrolyteAdvice = electrolyteGaps.length
-    ? `Elektrolyter: ${electrolyteGaps.slice(0, 2).join("; ")}.`
-    : "Elektrolyter: tydliga signaler finns redan.";
+  const electrolyteAdvice = dinnerElectrolyteAdvice(macros, entry);
   const collagenAdvice = collagen > 0 ? ` Kollagen (${decimal(collagen)} g) räknas inte som fullvärdigt protein.` : "";
 
   return `${proteinAdvice} ${carbAdvice} ${electrolyteAdvice}${collagenAdvice}`;
