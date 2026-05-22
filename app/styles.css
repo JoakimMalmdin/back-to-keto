@@ -1082,6 +1082,10 @@ textarea {
     grid-template-columns: 1fr;
   }
 
+  .daily-macro-inputs {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
   .hydration-row {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
