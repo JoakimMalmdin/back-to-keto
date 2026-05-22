@@ -3,7 +3,7 @@ const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
 const macroTargetsKey = "btk.keto.macroTargets.v1";
 const defaultMacroTargets = { proteinMin: 140, proteinMax: 140, fatMin: 140, fatMax: 150, carbsMin: 16, carbsMax: 16 };
-const appVersion = "135";
+const appVersion = "136";
 const appDisplayVersion = `v1.0 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -133,7 +133,9 @@ const foodSignals = [
   { match: /yoghurt|youghurt|yogurt/i, exclude: /grekisk\s+(?:yoghurt|youghurt|yogurt)/i, kcal: 56, protein: 3.5, fat: 3, carbs: 3.7, servingGrams: 100, dlGrams: 100, keto: -1 },
   { match: /röda?\s+vinbär|roda?\s+vinbar|vinbär|vinbar/i, kcal: 45, protein: 0.8, fat: 0.4, carbs: 8, servingGrams: 100, berryGrams: 0.5, keto: -1 },
   { match: /björnbär|bjornbar/i, kcal: 45, protein: 0.8, fat: 0.4, carbs: 8, servingGrams: 100, berryGrams: 5, keto: -1 },
-  { match: /bär|bar|jordgubb|hallon|blåbär/i, exclude: /björnbär|bjornbar|röda?\s+vinbär|roda?\s+vinbar|vinbär|vinbar/i, kcal: 45, protein: 0.8, fat: 0.4, carbs: 8, servingGrams: 100, keto: -1 },
+  { match: /blåbär|blabar/i, kcal: 57, protein: 0.7, fat: 0.3, carbs: 12, servingGrams: 100, berryGrams: 1, keto: -1 },
+  { match: /hjortron/i, kcal: 51, protein: 1.6, fat: 0.8, carbs: 8.6, servingGrams: 100, berryGrams: 1, keto: -1 },
+  { match: /bär|bar|jordgubb|hallon/i, exclude: /björnbär|bjornbar|röda?\s+vinbär|roda?\s+vinbar|vinbär|vinbar|blåbär|blabar|hjortron/i, kcal: 45, protein: 0.8, fat: 0.4, carbs: 8, servingGrams: 100, keto: -1 },
   { match: /äpple|apple/i, kcal: 70, protein: 0.3, fat: 0.2, carbs: 17, servingGrams: 135, keto: -2 },
   { match: /apelsin/i, kcal: 62, protein: 1.2, fat: 0.2, carbs: 15, servingGrams: 130, keto: -2 },
   { match: /spetskål|spetskal/i, kcal: 30, protein: 1.5, fat: 0.2, carbs: 5, servingGrams: 100, keto: 1 },
@@ -626,8 +628,10 @@ function signalLabel(signal) {
     [/collagen|kollagen/, "Collagen"],
     [/vinbär|vinbar/, "Röda vinbär"],
     [/björnbär|bjornbar/, "Björnbär"],
+    [/blåbär|blabar/, "Blåbär"],
+    [/hjortron/, "Hjortron"],
     [/yoghurt|youghurt|yogurt/, "Yoghurt"],
-    [/bär|bar|jordgubb|hallon|blåbär/, "Bär"],
+    [/bär|bar|jordgubb|hallon/, "Bär"],
     [/plommontomat|plommon\s*tomat/, "Plommontomat"],
     [/äpple|apple/, "Äpple"],
     [/apelsin/, "Apelsin"],
