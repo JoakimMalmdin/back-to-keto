@@ -1,7 +1,9 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
-const appVersion = "126";
+const macroTargetsKey = "btk.keto.macroTargets.v1";
+const defaultMacroTargets = { protein: 140, fatMin: 140, fatMax: 150, carbs: 16 };
+const appVersion = "127";
 const appDisplayVersion = `v1.0 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -109,6 +111,12 @@ const fields = {
   notes: document.querySelector("#notesInput"),
 };
 const goalInput = document.querySelector("#goalInput");
+const macroTargetInputs = {
+  protein: document.querySelector("#targetProteinInput"),
+  fatMin: document.querySelector("#targetFatMinInput"),
+  fatMax: document.querySelector("#targetFatMaxInput"),
+  carbs: document.querySelector("#targetCarbsInput"),
+};
 const syncCodeInput = document.querySelector("#syncCodeInput");
 const syncStatus = document.querySelector("#syncStatus");
 const quickSyncStatus = document.querySelector("#quickSyncStatus");
@@ -263,6 +271,39 @@ function saveGoalWeight(value) {
   localStorage.removeItem(goalKey);
   queueCloudSync();
   return null;
+}
+
+function normalizeMacroTargets(targets = {}) {
+  const next = { ...defaultMacroTargets };
+  for (const key of Object.keys(next)) {
+    const value = Number(targets[key]);
+    if (Number.isFinite(value) && value > 0) next[key] = value;
+  }
+  if (next.fatMax < next.fatMin) {
+    [next.fatMin, next.fatMax] = [next.fatMax, next.fatMin];
+  }
+  return next;
+}
+
+function getMacroTargets() {
+  try {
+    return normalizeMacroTargets(JSON.parse(localStorage.getItem(macroTargetsKey) || "{}"));
+  } catch {
+    return { ...defaultMacroTargets };
+  }
+}
+
+function saveMacroTargets(targets) {
+  const normalized = normalizeMacroTargets(targets);
+  localStorage.setItem(macroTargetsKey, JSON.stringify(normalized));
+  queueCloudSync();
+  return normalized;
+}
+
+function macroKcalRange(targets = getMacroTargets()) {
+  const min = targets.protein * 4 + targets.fatMin * 9 + targets.carbs * 4;
+  const max = targets.protein * 4 + targets.fatMax * 9 + targets.carbs * 4;
+  return { min, max };
 }
 
 function hasEntryContent(entry) {
@@ -639,14 +680,15 @@ function dinnerCompass(entry) {
     return null;
   }
 
+  const targets = getMacroTargets();
   const beforeDinnerText = [entry.breakfast, entry.lunch, entry.extras, entry.notes].filter(Boolean).join(" ");
   const beforeDinnerEntry = partialEntry(entry, ["breakfast", "lunch", "extras"]);
   const macros = estimateMacros(beforeDinnerEntry);
   const completeProtein = fullProtein(macros);
   const collagen = collagenProtein(macros);
-  const proteinTarget = 150;
+  const proteinTarget = targets.protein;
   const proteinNeeded = Math.max(0, proteinTarget - completeProtein);
-  const carbRoom = Math.max(0, 20 - macros.carbs);
+  const carbRoom = Math.max(0, targets.carbs - macros.carbs);
   const liters = parseLiters(entry.water || "");
   const symptoms = hasSymptomSignal(entry);
   const electrolyteGaps = [];
@@ -661,7 +703,7 @@ function dinnerCompass(entry) {
   }
 
   const proteinAdvice = proteinNeeded >= 35 ? `Protein: ca ${Math.round(proteinNeeded)} g kvar.` : "Protein: läget är okej.";
-  const carbAdvice = macros.carbs >= 18 ? "Kolhydrater: håll middagen strikt." : `Kolhydrater: ca ${decimal(carbRoom)} g kvar.`;
+  const carbAdvice = macros.carbs >= targets.carbs - 2 ? "Kolhydrater: håll middagen strikt." : `Kolhydrater: ca ${decimal(carbRoom)} g kvar.`;
   const electrolyteAdvice = electrolyteGaps.length
     ? `Elektrolyter: ${electrolyteGaps.slice(0, 2).join("; ")}.`
     : "Elektrolyter: tydliga signaler finns redan.";
@@ -671,8 +713,9 @@ function dinnerCompass(entry) {
 }
 
 function classify(entry, macros) {
-  if (macros.carbs <= 20 && macros.fatPct >= 65) return "strikt keto";
-  if (macros.carbs <= 30 && macros.fatPct >= 55) return "keto-ish";
+  const targets = getMacroTargets();
+  if (macros.carbs <= targets.carbs && macros.fatPct >= 65) return "strikt keto";
+  if (macros.carbs <= targets.carbs + 10 && macros.fatPct >= 55) return "keto-ish";
   return "riskzon";
 }
 
@@ -871,6 +914,8 @@ function render(selectedDate = activeDate) {
   const startDate = entries[0]?.date || latest.date || todayIso();
   const delta = latest.weight && startWeight ? latest.weight - startWeight : 0;
   const goalWeight = getGoalWeight();
+  const targets = getMacroTargets();
+  const kcalRange = macroKcalRange(targets);
   const toGoal = latest.weight && goalWeight ? latest.weight - goalWeight : 0;
 
   document.querySelector("#todayDate").textContent = latest.date;
@@ -880,6 +925,10 @@ function render(selectedDate = activeDate) {
   document.querySelector("#goalMetricLabel").textContent = goalWeight ? `Till målvikt ${decimal(goalWeight)} kg` : "Till målvikt";
   document.querySelector("#toGoal").textContent = latest.weight && goalWeight ? `${decimal(toGoal)} kg` : "--";
   if (goalInput) goalInput.value = goalWeight ? goalWeight : "";
+  if (macroTargetInputs.protein) macroTargetInputs.protein.value = targets.protein;
+  if (macroTargetInputs.fatMin) macroTargetInputs.fatMin.value = targets.fatMin;
+  if (macroTargetInputs.fatMax) macroTargetInputs.fatMax.value = targets.fatMax;
+  if (macroTargetInputs.carbs) macroTargetInputs.carbs.value = targets.carbs;
   const marker = macros.source === "manual" ? "" : "~";
   document.querySelector("#carbMetric").textContent = hasContent ? `${marker}${decimal(macros.carbs)} g` : "--";
   document.querySelector("#fatMetric").textContent = hasContent ? `${marker}${macros.fatPct}%` : "--";
@@ -901,11 +950,16 @@ function render(selectedDate = activeDate) {
   document.querySelector("#fatBar").style.width = `${Math.min(macros.fatPct, 100)}%`;
   document.querySelector("#proteinBar").style.width = `${Math.min(macros.proteinPct, 100)}%`;
   document.querySelector("#carbBar").style.width = `${Math.min(macros.carbPct, 100)}%`;
-  document.querySelector("#fatGramBar").style.width = `${Math.min((macros.fat / 200) * 100, 100)}%`;
-  document.querySelector("#carbGramBar").style.width = `${Math.min((macros.carbs / 20) * 100, 100)}%`;
+  document.querySelector("#proteinGramBar").style.width = `${Math.min((macros.protein / targets.protein) * 100, 100)}%`;
+  document.querySelector("#fatGramBar").style.width = `${Math.min((macros.fat / targets.fatMax) * 100, 100)}%`;
+  document.querySelector("#carbGramBar").style.width = `${Math.min((macros.carbs / targets.carbs) * 100, 100)}%`;
+  document.querySelector("#proteinTargetLabel").textContent = `Protein mot ${decimal(targets.protein)} g`;
+  document.querySelector("#fatTargetLabel").textContent = `Fett mot ${decimal(targets.fatMin)}-${decimal(targets.fatMax)} g`;
+  document.querySelector("#carbTargetLabel").textContent = `Kolhydrater mot ${decimal(targets.carbs)} g`;
   document.querySelector("#fatText").textContent = hasContent ? `${macros.fatPct}%` : "--";
   document.querySelector("#proteinText").textContent = hasContent ? `${macros.proteinPct}%` : "--";
   document.querySelector("#carbText").textContent = hasContent ? `${macros.carbPct}%` : "--";
+  document.querySelector("#proteinGramText").textContent = hasContent ? `${decimal(macros.protein)} g` : "--";
   document.querySelector("#fatGramText").textContent = hasContent ? `${decimal(macros.fat)} g` : "--";
   document.querySelector("#carbGramText").textContent = hasContent ? `${decimal(macros.carbs)} g` : "--";
   document.querySelector("#macroNote").textContent =
@@ -913,7 +967,7 @@ function render(selectedDate = activeDate) {
       ? "Makron bygger på manuellt inmatade gram för fett, protein och kolhydrater."
       : macros.alcohol > 0
         ? "Övre staplarna visar kaloriprocent. Alkohol ger energi men visas inte som fett, protein eller kolhydrater."
-        : "Automatisk uppskattning: g/gram fungerar brett; dl för yoghurt, gräddfil och grädde; msk för majonnäs, bearnaise, smör, olivolja, färskost, ketchup och balsamico; tsk för majonnäs och kaviar. Annars används normalportioner.";
+        : `Automatisk uppskattning. Personligt mål: ${decimal(targets.protein)} g protein, ${decimal(targets.fatMin)}-${decimal(targets.fatMax)} g fett, ${decimal(targets.carbs)} g kolhydrater (${Math.round(kcalRange.min / 10) * 10}-${Math.round(kcalRange.max / 10) * 10} kcal).`;
   renderMacroBreakdown(macros, hasContent);
   renderTrendChart(entries);
 
@@ -942,6 +996,11 @@ function fillForm(entry) {
     }
   }
   if (goalInput) goalInput.value = getGoalWeight() || "";
+  const targets = getMacroTargets();
+  if (macroTargetInputs.protein) macroTargetInputs.protein.value = targets.protein;
+  if (macroTargetInputs.fatMin) macroTargetInputs.fatMin.value = targets.fatMin;
+  if (macroTargetInputs.fatMax) macroTargetInputs.fatMax.value = targets.fatMax;
+  if (macroTargetInputs.carbs) macroTargetInputs.carbs.value = targets.carbs;
 }
 
 function setSaveStatus(message, isError = false) {
@@ -953,6 +1012,7 @@ function setSaveStatus(message, isError = false) {
 function saveCurrentEntry(options = {}) {
   const entry = formEntry();
   if (goalInput) saveGoalWeight(goalInput.value.trim());
+  if (Object.values(macroTargetInputs).some(Boolean)) saveMacroTargets(currentMacroTargetInputs());
   activeDate = entry.date;
   const entries = getEntries().filter((item) => item.date !== entry.date);
   entries.push(entry);
@@ -1244,6 +1304,7 @@ fields.date.addEventListener("change", () => {
 
 form.addEventListener("input", (event) => {
   if (event.target === goalInput) return;
+  if (Object.values(macroTargetInputs).includes(event.target)) return;
   queueAutosave();
 });
 
@@ -1256,6 +1317,30 @@ if (goalInput) {
 
   goalInput.addEventListener("input", () => {
     saveGoalWeight(goalInput.value.trim());
+    render(activeDate);
+  });
+}
+
+function currentMacroTargetInputs() {
+  return {
+    protein: macroTargetInputs.protein?.value,
+    fatMin: macroTargetInputs.fatMin?.value,
+    fatMax: macroTargetInputs.fatMax?.value,
+    carbs: macroTargetInputs.carbs?.value,
+  };
+}
+
+for (const input of Object.values(macroTargetInputs)) {
+  input?.addEventListener("change", () => {
+    const targets = saveMacroTargets(currentMacroTargetInputs());
+    render(activeDate);
+    setSaveStatus(
+      `Makromål sparade: ${decimal(targets.protein)} g protein, ${decimal(targets.fatMin)}-${decimal(targets.fatMax)} g fett, ${decimal(targets.carbs)} g kolhydrater`
+    );
+  });
+
+  input?.addEventListener("input", () => {
+    saveMacroTargets(currentMacroTargetInputs());
     render(activeDate);
   });
 }
@@ -1304,11 +1389,21 @@ function queueCloudSync() {
 async function pushCloudData({ silent = false } = {}) {
   const syncCode = getSyncCode();
   if (!supabaseClient || !syncCode) return;
-  const { error } = await supabaseRpc("keto_sync_push", {
+  const payload = {
     sync_key: syncCode,
     profile_entries: getEntries(),
     profile_goal_weight: getGoalWeight(),
-  });
+    profile_macro_targets: getMacroTargets(),
+  };
+  let { error } = await supabaseRpc("keto_sync_push", payload);
+  if (error && /profile_macro_targets|function public\.keto_sync_push|Could not find the function/i.test(error.message || "")) {
+    const fallback = await supabaseRpc("keto_sync_push", {
+      sync_key: payload.sync_key,
+      profile_entries: payload.profile_entries,
+      profile_goal_weight: payload.profile_goal_weight,
+    });
+    error = fallback.error;
+  }
   if (error) {
     setSyncStatus(`Synkfel: ${error.message}`, true);
     return;
@@ -1336,6 +1431,9 @@ async function pullCloudData() {
     localStorage.setItem(goalKey, String(row.goal_weight));
   } else {
     localStorage.removeItem(goalKey);
+  }
+  if (row.macro_targets) {
+    localStorage.setItem(macroTargetsKey, JSON.stringify(normalizeMacroTargets(row.macro_targets)));
   }
   applyingRemoteData = false;
   const nextEntry = getEntries().at(-1) || emptyEntry();
@@ -1443,6 +1541,7 @@ document.querySelector("#importButton").addEventListener("click", () => {
     if (cleaned.length === 0) throw new Error("No dated entries");
     saveEntries(cleaned);
     if (imported.goalWeight) saveGoalWeight(imported.goalWeight);
+    if (imported.macroTargets) saveMacroTargets(imported.macroTargets);
     fillForm(cleaned.sort((a, b) => a.date.localeCompare(b.date)).at(-1));
     render();
     document.querySelector("#toolsNote").textContent = "Importerad data sparad i den här browsern.";
@@ -1455,12 +1554,13 @@ document.querySelector("#resetButton").addEventListener("click", () => {
   if (!window.confirm("Rensa din lokala data i den här browsern?")) return;
   localStorage.removeItem(storageKey);
   localStorage.removeItem(goalKey);
+  localStorage.removeItem(macroTargetsKey);
   fillForm(emptyEntry());
   render();
 });
 
 document.querySelector("#exportButton").addEventListener("click", async () => {
-  const payload = JSON.stringify({ entries: getEntries(), goalWeight: getGoalWeight() }, null, 2);
+  const payload = JSON.stringify({ entries: getEntries(), goalWeight: getGoalWeight(), macroTargets: getMacroTargets() }, null, 2);
   await navigator.clipboard.writeText(payload);
   document.querySelector("#coachLine").textContent = "Data kopierad. Den kan importeras i appen på en annan enhet.";
 });

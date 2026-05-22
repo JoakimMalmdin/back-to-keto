@@ -4,8 +4,12 @@ create table if not exists public.keto_sync_profiles (
   sync_key_hash text primary key,
   entries jsonb not null default '[]'::jsonb,
   goal_weight numeric,
+  macro_targets jsonb not null default '{"protein":140,"fatMin":140,"fatMax":150,"carbs":16}'::jsonb,
   updated_at timestamptz not null default now()
 );
+
+alter table public.keto_sync_profiles
+  add column if not exists macro_targets jsonb not null default '{"protein":140,"fatMin":140,"fatMax":150,"carbs":16}'::jsonb;
 
 alter table public.keto_sync_profiles enable row level security;
 
@@ -20,41 +24,49 @@ as $$
   select encode(extensions.digest(sync_key, 'sha256'), 'hex')
 $$;
 
+drop function if exists public.keto_sync_pull(text);
+
 create or replace function public.keto_sync_pull(sync_key text)
-returns table(entries jsonb, goal_weight numeric, updated_at timestamptz)
+returns table(entries jsonb, goal_weight numeric, macro_targets jsonb, updated_at timestamptz)
 language sql
 security definer
 set search_path = public
 as $$
-  select p.entries, p.goal_weight, p.updated_at
+  select p.entries, p.goal_weight, p.macro_targets, p.updated_at
   from public.keto_sync_profiles p
   where p.sync_key_hash = public.keto_sync_hash(sync_key);
 $$;
 
+drop function if exists public.keto_sync_push(text, jsonb, numeric);
+drop function if exists public.keto_sync_push(text, jsonb, numeric, jsonb);
+
 create or replace function public.keto_sync_push(
   sync_key text,
   profile_entries jsonb,
-  profile_goal_weight numeric
+  profile_goal_weight numeric,
+  profile_macro_targets jsonb default '{"protein":140,"fatMin":140,"fatMax":150,"carbs":16}'::jsonb
 )
 returns void
 language sql
 security definer
 set search_path = public
 as $$
-  insert into public.keto_sync_profiles (sync_key_hash, entries, goal_weight, updated_at)
+  insert into public.keto_sync_profiles (sync_key_hash, entries, goal_weight, macro_targets, updated_at)
   values (
     public.keto_sync_hash(sync_key),
     coalesce(profile_entries, '[]'::jsonb),
     profile_goal_weight,
+    coalesce(profile_macro_targets, '{"protein":140,"fatMin":140,"fatMax":150,"carbs":16}'::jsonb),
     now()
   )
   on conflict (sync_key_hash)
   do update set
     entries = excluded.entries,
     goal_weight = excluded.goal_weight,
+    macro_targets = excluded.macro_targets,
     updated_at = now();
 $$;
 
 revoke all on function public.keto_sync_hash(text) from public;
 grant execute on function public.keto_sync_pull(text) to anon, authenticated;
-grant execute on function public.keto_sync_push(text, jsonb, numeric) to anon, authenticated;
+grant execute on function public.keto_sync_push(text, jsonb, numeric, jsonb) to anon, authenticated;
