@@ -1115,9 +1115,14 @@ textarea {
   }
 
   .report-inline-button {
-    padding-inline: 5px;
-    font-size: 0.72rem;
+    min-height: 40px;
+    padding: 8px 4px;
+    border-radius: 8px;
+    color: var(--muted);
+    font-size: 0.8rem;
+    font-weight: 800;
     letter-spacing: 0;
+    line-height: 1.1;
   }
 
   .one-third-field {
