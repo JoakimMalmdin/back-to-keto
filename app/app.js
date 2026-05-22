@@ -3,7 +3,7 @@ const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
 const macroTargetsKey = "btk.keto.macroTargets.v1";
 const defaultMacroTargets = { proteinMin: 140, proteinMax: 140, fatMin: 140, fatMax: 150, carbsMin: 16, carbsMax: 16 };
-const appVersion = "133";
+const appVersion = "134";
 const appDisplayVersion = `v1.0 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -323,6 +323,13 @@ function macroKcalRange(targets = getMacroTargets()) {
 
 function roundedKcal(value) {
   return Math.round(value / 10) * 10;
+}
+
+function fatEnergyShareLabel(targets, kcalRange) {
+  const minShare = Math.round(((targets.fatMin * 9) / kcalRange.min) * 100);
+  const maxShare = Math.round(((targets.fatMax * 9) / kcalRange.max) * 100);
+  if (Number(targets.fatMin) === Number(targets.fatMax)) return `${minShare} %`;
+  return minShare === maxShare ? `${minShare} %` : `${minShare}-${maxShare} %`;
 }
 
 function targetRangeLabel(min, max) {
@@ -957,7 +964,7 @@ function render(selectedDate = activeDate) {
   const macroTargetKcalNote = document.querySelector("#macroTargetKcalNote");
   if (macroTargetKcalNote) {
     macroTargetKcalNote.textContent =
-      `Dessa makron ger ett uppskattat kaloriintag på ${roundedKcal(kcalRange.min)} till ${roundedKcal(kcalRange.max)} kcal.`;
+      `Dessa makron ger ett uppskattat kaloriintag på ${roundedKcal(kcalRange.min)} till ${roundedKcal(kcalRange.max)} kcal och ${fatEnergyShareLabel(targets, kcalRange)} av det totala kaloriintaget utgörs av fett.`;
   }
   const marker = macros.source === "manual" ? "" : "~";
   document.querySelector("#carbMetric").textContent = hasContent ? `${marker}${decimal(macros.carbs)} g` : "--";
