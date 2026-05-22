@@ -3,7 +3,7 @@ const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
 const macroTargetsKey = "btk.keto.macroTargets.v1";
 const defaultMacroTargets = { proteinMin: 140, proteinMax: 140, fatMin: 140, fatMax: 150, carbsMin: 16, carbsMax: 16 };
-const appVersion = "140";
+const appVersion = "141";
 const appDisplayVersion = `v1.0 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -1032,7 +1032,7 @@ function renderElectrolyteBreakdown(macros, hasContent) {
     .sort((a, b) => b.sodiumMg + b.potassiumMg + b.magnesiumMg - (a.sodiumMg + a.potassiumMg + a.magnesiumMg))
     .map((item) => {
       const count = Number.isInteger(item.count) ? item.count : decimal(item.count);
-      return `<div><strong>${item.label}</strong><span class="macro-count">${item.amountLabel || `x ${count}`}</span><span class="macro-value">${Math.round(item.sodiumMg)} mg Na</span><span class="macro-value">${Math.round(item.potassiumMg)} mg Ka</span><span class="macro-value">${Math.round(item.magnesiumMg)} mg Mg</span></div>`;
+      return `<div><strong>${item.label}</strong><span class="macro-count">${item.amountLabel || `x ${count}`}</span><span class="macro-value">Na ${Math.round(item.sodiumMg)}</span><span class="macro-value">Ka ${Math.round(item.potassiumMg)}</span><span class="macro-value">Mg ${Math.round(item.magnesiumMg)}</span></div>`;
     })
     .join("");
   breakdown.innerHTML = rows;

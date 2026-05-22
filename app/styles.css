@@ -880,13 +880,15 @@ textarea {
   font-weight: 850;
 }
 
-#macroBreakdown {
+#macroBreakdown,
+#electrolyteBreakdown {
   display: grid;
   gap: 7px;
   margin-top: 10px;
 }
 
-#macroBreakdown > div {
+#macroBreakdown > div,
+#electrolyteBreakdown > div {
   display: grid;
   grid-template-columns: minmax(120px, 1fr) 48px repeat(3, 64px);
   gap: 8px;
@@ -895,16 +897,20 @@ textarea {
   font-size: 0.78rem;
 }
 
-#macroBreakdown strong {
+#macroBreakdown strong,
+#electrolyteBreakdown strong {
   color: var(--ink);
 }
 
-#macroBreakdown span {
+#macroBreakdown span,
+#electrolyteBreakdown span {
   text-align: right;
 }
 
 #macroBreakdown .macro-count,
-#macroBreakdown .macro-value {
+#macroBreakdown .macro-value,
+#electrolyteBreakdown .macro-count,
+#electrolyteBreakdown .macro-value {
   white-space: nowrap;
 }
 
@@ -1137,18 +1143,22 @@ textarea {
     font-size: 0.95rem;
   }
 
-  #macroBreakdown > div {
+  #macroBreakdown > div,
+  #electrolyteBreakdown > div {
     display: block;
     padding: 7px 0;
   }
 
-  #macroBreakdown strong {
+  #macroBreakdown strong,
+  #electrolyteBreakdown strong {
     display: block;
     margin-bottom: 4px;
   }
 
   #macroBreakdown .macro-count,
-  #macroBreakdown .macro-value {
+  #macroBreakdown .macro-value,
+  #electrolyteBreakdown .macro-count,
+  #electrolyteBreakdown .macro-value {
     display: inline-block;
     margin-right: 10px;
     text-align: left;
@@ -1156,18 +1166,22 @@ textarea {
 }
 
 @media (hover: none) and (pointer: coarse) {
-  #macroBreakdown > div {
+  #macroBreakdown > div,
+  #electrolyteBreakdown > div {
     display: block;
     padding: 7px 0;
   }
 
-  #macroBreakdown strong {
+  #macroBreakdown strong,
+  #electrolyteBreakdown strong {
     display: block;
     margin-bottom: 4px;
   }
 
   #macroBreakdown .macro-count,
-  #macroBreakdown .macro-value {
+  #macroBreakdown .macro-value,
+  #electrolyteBreakdown .macro-count,
+  #electrolyteBreakdown .macro-value {
     display: inline-block;
     margin-right: 10px;
     text-align: left;
