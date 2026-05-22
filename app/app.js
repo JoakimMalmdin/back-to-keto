@@ -3,7 +3,7 @@ const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
 const macroTargetsKey = "btk.keto.macroTargets.v1";
 const defaultMacroTargets = { proteinMin: 140, proteinMax: 140, fatMin: 140, fatMax: 150, carbsMin: 16, carbsMax: 16 };
-const appVersion = "146";
+const appVersion = "147";
 const appDisplayVersion = `v1.0 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -878,7 +878,7 @@ function estimateMacros(entry) {
     fat: totals.fat * 9,
     carbs: totals.carbs * 4,
   };
-  const macroTotal = macroCalories.protein + macroCalories.fat + macroCalories.carbs + totals.alcohol || 1;
+  const macroTotal = macroCalories.protein + macroCalories.fat + macroCalories.carbs || 1;
 
   return {
     ...totals,
@@ -1234,6 +1234,13 @@ function render(selectedDate = activeDate) {
   const marker = macros.source === "manual" ? "" : "~";
   document.querySelector("#carbMetric").textContent = hasContent ? `${marker}${decimal(macros.carbs)} g` : "--";
   document.querySelector("#fatMetric").textContent = hasContent ? `${marker}${macros.fatPct}%` : "--";
+  const alcoholKcal = Math.round(macros.alcohol || 0);
+  const energyMetricLabel = document.querySelector("#energyMetricLabel");
+  if (energyMetricLabel) {
+    energyMetricLabel.textContent = hasContent
+      ? `Dagens energiintag (varav alkh. ${alcoholKcal} kcal)`
+      : "Dagens energiintag";
+  }
   document.querySelector("#energyMetric").textContent = hasContent ? `${marker}${Math.round(macros.kcal)} kcal` : "--";
   document.querySelector("#coachLine").textContent = hasContent
     ? coach(latest, macros, kind)
