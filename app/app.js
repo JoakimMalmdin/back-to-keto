@@ -2,8 +2,8 @@ const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
 const macroTargetsKey = "btk.keto.macroTargets.v1";
-const defaultMacroTargets = { protein: 140, fatMin: 140, fatMax: 150, carbs: 16 };
-const appVersion = "128";
+const defaultMacroTargets = { proteinMin: 140, proteinMax: 140, fatMin: 140, fatMax: 150, carbsMin: 16, carbsMax: 16 };
+const appVersion = "129";
 const appDisplayVersion = `v1.0 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -112,10 +112,12 @@ const fields = {
 };
 const goalInput = document.querySelector("#goalInput");
 const macroTargetInputs = {
-  protein: document.querySelector("#targetProteinInput"),
+  proteinMin: document.querySelector("#targetProteinMinInput"),
+  proteinMax: document.querySelector("#targetProteinMaxInput"),
   fatMin: document.querySelector("#targetFatMinInput"),
   fatMax: document.querySelector("#targetFatMaxInput"),
-  carbs: document.querySelector("#targetCarbsInput"),
+  carbsMin: document.querySelector("#targetCarbsMinInput"),
+  carbsMax: document.querySelector("#targetCarbsMaxInput"),
 };
 const syncCodeInput = document.querySelector("#syncCodeInput");
 const syncStatus = document.querySelector("#syncStatus");
@@ -274,13 +276,26 @@ function saveGoalWeight(value) {
 }
 
 function normalizeMacroTargets(targets = {}) {
+  const migrated = {
+    ...targets,
+    proteinMin: targets.proteinMin ?? targets.protein,
+    proteinMax: targets.proteinMax ?? targets.protein,
+    carbsMin: targets.carbsMin ?? targets.carbs,
+    carbsMax: targets.carbsMax ?? targets.carbs,
+  };
   const next = { ...defaultMacroTargets };
   for (const key of Object.keys(next)) {
-    const value = Number(targets[key]);
+    const value = Number(migrated[key]);
     if (Number.isFinite(value) && value > 0) next[key] = value;
+  }
+  if (next.proteinMax < next.proteinMin) {
+    [next.proteinMin, next.proteinMax] = [next.proteinMax, next.proteinMin];
   }
   if (next.fatMax < next.fatMin) {
     [next.fatMin, next.fatMax] = [next.fatMax, next.fatMin];
+  }
+  if (next.carbsMax < next.carbsMin) {
+    [next.carbsMin, next.carbsMax] = [next.carbsMax, next.carbsMin];
   }
   return next;
 }
@@ -301,9 +316,13 @@ function saveMacroTargets(targets) {
 }
 
 function macroKcalRange(targets = getMacroTargets()) {
-  const min = targets.protein * 4 + targets.fatMin * 9 + targets.carbs * 4;
-  const max = targets.protein * 4 + targets.fatMax * 9 + targets.carbs * 4;
+  const min = targets.proteinMin * 4 + targets.fatMin * 9 + targets.carbsMin * 4;
+  const max = targets.proteinMax * 4 + targets.fatMax * 9 + targets.carbsMax * 4;
   return { min, max };
+}
+
+function targetRangeLabel(min, max) {
+  return Number(min) === Number(max) ? decimal(min) : `${decimal(min)}-${decimal(max)}`;
 }
 
 function hasEntryContent(entry) {
@@ -686,9 +705,9 @@ function dinnerCompass(entry) {
   const macros = estimateMacros(beforeDinnerEntry);
   const completeProtein = fullProtein(macros);
   const collagen = collagenProtein(macros);
-  const proteinTarget = targets.protein;
+  const proteinTarget = targets.proteinMin;
   const proteinNeeded = Math.max(0, proteinTarget - completeProtein);
-  const carbRoom = Math.max(0, targets.carbs - macros.carbs);
+  const carbRoom = Math.max(0, targets.carbsMax - macros.carbs);
   const liters = parseLiters(entry.water || "");
   const symptoms = hasSymptomSignal(entry);
   const electrolyteGaps = [];
@@ -703,7 +722,7 @@ function dinnerCompass(entry) {
   }
 
   const proteinAdvice = proteinNeeded >= 35 ? `Protein: ca ${Math.round(proteinNeeded)} g kvar.` : "Protein: läget är okej.";
-  const carbAdvice = macros.carbs >= targets.carbs - 2 ? "Kolhydrater: håll middagen strikt." : `Kolhydrater: ca ${decimal(carbRoom)} g kvar.`;
+  const carbAdvice = macros.carbs >= targets.carbsMax - 2 ? "Kolhydrater: håll middagen strikt." : `Kolhydrater: ca ${decimal(carbRoom)} g kvar.`;
   const electrolyteAdvice = electrolyteGaps.length
     ? `Elektrolyter: ${electrolyteGaps.slice(0, 2).join("; ")}.`
     : "Elektrolyter: tydliga signaler finns redan.";
@@ -714,8 +733,8 @@ function dinnerCompass(entry) {
 
 function classify(entry, macros) {
   const targets = getMacroTargets();
-  if (macros.carbs <= targets.carbs && macros.fatPct >= 65) return "strikt keto";
-  if (macros.carbs <= targets.carbs + 10 && macros.fatPct >= 55) return "keto-ish";
+  if (macros.carbs <= targets.carbsMax && macros.fatPct >= 65) return "strikt keto";
+  if (macros.carbs <= targets.carbsMax + 10 && macros.fatPct >= 55) return "keto-ish";
   return "riskzon";
 }
 
@@ -925,10 +944,12 @@ function render(selectedDate = activeDate) {
   document.querySelector("#goalMetricLabel").textContent = goalWeight ? `Till målvikt ${decimal(goalWeight)} kg` : "Till målvikt";
   document.querySelector("#toGoal").textContent = latest.weight && goalWeight ? `${decimal(toGoal)} kg` : "--";
   if (goalInput) goalInput.value = goalWeight ? goalWeight : "";
-  if (macroTargetInputs.protein) macroTargetInputs.protein.value = targets.protein;
+  if (macroTargetInputs.proteinMin) macroTargetInputs.proteinMin.value = targets.proteinMin;
+  if (macroTargetInputs.proteinMax) macroTargetInputs.proteinMax.value = targets.proteinMax;
   if (macroTargetInputs.fatMin) macroTargetInputs.fatMin.value = targets.fatMin;
   if (macroTargetInputs.fatMax) macroTargetInputs.fatMax.value = targets.fatMax;
-  if (macroTargetInputs.carbs) macroTargetInputs.carbs.value = targets.carbs;
+  if (macroTargetInputs.carbsMin) macroTargetInputs.carbsMin.value = targets.carbsMin;
+  if (macroTargetInputs.carbsMax) macroTargetInputs.carbsMax.value = targets.carbsMax;
   const marker = macros.source === "manual" ? "" : "~";
   document.querySelector("#carbMetric").textContent = hasContent ? `${marker}${decimal(macros.carbs)} g` : "--";
   document.querySelector("#fatMetric").textContent = hasContent ? `${marker}${macros.fatPct}%` : "--";
@@ -950,12 +971,12 @@ function render(selectedDate = activeDate) {
   document.querySelector("#fatBar").style.width = `${Math.min(macros.fatPct, 100)}%`;
   document.querySelector("#proteinBar").style.width = `${Math.min(macros.proteinPct, 100)}%`;
   document.querySelector("#carbBar").style.width = `${Math.min(macros.carbPct, 100)}%`;
-  document.querySelector("#proteinGramBar").style.width = `${Math.min((macros.protein / targets.protein) * 100, 100)}%`;
+  document.querySelector("#proteinGramBar").style.width = `${Math.min((macros.protein / targets.proteinMax) * 100, 100)}%`;
   document.querySelector("#fatGramBar").style.width = `${Math.min((macros.fat / targets.fatMax) * 100, 100)}%`;
-  document.querySelector("#carbGramBar").style.width = `${Math.min((macros.carbs / targets.carbs) * 100, 100)}%`;
-  document.querySelector("#proteinTargetLabel").textContent = `Protein mot ${decimal(targets.protein)} g`;
-  document.querySelector("#fatTargetLabel").textContent = `Fett mot ${decimal(targets.fatMin)}-${decimal(targets.fatMax)} g`;
-  document.querySelector("#carbTargetLabel").textContent = `Kolhydrater mot ${decimal(targets.carbs)} g`;
+  document.querySelector("#carbGramBar").style.width = `${Math.min((macros.carbs / targets.carbsMax) * 100, 100)}%`;
+  document.querySelector("#proteinTargetLabel").textContent = `Protein mot ${targetRangeLabel(targets.proteinMin, targets.proteinMax)} g`;
+  document.querySelector("#fatTargetLabel").textContent = `Fett mot ${targetRangeLabel(targets.fatMin, targets.fatMax)} g`;
+  document.querySelector("#carbTargetLabel").textContent = `Kolhydrater mot ${targetRangeLabel(targets.carbsMin, targets.carbsMax)} g`;
   document.querySelector("#fatText").textContent = hasContent ? `${macros.fatPct}%` : "--";
   document.querySelector("#proteinText").textContent = hasContent ? `${macros.proteinPct}%` : "--";
   document.querySelector("#carbText").textContent = hasContent ? `${macros.carbPct}%` : "--";
@@ -967,7 +988,7 @@ function render(selectedDate = activeDate) {
       ? "Makron bygger på manuellt inmatade gram för fett, protein och kolhydrater."
       : macros.alcohol > 0
         ? "Övre staplarna visar kaloriprocent. Alkohol ger energi men visas inte som fett, protein eller kolhydrater."
-        : `Automatisk uppskattning. Personligt mål: ${decimal(targets.protein)} g protein, ${decimal(targets.fatMin)}-${decimal(targets.fatMax)} g fett, ${decimal(targets.carbs)} g kolhydrater (${Math.round(kcalRange.min / 10) * 10}-${Math.round(kcalRange.max / 10) * 10} kcal).`;
+        : `Automatisk uppskattning. Personligt mål: ${targetRangeLabel(targets.proteinMin, targets.proteinMax)} g protein, ${targetRangeLabel(targets.fatMin, targets.fatMax)} g fett, ${targetRangeLabel(targets.carbsMin, targets.carbsMax)} g kolhydrater (${Math.round(kcalRange.min / 10) * 10}-${Math.round(kcalRange.max / 10) * 10} kcal).`;
   renderMacroBreakdown(macros, hasContent);
   renderTrendChart(entries);
 
@@ -997,10 +1018,12 @@ function fillForm(entry) {
   }
   if (goalInput) goalInput.value = getGoalWeight() || "";
   const targets = getMacroTargets();
-  if (macroTargetInputs.protein) macroTargetInputs.protein.value = targets.protein;
+  if (macroTargetInputs.proteinMin) macroTargetInputs.proteinMin.value = targets.proteinMin;
+  if (macroTargetInputs.proteinMax) macroTargetInputs.proteinMax.value = targets.proteinMax;
   if (macroTargetInputs.fatMin) macroTargetInputs.fatMin.value = targets.fatMin;
   if (macroTargetInputs.fatMax) macroTargetInputs.fatMax.value = targets.fatMax;
-  if (macroTargetInputs.carbs) macroTargetInputs.carbs.value = targets.carbs;
+  if (macroTargetInputs.carbsMin) macroTargetInputs.carbsMin.value = targets.carbsMin;
+  if (macroTargetInputs.carbsMax) macroTargetInputs.carbsMax.value = targets.carbsMax;
 }
 
 function setSaveStatus(message, isError = false) {
@@ -1323,10 +1346,12 @@ if (goalInput) {
 
 function currentMacroTargetInputs() {
   return {
-    protein: macroTargetInputs.protein?.value,
+    proteinMin: macroTargetInputs.proteinMin?.value,
+    proteinMax: macroTargetInputs.proteinMax?.value,
     fatMin: macroTargetInputs.fatMin?.value,
     fatMax: macroTargetInputs.fatMax?.value,
-    carbs: macroTargetInputs.carbs?.value,
+    carbsMin: macroTargetInputs.carbsMin?.value,
+    carbsMax: macroTargetInputs.carbsMax?.value,
   };
 }
 
@@ -1335,7 +1360,7 @@ for (const input of Object.values(macroTargetInputs)) {
     const targets = saveMacroTargets(currentMacroTargetInputs());
     render(activeDate);
     setSaveStatus(
-      `Makromål sparade: ${decimal(targets.protein)} g protein, ${decimal(targets.fatMin)}-${decimal(targets.fatMax)} g fett, ${decimal(targets.carbs)} g kolhydrater`
+      `Makromål sparade: ${targetRangeLabel(targets.proteinMin, targets.proteinMax)} g protein, ${targetRangeLabel(targets.fatMin, targets.fatMax)} g fett, ${targetRangeLabel(targets.carbsMin, targets.carbsMax)} g kolhydrater`
     );
   });
 

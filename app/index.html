@@ -7,10 +7,10 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="BTK" />
     <title>Back to Keto</title>
-    <link rel="manifest" href="manifest.webmanifest?v=128" />
-    <link rel="icon" href="icon.svg?v=128" type="image/svg+xml" />
-    <link rel="apple-touch-icon" href="apple-touch-icon.png?v=128" />
-    <link rel="stylesheet" href="styles.css?v=128" />
+    <link rel="manifest" href="manifest.webmanifest?v=129" />
+    <link rel="icon" href="icon.svg?v=129" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png?v=129" />
+    <link rel="stylesheet" href="styles.css?v=129" />
   </head>
   <body>
     <div class="app-shell">
@@ -18,7 +18,7 @@
         <div>
           <p class="eyebrow">Back to Keto</p>
           <h1>Daglig keto-logg</h1>
-          <p class="version-pill">v1.0 beta · build 128</p>
+          <p class="version-pill">v1.0 beta · build 129</p>
         </div>
         <button class="icon-button" id="exportButton" type="button" aria-label="Exportera data">
           <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" /></svg>
@@ -94,10 +94,14 @@
             <details class="manual-macros macro-target-settings">
               <summary>Personliga makromål</summary>
               <p class="mini-note">Används av makrostaplar, keto-bedömning och Middagskompass. Justera protein när träningen ökar.</p>
-              <div class="four-col">
+              <div class="three-col">
                 <label>
-                  Protein g
-                  <input id="targetProteinInput" type="number" step="1" inputmode="numeric" />
+                  Protein min g
+                  <input id="targetProteinMinInput" type="number" step="1" inputmode="numeric" />
+                </label>
+                <label>
+                  Protein max g
+                  <input id="targetProteinMaxInput" type="number" step="1" inputmode="numeric" />
                 </label>
                 <label>
                   Fett min g
@@ -108,8 +112,12 @@
                   <input id="targetFatMaxInput" type="number" step="1" inputmode="numeric" />
                 </label>
                 <label>
-                  Kolh. g
-                  <input id="targetCarbsInput" type="number" step="1" inputmode="numeric" />
+                  Kolh. min g
+                  <input id="targetCarbsMinInput" type="number" step="1" inputmode="numeric" />
+                </label>
+                <label>
+                  Kolh. max g
+                  <input id="targetCarbsMaxInput" type="number" step="1" inputmode="numeric" />
                 </label>
               </div>
             </details>
@@ -482,6 +490,6 @@
       </main>
     </div>
 
-    <script src="app.js?v=128" type="module"></script>
+    <script src="app.js?v=129" type="module"></script>
   </body>
 </html>

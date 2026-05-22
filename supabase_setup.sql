@@ -4,12 +4,12 @@ create table if not exists public.keto_sync_profiles (
   sync_key_hash text primary key,
   entries jsonb not null default '[]'::jsonb,
   goal_weight numeric,
-  macro_targets jsonb not null default '{"protein":140,"fatMin":140,"fatMax":150,"carbs":16}'::jsonb,
+  macro_targets jsonb not null default '{"proteinMin":140,"proteinMax":140,"fatMin":140,"fatMax":150,"carbsMin":16,"carbsMax":16}'::jsonb,
   updated_at timestamptz not null default now()
 );
 
 alter table public.keto_sync_profiles
-  add column if not exists macro_targets jsonb not null default '{"protein":140,"fatMin":140,"fatMax":150,"carbs":16}'::jsonb;
+  add column if not exists macro_targets jsonb not null default '{"proteinMin":140,"proteinMax":140,"fatMin":140,"fatMax":150,"carbsMin":16,"carbsMax":16}'::jsonb;
 
 alter table public.keto_sync_profiles enable row level security;
 
@@ -44,7 +44,7 @@ create or replace function public.keto_sync_push(
   sync_key text,
   profile_entries jsonb,
   profile_goal_weight numeric,
-  profile_macro_targets jsonb default '{"protein":140,"fatMin":140,"fatMax":150,"carbs":16}'::jsonb
+  profile_macro_targets jsonb default '{"proteinMin":140,"proteinMax":140,"fatMin":140,"fatMax":150,"carbsMin":16,"carbsMax":16}'::jsonb
 )
 returns void
 language sql
@@ -56,7 +56,7 @@ as $$
     public.keto_sync_hash(sync_key),
     coalesce(profile_entries, '[]'::jsonb),
     profile_goal_weight,
-    coalesce(profile_macro_targets, '{"protein":140,"fatMin":140,"fatMax":150,"carbs":16}'::jsonb),
+    coalesce(profile_macro_targets, '{"proteinMin":140,"proteinMax":140,"fatMin":140,"fatMax":150,"carbsMin":16,"carbsMax":16}'::jsonb),
     now()
   )
   on conflict (sync_key_hash)
