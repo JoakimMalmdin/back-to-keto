@@ -182,8 +182,6 @@ main {
 }
 
 .dinner-compass {
-  display: grid;
-  gap: 6px;
   margin-top: 12px;
   padding: 12px;
   border: 1px solid color-mix(in srgb, var(--leaf) 28%, var(--line));
@@ -194,17 +192,24 @@ main {
   line-height: 1.4;
 }
 
-.dinner-compass:empty {
+.dinner-compass[hidden] {
   display: none;
 }
 
-.dinner-compass strong {
-  font-size: 0.78rem;
-  letter-spacing: 0;
-  text-transform: uppercase;
+.dinner-compass summary {
+  color: var(--ink);
+  cursor: pointer;
+  font-weight: 700;
+  list-style-position: outside;
 }
 
-.dinner-compass span {
+.dinner-compass summary::marker,
+.dinner-compass summary::-webkit-details-marker {
+  color: var(--leaf-strong);
+}
+
+.dinner-compass p {
+  margin: 8px 0 0;
   color: var(--muted);
 }
 

@@ -1,7 +1,7 @@
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
-const appVersion = "125";
+const appVersion = "126";
 const appDisplayVersion = `v1.0 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -13,7 +13,7 @@ const foodSignals = [
   { match: /makrill/i, kcal: 238, protein: 15, fat: 17.5, carbs: 4.9, servingGrams: 125, keto: 2 },
   { match: /aioli/i, kcal: 105, protein: 0.2, fat: 11.5, carbs: 0.4, servingGrams: 15, mskGrams: 15, keto: 2 },
   { match: /hollandaise(?:sås|sas)?/i, kcal: 80, protein: 0.2, fat: 8.5, carbs: 0.5, servingGrams: 15, mskGrams: 15, keto: 2 },
-  { match: /majonnäs|majonnas/i, kcal: 108, protein: 0.2, fat: 11.9, carbs: 0.2, servingGrams: 15, mskGrams: 15, keto: 2 },
+  { match: /majonnäs|majonnas/i, kcal: 108, protein: 0.2, fat: 11.9, carbs: 0.2, servingGrams: 15, mskGrams: 15, tskGrams: 5, keto: 2 },
   { match: /pesto/i, kcal: 70, protein: 0.8, fat: 7, carbs: 1, servingGrams: 15, mskGrams: 15, keto: 1 },
   { match: /brie/i, kcal: 100, protein: 6, fat: 8, carbs: 0.1, servingGrams: 30, sliceGrams: 10, keto: 2 },
   { match: /cheddar/i, kcal: 120, protein: 7.5, fat: 10, carbs: 0.4, servingGrams: 30, sliceGrams: 10, keto: 2 },
@@ -623,15 +623,23 @@ function hasSymptomSignal(entry) {
 }
 
 function hasSodiumSignal(text) {
-  return /buljong|salt|seltin|pansalt|feta|halloumi|bacon|skinka|lax|sill|kaviar|salami|korv/i.test(text);
+  return /buljong|salt|saltar|saltat|seltin|pansalt|natrium|feta|halloumi|bacon|skinka|lax|sill|kaviar|salami|korv/i.test(text);
+}
+
+function hasPotassiumSignal(text) {
+  return /kalium|seltin|pansalt|avokado|avocado|spenat|lax|nötkött|notkott|nötfärs|notfars|köttfärs|kottfars|entrecote|svamp|champinjon|tomat|broccoli/i.test(text);
+}
+
+function hasMagnesiumSignal(text) {
+  return /magnesium|magnesiumglycinat|magnesiumcitrat|pumpakärnor|pumpakarnor|mandel|spenat|avokado|avocado|lax/i.test(text);
 }
 
 function dinnerCompass(entry) {
-  const beforeDinnerText = [entry.breakfast, entry.lunch, entry.extras].filter(Boolean).join(" ");
-  if (!beforeDinnerText.trim()) {
-    return "Logga frukost och/eller lunch så föreslår kompassen vad middagen bör komplettera med.";
+  if (!entry.lunch?.trim()) {
+    return null;
   }
 
+  const beforeDinnerText = [entry.breakfast, entry.lunch, entry.extras, entry.notes].filter(Boolean).join(" ");
   const beforeDinnerEntry = partialEntry(entry, ["breakfast", "lunch", "extras"]);
   const macros = estimateMacros(beforeDinnerEntry);
   const completeProtein = fullProtein(macros);
@@ -640,25 +648,26 @@ function dinnerCompass(entry) {
   const proteinNeeded = Math.max(0, proteinTarget - completeProtein);
   const carbRoom = Math.max(0, 20 - macros.carbs);
   const liters = parseLiters(entry.water || "");
-  const needsSodium = hasSymptomSignal(entry) || (Number.isFinite(liters) && liters < 1.5) || !hasSodiumSignal(beforeDinnerText);
+  const symptoms = hasSymptomSignal(entry);
+  const electrolyteGaps = [];
+  if (symptoms || (Number.isFinite(liters) && liters < 1.5) || !hasSodiumSignal(beforeDinnerText)) {
+    electrolyteGaps.push("natrium: buljong/salta maten, feta, halloumi, bacon, skinka, lax eller sill");
+  }
+  if (!hasPotassiumSignal(beforeDinnerText)) {
+    electrolyteGaps.push("kalium: avokado, spenat, lax, nötkött, svamp, tomat eller broccoli");
+  }
+  if (symptoms || !hasMagnesiumSignal(beforeDinnerText)) {
+    electrolyteGaps.push("magnesium: pumpakärnor, mandel, spenat, avokado, lax eller tillskott");
+  }
 
-  const proteinAdvice =
-    proteinNeeded >= 75
-      ? `Middagen bör ge cirka ${Math.round(proteinNeeded)} g fullvärdigt protein.`
-      : proteinNeeded >= 35
-        ? `Middagen bör ge minst ${Math.round(proteinNeeded)} g fullvärdigt protein.`
-        : "Proteinläget är hyggligt; middagen kan vara mer fett- och elektrolytfokuserad.";
-  const carbAdvice =
-    macros.carbs >= 18
-      ? "Håll middagen mycket kolhydratsnål."
-      : `Kolhydratutrymme kvar: cirka ${decimal(carbRoom)} g.`;
-  const sodiumAdvice = needsSodium
-    ? "Lägg gärna till natrium: buljong, salt, feta, halloumi, bacon, skinka, lax eller sill."
-    : "Natriumsignaler finns redan, men salta efter smak.";
-  const foodAdvice = "Bra middagsval: fläskkotlett, kyckling, tonfisk, lax, nötfärs eller ägg.";
-  const collagenAdvice = collagen > 0 ? ` Kollagen räknas separat (${decimal(collagen)} g) och ersätter inte fullvärdigt protein.` : "";
+  const proteinAdvice = proteinNeeded >= 35 ? `Protein: ca ${Math.round(proteinNeeded)} g kvar.` : "Protein: läget är okej.";
+  const carbAdvice = macros.carbs >= 18 ? "Kolhydrater: håll middagen strikt." : `Kolhydrater: ca ${decimal(carbRoom)} g kvar.`;
+  const electrolyteAdvice = electrolyteGaps.length
+    ? `Elektrolyter: ${electrolyteGaps.slice(0, 2).join("; ")}.`
+    : "Elektrolyter: tydliga signaler finns redan.";
+  const collagenAdvice = collagen > 0 ? ` Kollagen (${decimal(collagen)} g) räknas inte som fullvärdigt protein.` : "";
 
-  return `<strong>Middagskompass</strong><span>Hittills: ${decimal(completeProtein)} g fullvärdigt protein, ${decimal(macros.carbs)} g kolhydrater, ca ${Math.round(macros.kcal)} kcal.${collagenAdvice} ${proteinAdvice} ${carbAdvice} ${sodiumAdvice} ${foodAdvice}</span>`;
+  return `${proteinAdvice} ${carbAdvice} ${electrolyteAdvice}${collagenAdvice}`;
 }
 
 function classify(entry, macros) {
@@ -879,8 +888,11 @@ function render(selectedDate = activeDate) {
     ? coach(latest, macros, kind)
     : "Fyll i dagens mat, vikt, sömn och vätska så börjar coachningen.";
   const compass = document.querySelector("#dinnerCompass");
+  const compassText = document.querySelector("#dinnerCompassText");
   if (compass) {
-    compass.innerHTML = hasContent ? dinnerCompass(latest) : "";
+    const compassMessage = hasContent ? dinnerCompass(latest) : null;
+    compass.hidden = !compassMessage;
+    if (compassText) compassText.textContent = compassMessage || "";
   }
 
   const badge = document.querySelector("#strictnessBadge");
@@ -901,7 +913,7 @@ function render(selectedDate = activeDate) {
       ? "Makron bygger på manuellt inmatade gram för fett, protein och kolhydrater."
       : macros.alcohol > 0
         ? "Övre staplarna visar kaloriprocent. Alkohol ger energi men visas inte som fett, protein eller kolhydrater."
-        : "Automatisk uppskattning: g/gram fungerar brett; dl för yoghurt, gräddfil och grädde; msk för majonnäs, bearnaise, smör, olivolja, färskost, ketchup och balsamico. Annars används normalportioner.";
+        : "Automatisk uppskattning: g/gram fungerar brett; dl för yoghurt, gräddfil och grädde; msk för majonnäs, bearnaise, smör, olivolja, färskost, ketchup och balsamico; tsk för majonnäs och kaviar. Annars används normalportioner.";
   renderMacroBreakdown(macros, hasContent);
   renderTrendChart(entries);
 
