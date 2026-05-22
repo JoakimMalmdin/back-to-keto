@@ -3,12 +3,74 @@ const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
 const macroTargetsKey = "btk.keto.macroTargets.v1";
 const defaultMacroTargets = { proteinMin: 140, proteinMax: 140, fatMin: 140, fatMax: 150, carbsMin: 16, carbsMax: 16 };
-const appVersion = "134";
+const appVersion = "135";
 const appDisplayVersion = `v1.0 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
 let cloudSyncTimer = null;
 let applyingRemoteData = false;
+
+const electrolyteKeywords = {
+  sodium: [
+    "salt",
+    "saltar",
+    "saltat",
+    "buljong",
+    "seltin",
+    "pansalt",
+    "natrium",
+    "feta",
+    "fetaost",
+    "halloumi",
+    "bacon",
+    "skinka",
+    "lax",
+    "sill",
+    "kaviar",
+    "salami",
+    "korv",
+  ],
+  potassium: [
+    "kalium",
+    "seltin",
+    "pansalt",
+    "avokado",
+    "avocado",
+    "spenat",
+    "lax",
+    "nötkött",
+    "notkott",
+    "nötfärs",
+    "notfars",
+    "köttfärs",
+    "kottfars",
+    "entrecote",
+    "svamp",
+    "champinjon",
+    "tomat",
+    "broccoli",
+  ],
+  magnesium: [
+    "magnesium",
+    "magnesiumglycinat",
+    "magnesiumcitrat",
+    "pumpakärnor",
+    "pumpakarnor",
+    "mandel",
+    "spenat",
+    "avokado",
+    "avocado",
+    "lax",
+  ],
+};
+
+const symptomKeywords = ["huvudvärk", "huvudvark", "kramp", "yrsel", "trött", "trott", "seg", "orkeslös", "orkeslos", "hjärtklappning", "hjartklappning"];
+
+const electrolyteSuggestions = {
+  sodium: "natrium: buljong/salta maten, feta, halloumi, bacon, skinka, lax eller sill",
+  potassium: "kalium: avokado, spenat, lax, nötkött, svamp, tomat eller broccoli",
+  magnesium: "magnesium: pumpakärnor, mandel, spenat, avokado, lax eller tillskott",
+};
 
 const foodSignals = [
   { match: /(^|[^a-zåäö])(?:ägg|agg)(?:[^a-zåäö]|$)/i, quantity: /(\d+(?:[,.]\d+)?)\s*(?:st\s*)?(?:(?:stekta?|kokta?|pocherade?|äggröra|aggrora)\s+){0,3}(?:ägg|agg)/gi, kcal: 70, protein: 6.2, fat: 5, carbs: 0.5, keto: 2 },
@@ -689,20 +751,17 @@ function parseLiters(text = "") {
   return Number.isFinite(value) ? value : null;
 }
 
+function hasKeywordSignal(text = "", keywords = []) {
+  const normalized = ` ${String(text).toLowerCase()} `;
+  return keywords.some((keyword) => normalized.includes(keyword.toLowerCase()));
+}
+
 function hasSymptomSignal(entry) {
-  return /huvudvärk|huvudvark|kramp|yrsel|trött|trott|seg|orkeslös|orkeslos/i.test(entry.notes || "");
+  return hasKeywordSignal(entry.notes || "", symptomKeywords);
 }
 
-function hasSodiumSignal(text) {
-  return /buljong|salt|saltar|saltat|seltin|pansalt|natrium|feta|halloumi|bacon|skinka|lax|sill|kaviar|salami|korv/i.test(text);
-}
-
-function hasPotassiumSignal(text) {
-  return /kalium|seltin|pansalt|avokado|avocado|spenat|lax|nötkött|notkott|nötfärs|notfars|köttfärs|kottfars|entrecote|svamp|champinjon|tomat|broccoli/i.test(text);
-}
-
-function hasMagnesiumSignal(text) {
-  return /magnesium|magnesiumglycinat|magnesiumcitrat|pumpakärnor|pumpakarnor|mandel|spenat|avokado|avocado|lax/i.test(text);
+function hasElectrolyteSignal(text, type) {
+  return hasKeywordSignal(text, electrolyteKeywords[type] || []);
 }
 
 function dinnerCompass(entry) {
@@ -722,14 +781,14 @@ function dinnerCompass(entry) {
   const liters = parseLiters(entry.water || "");
   const symptoms = hasSymptomSignal(entry);
   const electrolyteGaps = [];
-  if (symptoms || (Number.isFinite(liters) && liters < 1.5) || !hasSodiumSignal(beforeDinnerText)) {
-    electrolyteGaps.push("natrium: buljong/salta maten, feta, halloumi, bacon, skinka, lax eller sill");
+  if (symptoms || (Number.isFinite(liters) && liters < 1.5) || !hasElectrolyteSignal(beforeDinnerText, "sodium")) {
+    electrolyteGaps.push(electrolyteSuggestions.sodium);
   }
-  if (!hasPotassiumSignal(beforeDinnerText)) {
-    electrolyteGaps.push("kalium: avokado, spenat, lax, nötkött, svamp, tomat eller broccoli");
+  if (!hasElectrolyteSignal(beforeDinnerText, "potassium")) {
+    electrolyteGaps.push(electrolyteSuggestions.potassium);
   }
-  if (symptoms || !hasMagnesiumSignal(beforeDinnerText)) {
-    electrolyteGaps.push("magnesium: pumpakärnor, mandel, spenat, avokado, lax eller tillskott");
+  if (symptoms || !hasElectrolyteSignal(beforeDinnerText, "magnesium")) {
+    electrolyteGaps.push(electrolyteSuggestions.magnesium);
   }
 
   const proteinAdvice = proteinNeeded >= 35 ? `Protein: ca ${Math.round(proteinNeeded)} g kvar.` : "Protein: läget är okej.";
