@@ -106,6 +106,8 @@ function renderDaily(root) {
       <div><span>Vatten</span><strong>${escapeHtml(entry.water || "--")}</strong></div>
       <div><span>Kaffe</span><strong>${escapeHtml(entry.coffee || "--")}</strong></div>
       <div><span>Promenad</span><strong>${escapeHtml(entry.walk || "--")}</strong></div>
+      <div><span>Blodsocker</span><strong>${entry.bloodGlucose ? `${decimal(entry.bloodGlucose)} mmol/L` : "--"}</strong></div>
+      <div><span>Ketoner</span><strong>${entry.ketones ? `${decimal(entry.ketones)} mmol/L` : "--"}</strong></div>
     </section>
     <section>
       <h2>Måltider och makron</h2>
@@ -176,6 +178,8 @@ function renderWeekly(root) {
       <div><span>Typvärde promenad</span><strong>${escapeHtml(report.walkMode || "--")}</strong></div>
       <div><span>Vatten/dag</span><strong>${report.waterAverage === null ? "--" : `${decimal(report.waterAverage)} liter`}</strong></div>
       <div><span>Kaffe/dag</span><strong>${report.coffeeAverage === null ? "--" : `${decimal(report.coffeeAverage)} koppar`}</strong></div>
+      <div><span>Blodsocker snitt</span><strong>${report.bloodGlucoseAverage === null ? "--" : `${decimal(report.bloodGlucoseAverage)} mmol/L`}</strong></div>
+      <div><span>Ketoner snitt</span><strong>${report.ketonesAverage === null ? "--" : `${decimal(report.ketonesAverage)} mmol/L`}</strong></div>
     </section>
     <section>
       <h2>Medelvärde per måltid</h2>

@@ -18,7 +18,7 @@
         <div>
           <p class="eyebrow">Back to Keto</p>
           <h1>Daglig keto-logg</h1>
-          <p class="version-pill">v1.0 beta · build 147</p>
+          <p class="version-pill">v1.0 beta · build 148</p>
         </div>
         <button class="icon-button" id="exportButton" type="button" aria-label="Exportera data">
           <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" /></svg>
@@ -179,6 +179,17 @@
                   <label for="walkPlus60Input">+60 min</label>
                 </div>
               </fieldset>
+            </div>
+
+            <div class="two-col health-row">
+              <label>
+                Blodsocker mmol/L
+                <input id="bloodGlucoseInput" name="bloodGlucose" type="number" step="0.1" inputmode="decimal" placeholder="t.ex. 5,4" />
+              </label>
+              <label>
+                Ketoner mmol/L
+                <input id="ketonesInput" name="ketones" type="number" step="0.1" inputmode="decimal" placeholder="t.ex. 1,2" />
+              </label>
             </div>
 
             <details class="manual-macros">

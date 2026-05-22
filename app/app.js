@@ -3,7 +3,7 @@ const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
 const macroTargetsKey = "btk.keto.macroTargets.v1";
 const defaultMacroTargets = { proteinMin: 140, proteinMax: 140, fatMin: 140, fatMax: 150, carbsMin: 16, carbsMax: 16 };
-const appVersion = "147";
+const appVersion = "148";
 const appDisplayVersion = `v1.0 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -320,6 +320,8 @@ const fields = {
   water: document.querySelector("#waterInput"),
   coffee: document.querySelector("#coffeeInput"),
   walk: document.querySelectorAll('input[name="walk"]'),
+  bloodGlucose: document.querySelector("#bloodGlucoseInput"),
+  ketones: document.querySelector("#ketonesInput"),
   notes: document.querySelector("#notesInput"),
 };
 const goalInput = document.querySelector("#goalInput");
@@ -450,6 +452,8 @@ function emptyEntry(date = todayIso()) {
     water: "",
     coffee: "",
     walk: "",
+    bloodGlucose: "",
+    ketones: "",
     notes: "",
   };
 }
@@ -573,7 +577,7 @@ function formEntry() {
       input instanceof NodeList
         ? [...input].find((option) => option.checked)?.value || ""
         : input.value.trim();
-    entry[key] = ["weight", "fat", "protein", "carbs"].includes(key) && value ? Number(value) : value;
+    entry[key] = ["weight", "fat", "protein", "carbs", "bloodGlucose", "ketones"].includes(key) && value ? Number(value) : value;
   }
   entry.date ||= todayIso();
   return entry;
@@ -1474,6 +1478,8 @@ function weeklyReportData(year, week) {
   });
   const waterAverage = average(entries.map((entry) => numberFromFreeText(entry.water)));
   const coffeeAverage = average(entries.map((entry) => numberFromFreeText(entry.coffee)));
+  const bloodGlucoseAverage = average(entries.map((entry) => (entry.bloodGlucose === "" ? NaN : Number(entry.bloodGlucose))));
+  const ketonesAverage = average(entries.map((entry) => (entry.ketones === "" ? NaN : Number(entry.ketones))));
   const totals = rows.reduce(
     (sum, row) => ({
       kcal: sum.kcal + (row.kcal || 0),
@@ -1495,6 +1501,8 @@ function weeklyReportData(year, week) {
     walkMode: mode(entries.map((entry) => entry.walk || "Ingen")),
     waterAverage,
     coffeeAverage,
+    bloodGlucoseAverage,
+    ketonesAverage,
     generatedAt: nowStamp(),
     version: appDisplayVersion,
   };
