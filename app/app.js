@@ -3,7 +3,7 @@ const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
 const macroTargetsKey = "btk.keto.macroTargets.v1";
 const defaultMacroTargets = { proteinMin: 140, proteinMax: 140, fatMin: 140, fatMax: 150, carbsMin: 16, carbsMax: 16 };
-const appVersion = "149";
+const appVersion = "150";
 const appDisplayVersion = `v1.0 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -1838,6 +1838,11 @@ async function checkForAppUpdate() {
     const latestVersion = Number(latest?.version);
     const currentVersion = Number(appVersion);
     if (!latestVersion || latestVersion <= currentVersion) return;
+    const currentCacheVersion = Number(new URL(window.location.href).searchParams.get("cache"));
+    if (currentCacheVersion === latestVersion) {
+      document.querySelector(".version-pill").textContent = `${appDisplayVersion} · ladda om appen`;
+      return;
+    }
     const target = new URL("./", window.location.href);
     target.searchParams.set("cache", String(latestVersion));
     document.querySelector(".version-pill").textContent = `${appDisplayVersion} -> build ${latestVersion}`;
