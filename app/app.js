@@ -3,7 +3,7 @@ const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
 const macroTargetsKey = "btk.keto.macroTargets.v1";
 const defaultMacroTargets = { proteinMin: 140, proteinMax: 140, fatMin: 140, fatMax: 150, carbsMin: 16, carbsMax: 16 };
-const appVersion = "145";
+const appVersion = "146";
 const appDisplayVersion = `v1.0 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -122,7 +122,7 @@ const foodSignals = [
   { match: /jordnötter\s*saltade|jordnotter\s*saltade|jordnötter|jordnotter/i, kcal: 180, protein: 8, fat: 15, carbs: 4.5, servingGrams: 30, keto: 0 },
   { match: /mandel/i, kcal: 180, protein: 6.3, fat: 15, carbs: 2.7, potassiumMg: 220, magnesiumMg: 80, servingGrams: 30, keto: 1 },
   { match: /pumpakärnor|pumpakarnor/i, kcal: 170, protein: 9, fat: 14, carbs: 3, potassiumMg: 240, magnesiumMg: 160, servingGrams: 30, keto: 1 },
-  { match: /(?:1\s*glas\s*)?chianti\s*(?:15\s*cl)?/i, kcal: 125, protein: 0, fat: 0, carbs: 3, alcohol: 113, keto: 0 },
+  { match: /(?:\d+(?:[,.]\d+)?\s*glas\s*)?chianti\s*(?:\(?\s*\d+(?:[,.]\d+)?\s*x\s*15\s*cl\s*\)?)?|(?:\d+(?:[,.]\d+)?\s*x\s*)?15\s*cl\s*chianti/i, quantityFirst: true, quantity: [/(\d+(?:[,.]\d+)?)\s*glas\s*chianti/gi, /(\d+(?:[,.]\d+)?)\s*x\s*15\s*cl\s*chianti/gi, /chianti\s*\(?\s*(\d+(?:[,.]\d+)?)\s*x\s*15\s*cl\s*\)?/gi], kcal: 125, protein: 0, fat: 0, carbs: 3, alcohol: 113, keto: 0 },
   { match: /lätt\s*öl|latt\s*ol/i, kcal: 90, protein: 1, fat: 0, carbs: 10, alcohol: 28, keto: -1 },
   { match: /laxfilé\s*125\s*g|laxfile\s*125\s*g/i, kcal: 260, protein: 25, fat: 17, carbs: 0, potassiumMg: 450, magnesiumMg: 38, keto: 2 },
   { match: /avokado|avocado/i, kcal: 160, protein: 2, fat: 15, carbs: 2, potassiumMg: 970, magnesiumMg: 58, servingGrams: 100, keto: 2 },
@@ -698,7 +698,9 @@ function countSignal(text, signal) {
         const end = start + match[0].length;
         if (shouldSkipSignalMatch(text, signal, start, end)) continue;
         const amount = match.find((part, index) => index > 0 && part);
-        quantities.push(Number(amount?.replace(",", ".")));
+        const value = Number(amount?.replace(",", "."));
+        if (signal.quantityFirst && Number.isFinite(value) && value > 0) return { count: value, amountLabel: null };
+        quantities.push(value);
       }
     }
     const total = quantities.reduce((sum, value) => sum + (Number.isFinite(value) ? value : 0), 0);
