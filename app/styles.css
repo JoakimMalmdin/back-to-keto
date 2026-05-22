@@ -337,7 +337,7 @@ main {
 
 .report-actions {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
   margin-top: 14px;
 }
@@ -352,6 +352,20 @@ main {
   gap: 10px;
   min-width: 0;
   margin-top: 12px;
+}
+
+.weekly-checkin-panel {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid rgba(39, 74, 60, 0.16);
+  border-radius: 8px;
+  background: rgba(255, 252, 246, 0.72);
+}
+
+.weekly-checkin-panel[hidden] {
+  display: none;
 }
 
 .top-fields {

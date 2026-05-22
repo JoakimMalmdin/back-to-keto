@@ -18,7 +18,7 @@
         <div>
           <p class="eyebrow">Back to Keto</p>
           <h1>Daglig keto-logg</h1>
-          <p class="version-pill">v1.0 beta · build 150</p>
+          <p class="version-pill">v1.0 beta · build 151</p>
         </div>
         <button class="icon-button" id="exportButton" type="button" aria-label="Exportera data">
           <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" /></svg>
@@ -73,6 +73,49 @@
             <div class="report-actions">
               <button class="text-button report-inline-button" id="reportButton" type="button">Dagsrapport</button>
               <button class="text-button report-inline-button" id="weekReportButton" type="button">Veckorapport</button>
+              <button class="text-button report-inline-button" id="weeklyCheckinButton" type="button">Veckoincheckning</button>
+            </div>
+            <div class="weekly-checkin-panel" id="weeklyCheckinPanel" hidden>
+              <div class="three-col">
+                <label>
+                  Vikt söndag kg
+                  <input id="checkinWeightInput" type="number" step="0.1" inputmode="decimal" />
+                </label>
+                <label>
+                  Midjemått cm
+                  <input id="checkinWaistInput" type="number" step="0.1" inputmode="decimal" />
+                </label>
+                <label>
+                  Buk/navelmått cm
+                  <input id="checkinBellyInput" type="number" step="0.1" inputmode="decimal" />
+                </label>
+              </div>
+              <div class="four-col checkin-score-grid">
+                <label>
+                  Blodsocker
+                  <input id="checkinBloodGlucoseInput" type="number" step="0.1" inputmode="decimal" />
+                </label>
+                <label>
+                  Ketoner
+                  <input id="checkinKetonesInput" type="number" step="0.1" inputmode="decimal" />
+                </label>
+                <label>
+                  Energi 1-5
+                  <input id="checkinEnergyInput" type="number" min="1" max="5" step="1" inputmode="numeric" />
+                </label>
+                <label>
+                  Hunger/sug 1-5
+                  <input id="checkinCravingInput" type="number" min="1" max="5" step="1" inputmode="numeric" />
+                </label>
+              </div>
+              <label>
+                Veckonotering
+                <textarea id="checkinNotesInput" rows="2" placeholder="Vad funkade? Vad behöver justeras?"></textarea>
+              </label>
+              <div class="button-row">
+                <button class="secondary-button" id="saveWeeklyCheckinButton" type="button">Spara veckoincheckning</button>
+              </div>
+              <p class="note" id="weeklyCheckinStatus">Incheckningen sparas för veckan som valt datum tillhör.</p>
             </div>
             <form id="entryForm" class="entry-form">
             <div class="top-fields">

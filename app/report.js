@@ -141,6 +141,7 @@ function renderDaily(root) {
 
 function renderWeekly(root) {
   document.title = `Keto-veckorapport ${report.year}-v${String(report.week).padStart(2, "0")}`;
+  const checkin = report.checkin || {};
   const totals = report.totals || report.rows.reduce(
     (sum, row) => ({
       kcal: sum.kcal + (row.kcal || 0),
@@ -163,6 +164,22 @@ function renderWeekly(root) {
         </tr>`
     )
     .join("");
+  const hasCheckin = Object.values(checkin).some((value) => value !== "" && value !== null && value !== undefined);
+  const checkinSection = hasCheckin
+    ? `<section>
+        <h2>Veckoincheckning</h2>
+        <section class="summary" aria-label="Veckoincheckning">
+          <div><span>Vikt söndag</span><strong>${checkin.weight ? `${decimal(checkin.weight)} kg` : "--"}</strong></div>
+          <div><span>Midjemått</span><strong>${checkin.waist ? `${decimal(checkin.waist)} cm` : "--"}</strong></div>
+          <div><span>Buk/navel</span><strong>${checkin.belly ? `${decimal(checkin.belly)} cm` : "--"}</strong></div>
+          <div><span>Blodsocker</span><strong>${checkin.bloodGlucose ? `${decimal(checkin.bloodGlucose)} mmol/L` : "--"}</strong></div>
+          <div><span>Ketoner</span><strong>${checkin.ketones ? `${decimal(checkin.ketones)} mmol/L` : "--"}</strong></div>
+          <div><span>Energi</span><strong>${checkin.energy || "--"}</strong></div>
+          <div><span>Hunger/sug</span><strong>${checkin.craving || "--"}</strong></div>
+        </section>
+        ${checkin.notes ? `<p class="note">${escapeHtml(checkin.notes)}</p>` : ""}
+      </section>`
+    : "";
 
   root.innerHTML = `
     <header>
@@ -214,7 +231,8 @@ function renderWeekly(root) {
         </tfoot>
       </table>
       <p class="note">Måltidsmedelvärden räknas på de dagar i veckan där respektive måltidsfält har text. Vatten och kaffe räknas som medel per dag där värde är angivet.</p>
-    </section>`;
+    </section>
+    ${checkinSection}`;
 
   document.querySelector("#printButton").addEventListener("click", () => window.print());
 }

@@ -2,8 +2,9 @@ const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
 const macroTargetsKey = "btk.keto.macroTargets.v1";
+const weeklyCheckinsKey = "btk.keto.weeklyCheckins.v1";
 const defaultMacroTargets = { proteinMin: 140, proteinMax: 140, fatMin: 140, fatMax: 150, carbsMin: 16, carbsMax: 16 };
-const appVersion = "150";
+const appVersion = "151";
 const appDisplayVersion = `v1.0 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -342,6 +343,20 @@ const syncNowButton = document.querySelector("#syncNowButton");
 const quickSyncButton = document.querySelector("#quickSyncButton");
 const reportButton = document.querySelector("#reportButton");
 const weekReportButton = document.querySelector("#weekReportButton");
+const weeklyCheckinButton = document.querySelector("#weeklyCheckinButton");
+const saveWeeklyCheckinButton = document.querySelector("#saveWeeklyCheckinButton");
+const weeklyCheckinPanel = document.querySelector("#weeklyCheckinPanel");
+const weeklyCheckinStatus = document.querySelector("#weeklyCheckinStatus");
+const weeklyCheckinInputs = {
+  weight: document.querySelector("#checkinWeightInput"),
+  waist: document.querySelector("#checkinWaistInput"),
+  belly: document.querySelector("#checkinBellyInput"),
+  bloodGlucose: document.querySelector("#checkinBloodGlucoseInput"),
+  ketones: document.querySelector("#checkinKetonesInput"),
+  energy: document.querySelector("#checkinEnergyInput"),
+  craving: document.querySelector("#checkinCravingInput"),
+  notes: document.querySelector("#checkinNotesInput"),
+};
 const printTrendButton = document.querySelector("#printTrendButton");
 const saveTrendPngButton = document.querySelector("#saveTrendPngButton");
 const trendModeInput = document.querySelector("#trendModeInput");
@@ -472,6 +487,62 @@ function getEntries() {
 function saveEntries(entries) {
   localStorage.setItem(storageKey, JSON.stringify(entries));
   queueCloudSync();
+}
+
+function getWeeklyCheckins() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(weeklyCheckinsKey) || "{}");
+    return stored && typeof stored === "object" && !Array.isArray(stored) ? stored : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveWeeklyCheckins(checkins) {
+  localStorage.setItem(weeklyCheckinsKey, JSON.stringify(checkins || {}));
+  queueCloudSync();
+}
+
+function currentWeekKey() {
+  return weekInputFromDate(fields.date?.value || activeDate || todayIso());
+}
+
+function numberInputValue(input) {
+  const value = input?.value?.trim() || "";
+  return value ? Number(value) : "";
+}
+
+function fillWeeklyCheckin(weekKey = currentWeekKey()) {
+  const checkin = getWeeklyCheckins()[weekKey] || {};
+  if (weeklyCheckinInputs.weight) weeklyCheckinInputs.weight.value = checkin.weight ?? "";
+  if (weeklyCheckinInputs.waist) weeklyCheckinInputs.waist.value = checkin.waist ?? "";
+  if (weeklyCheckinInputs.belly) weeklyCheckinInputs.belly.value = checkin.belly ?? "";
+  if (weeklyCheckinInputs.bloodGlucose) weeklyCheckinInputs.bloodGlucose.value = checkin.bloodGlucose ?? "";
+  if (weeklyCheckinInputs.ketones) weeklyCheckinInputs.ketones.value = checkin.ketones ?? "";
+  if (weeklyCheckinInputs.energy) weeklyCheckinInputs.energy.value = checkin.energy ?? "";
+  if (weeklyCheckinInputs.craving) weeklyCheckinInputs.craving.value = checkin.craving ?? "";
+  if (weeklyCheckinInputs.notes) weeklyCheckinInputs.notes.value = checkin.notes ?? "";
+  if (weeklyCheckinStatus) weeklyCheckinStatus.textContent = `Veckoincheckning för vecka ${weekKey}.`;
+}
+
+function saveCurrentWeeklyCheckin() {
+  const weekKey = currentWeekKey();
+  const checkins = getWeeklyCheckins();
+  checkins[weekKey] = {
+    week: weekKey,
+    weight: numberInputValue(weeklyCheckinInputs.weight),
+    waist: numberInputValue(weeklyCheckinInputs.waist),
+    belly: numberInputValue(weeklyCheckinInputs.belly),
+    bloodGlucose: numberInputValue(weeklyCheckinInputs.bloodGlucose),
+    ketones: numberInputValue(weeklyCheckinInputs.ketones),
+    energy: numberInputValue(weeklyCheckinInputs.energy),
+    craving: numberInputValue(weeklyCheckinInputs.craving),
+    notes: weeklyCheckinInputs.notes?.value?.trim() || "",
+    savedAt: nowStamp(),
+  };
+  saveWeeklyCheckins(checkins);
+  if (weeklyCheckinStatus) weeklyCheckinStatus.textContent = `Veckoincheckning sparad för vecka ${weekKey}.`;
+  setSaveStatus(`Veckoincheckning sparad för vecka ${weekKey}`);
 }
 
 function getGoalWeight() {
@@ -1455,6 +1526,8 @@ function entriesForWeek(year, week) {
 
 function weeklyReportData(year, week) {
   const { range, entries } = entriesForWeek(year, week);
+  const weekKey = `${year}-${String(week).padStart(2, "0")}`;
+  const checkin = getWeeklyCheckins()[weekKey] || null;
   const meals = [
     ["Frukost", "breakfast"],
     ["Lunch", "lunch"],
@@ -1495,6 +1568,7 @@ function weeklyReportData(year, week) {
     kind: "weekly",
     year,
     week,
+    checkin,
     range,
     days: entries.length,
     rows,
@@ -1538,6 +1612,14 @@ function openWeekReport() {
 
 reportButton?.addEventListener("click", openDailyReport);
 weekReportButton?.addEventListener("click", openWeekReport);
+weeklyCheckinButton?.addEventListener("click", () => {
+  if (!weeklyCheckinPanel) return;
+  const willOpen = weeklyCheckinPanel.hidden;
+  weeklyCheckinPanel.hidden = !willOpen;
+  weeklyCheckinButton?.classList.toggle("active", willOpen);
+  if (willOpen) fillWeeklyCheckin();
+});
+saveWeeklyCheckinButton?.addEventListener("click", saveCurrentWeeklyCheckin);
 
 function printTrendChart() {
   document.querySelector(".trend-panel details")?.setAttribute("open", "");
@@ -1628,6 +1710,7 @@ fields.date.addEventListener("change", () => {
   const date = fields.date.value || todayIso();
   const existing = findEntry(date);
   fillForm(existing || emptyEntry(date));
+  if (weeklyCheckinPanel && !weeklyCheckinPanel.hidden) fillWeeklyCheckin();
   updateTrendFilterState();
   render(date);
   setSaveStatus(existing ? `Visar sparad rad för ${date}` : `Ny tom rad för ${date}`);
@@ -1727,9 +1810,10 @@ async function pushCloudData({ silent = false } = {}) {
     profile_entries: getEntries(),
     profile_goal_weight: getGoalWeight(),
     profile_macro_targets: getMacroTargets(),
+    profile_weekly_checkins: getWeeklyCheckins(),
   };
   let { error } = await supabaseRpc("keto_sync_push", payload);
-  if (error && /profile_macro_targets|function public\.keto_sync_push|Could not find the function/i.test(error.message || "")) {
+  if (error && /profile_macro_targets|profile_weekly_checkins|function public\.keto_sync_push|Could not find the function/i.test(error.message || "")) {
     const fallback = await supabaseRpc("keto_sync_push", {
       sync_key: payload.sync_key,
       profile_entries: payload.profile_entries,
@@ -1767,6 +1851,9 @@ async function pullCloudData() {
   }
   if (row.macro_targets) {
     localStorage.setItem(macroTargetsKey, JSON.stringify(normalizeMacroTargets(row.macro_targets)));
+  }
+  if (row.weekly_checkins) {
+    saveWeeklyCheckins(row.weekly_checkins);
   }
   applyingRemoteData = false;
   const nextEntry = getEntries().at(-1) || emptyEntry();
@@ -1880,6 +1967,7 @@ document.querySelector("#importButton").addEventListener("click", () => {
     saveEntries(cleaned);
     if (imported.goalWeight) saveGoalWeight(imported.goalWeight);
     if (imported.macroTargets) saveMacroTargets(imported.macroTargets);
+    if (imported.weeklyCheckins) saveWeeklyCheckins(imported.weeklyCheckins);
     fillForm(cleaned.sort((a, b) => a.date.localeCompare(b.date)).at(-1));
     render();
     document.querySelector("#toolsNote").textContent = "Importerad data sparad i den här browsern.";
@@ -1893,12 +1981,13 @@ document.querySelector("#resetButton").addEventListener("click", () => {
   localStorage.removeItem(storageKey);
   localStorage.removeItem(goalKey);
   localStorage.removeItem(macroTargetsKey);
+  localStorage.removeItem(weeklyCheckinsKey);
   fillForm(emptyEntry());
   render();
 });
 
 document.querySelector("#exportButton").addEventListener("click", async () => {
-  const payload = JSON.stringify({ entries: getEntries(), goalWeight: getGoalWeight(), macroTargets: getMacroTargets() }, null, 2);
+  const payload = JSON.stringify({ entries: getEntries(), goalWeight: getGoalWeight(), macroTargets: getMacroTargets(), weeklyCheckins: getWeeklyCheckins() }, null, 2);
   await navigator.clipboard.writeText(payload);
   document.querySelector("#coachLine").textContent = "Data kopierad. Den kan importeras i appen på en annan enhet.";
 });
