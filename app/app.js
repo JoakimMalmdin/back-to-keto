@@ -3,7 +3,7 @@ const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
 const macroTargetsKey = "btk.keto.macroTargets.v1";
 const defaultMacroTargets = { proteinMin: 140, proteinMax: 140, fatMin: 140, fatMax: 150, carbsMin: 16, carbsMax: 16 };
-const appVersion = "136";
+const appVersion = "137";
 const appDisplayVersion = `v1.0 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -27,6 +27,8 @@ const electrolyteKeywords = {
     "lax",
     "sill",
     "kaviar",
+    "kalamata",
+    "oliver",
     "salami",
     "korv",
   ],
@@ -108,7 +110,8 @@ const foodSignals = [
   { label: "Köttfärsbit", match: /köttfärs\s*(?:bit|bitar|biff|biffar)|kottfars\s*(?:bit|bitar|biff|biffar)/i, skipBefore: /baconlindad(?:e)?\s*$/i, quantity: /(\d+(?:[,.]\d+)?)\s*(?:st\s*)?(?:köttfärs\s*(?:bit|bitar|biff|biffar)|kottfars\s*(?:bit|bitar|biff|biffar))/gi, kcal: 196, protein: 15.2, fat: 14.4, carbs: 0, servingGrams: 80, keto: 2 },
   { match: /nötfärs|notfars|köttfärs|kottfars/i, skipBefore: /baconlindad(?:e)?\s*$/i, skipAfter: /^\s*(?:bit|bitar|biff|biffar)/i, kcal: 245, protein: 19, fat: 18, carbs: 0, servingGrams: 100, keto: 2 },
   { match: /kycklingfil[eé]|kyckling\s*\(?\s*fil[eé](?:\s+utan\s+skinn)?\s*\)?|kycklingbröst|kycklingbrost/i, kcal: 165, protein: 31, fat: 3.6, carbs: 0, servingGrams: 100, keto: 1 },
-  { match: /tonfisk/i, kcal: 116, protein: 26, fat: 1, carbs: 0, servingGrams: 100, keto: 1 },
+  { label: "Tonfisk i vatten", match: /tonfisk(?:bitar)?\s+i\s+vatten|tonfisk.*vatten/i, kcal: 132, protein: 28.8, fat: 1.2, carbs: 0, servingGrams: 120, keto: 1 },
+  { match: /tonfisk/i, exclude: /tonfisk(?:bitar)?\s+i\s+vatten|tonfisk.*vatten/i, kcal: 116, protein: 26, fat: 1, carbs: 0, servingGrams: 100, keto: 1 },
   { match: /torsk/i, kcal: 82, protein: 18, fat: 0.7, carbs: 0, servingGrams: 100, keto: 1 },
   { match: /leverpastej/i, kcal: 95, protein: 3, fat: 8, carbs: 2.5, servingGrams: 30, keto: 0 },
   { match: /blodpudding/i, kcal: 215, protein: 9, fat: 8, carbs: 27, servingGrams: 100, keto: -2 },
@@ -122,6 +125,7 @@ const foodSignals = [
   { match: /laxfilé\s*125\s*g|laxfile\s*125\s*g/i, kcal: 260, protein: 25, fat: 17, carbs: 0, keto: 2 },
   { match: /avokado|avocado/i, kcal: 160, protein: 2, fat: 15, carbs: 2, servingGrams: 100, keto: 2 },
   { match: /olivolja|olive oil/i, kcal: 120, protein: 0, fat: 13.5, carbs: 0, servingGrams: 15, mskGrams: 15, keto: 2 },
+  { match: /kalamata(?:oliver)?|oliver|oliv(?!olja)/i, kcal: 11, protein: 0.1, fat: 1.1, carbs: 0, keto: 1 },
   { match: /(^|[^a-zåäö])(?:nötter|notter|valnöt|valnot|macadamia)(?:[^a-zåäö]|$)/i, kcal: 180, protein: 5, fat: 17, carbs: 3, servingGrams: 30, keto: 1 },
   { match: /påläggsskinka|palaggsskinka|skinka|kalkonpålägg|kalkonpalagg|kycklingpålägg|kycklingpalagg/i, quantity: [/(\d+(?:[,.]\d+)?)\s*(?:skivor?|skiva|st)\s*(?:påläggsskinka|palaggsskinka|skinka|kalkonpålägg|kalkonpalagg|kycklingpålägg|kycklingpalagg)/gi, /(?:påläggsskinka|palaggsskinka|skinka|kalkonpålägg|kalkonpalagg|kycklingpålägg|kycklingpalagg)\s*(\d+(?:[,.]\d+)?)\s*(?:skivor?|skiva|st)/gi], kcal: 30, protein: 5, fat: 1, carbs: 0.3, keto: 1 },
   { match: /kaviar/i, kcal: 18, protein: 0.4, fat: 1.6, carbs: 0.8, servingGrams: 5, tskGrams: 5, mskGrams: 15, keto: 0 },
@@ -149,6 +153,7 @@ const foodSignals = [
   { match: /bladgrönt|bladgront|sallad|ruccola/i, kcal: 20, protein: 2, fat: 0.3, carbs: 1.5, servingGrams: 100, keto: 1 },
   { match: /gurka/i, kcal: 15, protein: 0.7, fat: 0.1, carbs: 3, servingGrams: 100, keto: 1 },
   { match: /surkål|surkal|sauerkraut/i, kcal: 20, protein: 1, fat: 0.1, carbs: 2, servingGrams: 100, keto: 1 },
+  { match: /buljong(?:tärning|tarning)?|köttbuljong|kottbuljong/i, quantity: [/(\d+(?:[,.]\d+)?)\s*(?:st\s*)?(?:buljong)?(?:tärningar?|tarningar?)/gi, /(?:buljong(?:tärning|tarning)?|köttbuljong|kottbuljong)\s*(\d+(?:[,.]\d+)?)\s*(?:st|tärningar?|tarningar?)?/gi], kcal: 32, protein: 0.7, fat: 2.2, carbs: 2.3, keto: 1 },
   { match: /balsamico/i, kcal: 5, protein: 0, fat: 0, carbs: 1, servingGrams: 5, mskGrams: 15, keto: -1 },
   { match: /osötad\s+ketchup|osotad\s+ketchup|felix\s+(?:tomat)?ketchup\s+osötad|felix\s+(?:tomat)?ketchup\s+osotad/i, kcal: 7.5, protein: 0.2, fat: 0, carbs: 1.5, servingGrams: 15, mskGrams: 15, keto: 0 },
   { match: /ketchup/i, exclude: /osötad\s+ketchup|osotad\s+ketchup|felix\s+(?:tomat)?ketchup\s+osötad|felix\s+(?:tomat)?ketchup\s+osotad/i, kcal: 17, protein: 0.2, fat: 0, carbs: 4, servingGrams: 15, mskGrams: 15, keto: -1 },
@@ -607,6 +612,7 @@ function signalLabel(signal) {
     [/nötfärs|notfars|köttfärs|kottfars/, "Köttfärs/nötfärs"],
     [/påläggsskinka|palaggsskinka|skinka|kalkon|kycklingpålägg|kycklingpalagg/, "Påläggsskinka"],
     [/kyckling/, "Kycklingfilé"],
+    [/tonfisk.*vatten|vatten.*tonfisk/, "Tonfisk i vatten"],
     [/tonfisk/, "Tonfisk"],
     [/sill/, "Inlagd sill"],
     [/ost|gruyere|parmesan/, "Ost"],
@@ -622,6 +628,7 @@ function signalLabel(signal) {
     [/laxfil/, "Laxfilé"],
     [/avokado|avocado/, "Avokado"],
     [/olivolja|olive oil/, "Olivolja"],
+    [/kalamata|oliver|oliv/, "Kalamataoliver"],
     [/nötter|notter|valnöt|valnot|macadamia/, "Nötter"],
     [/pulled pork/, "Pulled pork"],
     [/kaviar/, "Kaviar"],
@@ -646,6 +653,7 @@ function signalLabel(signal) {
     [/bladgrönt|bladgront|sallad|ruccola/, "Bladgrönt"],
     [/gurka/, "Gurka"],
     [/surkål|surkal|sauerkraut/, "Surkål"],
+    [/buljong/, "Buljong"],
     [/balsamico/, "Balsamico"],
     [/osötad|osotad/, "Osötad ketchup"],
     [/ketchup/, "Ketchup"],
