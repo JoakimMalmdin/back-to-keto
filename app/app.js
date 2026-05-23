@@ -4,7 +4,7 @@ const syncCodeKey = "btk.keto.syncCode.v1";
 const macroTargetsKey = "btk.keto.macroTargets.v1";
 const weeklyCheckinsKey = "btk.keto.weeklyCheckins.v1";
 const defaultMacroTargets = { proteinMin: 140, proteinMax: 140, fatMin: 140, fatMax: 150, carbsMin: 16, carbsMax: 16 };
-const appVersion = "158";
+const appVersion = "159";
 const appDisplayVersion = `v1.0 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -175,6 +175,7 @@ const electrolyteSignalUpdates = [
   { label: "Brie", test: /brie/, sodiumMg: 189, potassiumMg: 45, magnesiumMg: 6 },
   { label: "Cheddar", test: /cheddar/, sodiumMg: 195, potassiumMg: 30, magnesiumMg: 8 },
   { label: "Crème fraiche", test: /fraiche/, sodiumMg: 35, potassiumMg: 90, magnesiumMg: 8 },
+  { label: "Fetaost", test: /fetaost|feta/, sodiumMg: 340, potassiumMg: 20, magnesiumMg: 6 },
   { label: "Färskost", test: /färskost|farskost|cream cheese/, sodiumMg: 380, potassiumMg: 130, magnesiumMg: 9 },
   { label: "Gouda", test: /gouda/, sodiumMg: 246, potassiumMg: 36, magnesiumMg: 9 },
   { label: "Grädde", test: /grädde|gradde/, sodiumMg: 9, potassiumMg: 23, magnesiumMg: 2 },
@@ -1132,18 +1133,19 @@ function renderElectrolyteBreakdown(macros, hasContent) {
     breakdown.textContent = "Elektrolyter beräknas inte från manuella makron.";
     return;
   }
-  const electrolyteItems = (macros.items || []).filter(
-    (item) => (item.sodiumMg || 0) > 0 || (item.potassiumMg || 0) > 0 || (item.magnesiumMg || 0) > 0
-  );
+  const electrolyteItems = macros.items || [];
   if (!electrolyteItems.length) {
-    breakdown.textContent = "Inga kända elektrolytvärden hittades i dagens text.";
+    breakdown.textContent = "Inga matposter beräknade ännu.";
     return;
   }
   const rows = electrolyteItems
     .sort(foodItemSort)
     .map((item) => {
       const count = Number.isInteger(item.count) ? item.count : decimal(item.count);
-      return `<div><strong>${item.label}</strong><span class="macro-count">${item.amountLabel || `x ${count}`}</span><span class="macro-value">Na ${Math.round(item.sodiumMg)}</span><span class="macro-value">Ka ${Math.round(item.potassiumMg)}</span><span class="macro-value">Mg ${Math.round(item.magnesiumMg)}</span></div>`;
+      const sodium = item.sodiumMg > 0 ? Math.round(item.sodiumMg) : "--";
+      const potassium = item.potassiumMg > 0 ? Math.round(item.potassiumMg) : "--";
+      const magnesium = item.magnesiumMg > 0 ? Math.round(item.magnesiumMg) : "--";
+      return `<div><strong>${item.label}</strong><span class="macro-count">${item.amountLabel || `x ${count}`}</span><span class="macro-value">Na ${sodium}</span><span class="macro-value">Ka ${potassium}</span><span class="macro-value">Mg ${magnesium}</span></div>`;
     })
     .join("");
   breakdown.innerHTML = rows;
