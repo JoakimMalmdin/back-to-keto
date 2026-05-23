@@ -4,7 +4,7 @@ const syncCodeKey = "btk.keto.syncCode.v1";
 const macroTargetsKey = "btk.keto.macroTargets.v1";
 const weeklyCheckinsKey = "btk.keto.weeklyCheckins.v1";
 const defaultMacroTargets = { proteinMin: 140, proteinMax: 140, fatMin: 140, fatMax: 150, carbsMin: 16, carbsMax: 16 };
-const appVersion = "155";
+const appVersion = "156";
 const appDisplayVersion = `v1.0 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -126,8 +126,8 @@ const foodSignals = [
   { match: /(?:\d+(?:[,.]\d+)?\s*glas\s*)?chianti\s*(?:\(?\s*\d+(?:[,.]\d+)?\s*x\s*15\s*cl\s*\)?)?|(?:\d+(?:[,.]\d+)?\s*x\s*)?15\s*cl\s*chianti/i, quantityFirst: true, quantity: [/(\d+(?:[,.]\d+)?)\s*glas\s*chianti/gi, /(\d+(?:[,.]\d+)?)\s*x\s*15\s*cl\s*chianti/gi, /chianti\s*\(?\s*(\d+(?:[,.]\d+)?)\s*x\s*15\s*cl\s*\)?/gi], kcal: 125, protein: 0, fat: 0, carbs: 3, alcohol: 113, keto: 0 },
   { match: /lätt\s*öl|latt\s*ol/i, kcal: 90, protein: 1, fat: 0, carbs: 10, alcohol: 28, keto: -1 },
   { match: /laxfilé\s*125\s*g|laxfile\s*125\s*g/i, kcal: 260, protein: 25, fat: 17, carbs: 0, potassiumMg: 450, magnesiumMg: 38, keto: 2 },
-  { match: /avokado|avocado/i, kcal: 160, protein: 2, fat: 15, carbs: 2, potassiumMg: 970, magnesiumMg: 58, servingGrams: 100, keto: 2 },
-  { match: /olivolja|olive oil/i, kcal: 120, protein: 0, fat: 13.5, carbs: 0, servingGrams: 15, mskGrams: 15, keto: 2 },
+  { match: /avokado|avocado/i, kcal: 320, protein: 4, fat: 30, carbs: 4, sodiumMg: 14, potassiumMg: 970, magnesiumMg: 58, servingGrams: 200, keto: 2 },
+  { match: /olivolja|olive oil/i, kcal: 120, protein: 0, fat: 13.5, carbs: 0, servingGrams: 15, mskGrams: 15, tskGrams: 5, keto: 2 },
   { match: /kalamata(?:oliver)?|oliver|oliv(?!olja)/i, kcal: 11, protein: 0.1, fat: 1.1, carbs: 0, sodiumMg: 52, keto: 1 },
   { match: /valnötter|valnotter|valnöt|valnot/i, kcal: 196, protein: 4.5, fat: 19.5, carbs: 4.2, sodiumMg: 1, potassiumMg: 132, magnesiumMg: 47, servingGrams: 30, keto: 1 },
   { match: /påläggsskinka|palaggsskinka|skinka|kalkonpålägg|kalkonpalagg|kycklingpålägg|kycklingpalagg/i, quantity: [/(\d+(?:[,.]\d+)?)\s*(?:skivor?|skiva|st)\s*(?:påläggsskinka|palaggsskinka|skinka|kalkonpålägg|kalkonpalagg|kycklingpålägg|kycklingpalagg)/gi, /(?:påläggsskinka|palaggsskinka|skinka|kalkonpålägg|kalkonpalagg|kycklingpålägg|kycklingpalagg)\s*(\d+(?:[,.]\d+)?)\s*(?:skivor?|skiva|st)/gi], kcal: 30, protein: 5, fat: 1, carbs: 0.3, sodiumMg: 250, potassiumMg: 70, magnesiumMg: 5, keto: 1 },
@@ -156,7 +156,8 @@ const foodSignals = [
   { match: /bladgrönt|bladgront|sallad|ruccola/i, kcal: 20, protein: 2, fat: 0.3, carbs: 1.5, servingGrams: 100, keto: 1 },
   { match: /gurka/i, kcal: 15, protein: 0.7, fat: 0.1, carbs: 3, servingGrams: 100, keto: 1 },
   { match: /surkål|surkal|sauerkraut/i, kcal: 20, protein: 1, fat: 0.1, carbs: 2, servingGrams: 100, keto: 1 },
-  { match: /seltin/i, quantity: [/(\d+(?:[,.]\d+)?)\s*tsk\s*seltin/gi, /seltin\s*(\d+(?:[,.]\d+)?)\s*tsk/gi], kcal: 0, protein: 0, fat: 0, carbs: 0, sodiumMg: 480, potassiumMg: 500, magnesiumMg: 24, keto: 1 },
+  { label: "Seltin", match: /(?:\d+(?:[,.]\d+)?\s*)?krm\s+seltin|seltin\s*(?:\d+(?:[,.]\d+)?\s*)?krm/i, quantity: [/(\d+(?:[,.]\d+)?)\s*krm\s+seltin/gi, /seltin\s*(\d+(?:[,.]\d+)?)\s*krm/gi], kcal: 0, protein: 0, fat: 0, carbs: 0, sodiumMg: 240, potassiumMg: 252, magnesiumMg: 12, keto: 1 },
+  { label: "Seltin", match: /(?:\d+(?:[,.]\d+)?\s*)?tsk\s+seltin|seltin\s*(?:\d+(?:[,.]\d+)?\s*)?tsk/i, quantity: [/(\d+(?:[,.]\d+)?)\s*tsk\s+seltin/gi, /seltin\s*(\d+(?:[,.]\d+)?)\s*tsk/gi], kcal: 0, protein: 0, fat: 0, carbs: 0, sodiumMg: 1200, potassiumMg: 1260, magnesiumMg: 61, keto: 1 },
   { label: "Magnesiumtablett", match: /(?:mg-?\s*)?magnesium(?:tablett|tabletter|tillskott)?|mg-?tablett/i, quantity: [/(\d+(?:[,.]\d+)?)\s*(?:st\s*)?magnesium(?:tabletter?|tillskott)?/gi, /(\d+(?:[,.]\d+)?)\s*(?:st\s*)?mg-?tabletter?/gi], kcal: 0, protein: 0, fat: 0, carbs: 0, magnesiumMg: 200, keto: 1 },
   { label: "Salt", match: /(?:\d+(?:[,.]\d+)?\s*)?krm\s+salt|salt\s*(?:\d+(?:[,.]\d+)?\s*)?krm/i, quantity: [/(\d+(?:[,.]\d+)?)\s*krm\s+salt/gi, /salt\s*(\d+(?:[,.]\d+)?)\s*krm/gi], kcal: 0, protein: 0, fat: 0, carbs: 0, sodiumMg: 460, keto: 1 },
   { label: "Salt", match: /(?:\d+(?:[,.]\d+)?\s*)?tsk\s+salt|salt\s*(?:\d+(?:[,.]\d+)?\s*)?tsk/i, quantity: [/(\d+(?:[,.]\d+)?)\s*tsk\s+salt/gi, /salt\s*(\d+(?:[,.]\d+)?)\s*tsk/gi], kcal: 0, protein: 0, fat: 0, carbs: 0, sodiumMg: 2300, keto: 1 },
@@ -189,7 +190,7 @@ const electrolyteSignalUpdates = [
   { label: "Smör", test: /smör|smor/, sodiumMg: 1, potassiumMg: 3, magnesiumMg: 0 },
   { label: "Yoghurt", test: /yoghurt|youghurt|yogurt/, sodiumMg: 45, potassiumMg: 160, magnesiumMg: 13 },
   { label: "Baconlindad köttfärsbit", test: /baconlindad/, sodiumMg: 600, potassiumMg: 280, magnesiumMg: 18 },
-  { label: "Benfri fläskkotlett", test: /kotlett/, sodiumMg: 65, potassiumMg: 380, magnesiumMg: 27 },
+  { label: "Benfri fläskkotlett", test: /kotlett/, sodiumMg: 81, potassiumMg: 475, magnesiumMg: 34 },
   { label: "Blodpudding", test: /blodpudding/, sodiumMg: 750, potassiumMg: 280, magnesiumMg: 28 },
   { label: "Collagen", test: /collagen|kollagen/, sodiumMg: 8, potassiumMg: 0, magnesiumMg: 0 },
   { label: "Entrecote", test: /entrecote|entrecôte/, sodiumMg: 90, potassiumMg: 480, magnesiumMg: 32 },
