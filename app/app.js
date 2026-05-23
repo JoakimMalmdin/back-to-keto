@@ -4,7 +4,7 @@ const syncCodeKey = "btk.keto.syncCode.v1";
 const macroTargetsKey = "btk.keto.macroTargets.v1";
 const weeklyCheckinsKey = "btk.keto.weeklyCheckins.v1";
 const defaultMacroTargets = { proteinMin: 140, proteinMax: 140, fatMin: 140, fatMax: 150, carbsMin: 16, carbsMax: 16 };
-const appVersion = "153";
+const appVersion = "154";
 const appDisplayVersion = `v1.0 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -275,11 +275,12 @@ const additionalFoodSignals = [
   { label: "Chiafrön", match: /chiafrön|chiafron/i, kcal: 73, protein: 2.6, fat: 4.7, carbs: 6.3, sodiumMg: 2, potassiumMg: 61, magnesiumMg: 50, servingGrams: 15, mskGrams: 15, keto: 0 },
   { label: "Hampafrön", match: /hampafrön|hampafron/i, kcal: 83, protein: 4.8, fat: 7.4, carbs: 1.4, sodiumMg: 1, potassiumMg: 180, magnesiumMg: 105, servingGrams: 15, mskGrams: 15, keto: 1 },
   { label: "Hasselnötter", match: /hasselnötter|hasselnotter/i, kcal: 188, protein: 4.5, fat: 18.3, carbs: 5.1, sodiumMg: 0, potassiumMg: 204, magnesiumMg: 49, servingGrams: 30, keto: 1 },
-  { label: "Linfrön", match: /linfrön|linfron/i, kcal: 80, protein: 2.7, fat: 6.3, carbs: 4.4, sodiumMg: 5, potassiumMg: 122, magnesiumMg: 59, servingGrams: 15, mskGrams: 15, keto: 0 },
+  { label: "Linfrön", match: /linfrön|linfron/i, kcal: 80, protein: 2.7, fat: 6.3, carbs: 4.4, sodiumMg: 5, potassiumMg: 122, magnesiumMg: 59, servingGrams: 15, mskGrams: 15, tskGrams: 5, keto: 0 },
   { label: "Macadamia", match: /macadamia/i, kcal: 215, protein: 2.4, fat: 22.8, carbs: 4.2, sodiumMg: 2, potassiumMg: 111, magnesiumMg: 39, servingGrams: 30, keto: 1 },
   { label: "Paranötter", match: /paranötter|paranotter/i, kcal: 33, protein: 0.7, fat: 3.3, carbs: 0.6, sodiumMg: 0, potassiumMg: 33, magnesiumMg: 19, servingGrams: 5, keto: 1 },
   { label: "Pekannötter", match: /pekannötter|pekannotter/i, kcal: 207, protein: 2.7, fat: 21.6, carbs: 4.2, sodiumMg: 0, potassiumMg: 123, magnesiumMg: 36, servingGrams: 30, keto: 1 },
   { label: "Sesamfrön", match: /sesamfrön|sesamfron/i, kcal: 86, protein: 2.7, fat: 7.5, carbs: 3.5, sodiumMg: 2, potassiumMg: 70, magnesiumMg: 53, servingGrams: 15, mskGrams: 15, keto: 0 },
+  { label: "Solrosfrön", match: /solrosfrön|solrosfron/i, kcal: 88, protein: 3.1, fat: 7.7, carbs: 3, sodiumMg: 1, potassiumMg: 97, magnesiumMg: 49, servingGrams: 15, mskGrams: 15, tskGrams: 5, keto: 0 },
   { label: "Hallon", match: /hallon/i, kcal: 52, protein: 1.2, fat: 0.7, carbs: 12, sodiumMg: 1, potassiumMg: 151, magnesiumMg: 22, servingGrams: 100, keto: -1 },
   { label: "Jordgubbar", match: /jordgubb/i, kcal: 32, protein: 0.7, fat: 0.3, carbs: 8, sodiumMg: 1, potassiumMg: 153, magnesiumMg: 13, servingGrams: 100, keto: -1 },
   { label: "Dijonsenap", match: /dijon|senap/i, kcal: 3, protein: 0.2, fat: 0.2, carbs: 0.3, sodiumMg: 85, potassiumMg: 7, magnesiumMg: 3, servingGrams: 5, tskGrams: 5, keto: 0 },
@@ -348,7 +349,7 @@ const saveWeeklyCheckinButton = document.querySelector("#saveWeeklyCheckinButton
 const weeklyCheckinPanel = document.querySelector("#weeklyCheckinPanel");
 const weeklyCheckinStatus = document.querySelector("#weeklyCheckinStatus");
 const weeklyCheckinInputs = {
-  weight: document.querySelector("#checkinWeightInput"),
+  averageWeight: document.querySelector("#checkinAverageWeightInput"),
   waist: document.querySelector("#checkinWaistInput"),
   belly: document.querySelector("#checkinBellyInput"),
   bloodGlucose: document.querySelector("#checkinBloodGlucoseInput"),
@@ -394,6 +395,8 @@ function numberFromText(value) {
     tio: 10,
   };
   if (Object.prototype.hasOwnProperty.call(words, normalized)) return words[normalized];
+  const fraction = normalized.match(/^(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)$/);
+  if (fraction && Number(fraction[2]) !== 0) return Number(fraction[1]) / Number(fraction[2]);
   const numeric = Number(normalized);
   return Number.isFinite(numeric) ? numeric : NaN;
 }
@@ -512,9 +515,17 @@ function numberInputValue(input) {
   return value ? Number(value) : "";
 }
 
+function weeklyAverageWeight(weekKey = currentWeekKey()) {
+  const parsed = parseWeekInput(weekKey);
+  if (!parsed) return null;
+  const { entries } = entriesForWeek(parsed.year, parsed.week);
+  return average(entries.map((entry) => (Number(entry.weight) > 0 ? Number(entry.weight) : NaN)));
+}
+
 function fillWeeklyCheckin(weekKey = currentWeekKey()) {
   const checkin = getWeeklyCheckins()[weekKey] || {};
-  if (weeklyCheckinInputs.weight) weeklyCheckinInputs.weight.value = checkin.weight ?? "";
+  const averageWeight = weeklyAverageWeight(weekKey);
+  if (weeklyCheckinInputs.averageWeight) weeklyCheckinInputs.averageWeight.value = averageWeight === null ? "" : decimal(averageWeight);
   if (weeklyCheckinInputs.waist) weeklyCheckinInputs.waist.value = checkin.waist ?? "";
   if (weeklyCheckinInputs.belly) weeklyCheckinInputs.belly.value = checkin.belly ?? "";
   if (weeklyCheckinInputs.bloodGlucose) weeklyCheckinInputs.bloodGlucose.value = checkin.bloodGlucose ?? "";
@@ -522,7 +533,10 @@ function fillWeeklyCheckin(weekKey = currentWeekKey()) {
   if (weeklyCheckinInputs.energy) weeklyCheckinInputs.energy.value = checkin.energy ?? "";
   if (weeklyCheckinInputs.craving) weeklyCheckinInputs.craving.value = checkin.craving ?? "";
   if (weeklyCheckinInputs.notes) weeklyCheckinInputs.notes.value = checkin.notes ?? "";
-  if (weeklyCheckinStatus) weeklyCheckinStatus.textContent = `Veckoincheckning för vecka ${weekKey}.`;
+  if (weeklyCheckinStatus) {
+    const weightText = averageWeight === null ? " Ingen vikt registrerad ännu." : ` Medelvikt: ${decimal(averageWeight)} kg.`;
+    weeklyCheckinStatus.textContent = `Veckoincheckning för vecka ${weekKey}.${weightText}`;
+  }
 }
 
 function saveCurrentWeeklyCheckin() {
@@ -530,7 +544,6 @@ function saveCurrentWeeklyCheckin() {
   const checkins = getWeeklyCheckins();
   checkins[weekKey] = {
     week: weekKey,
-    weight: numberInputValue(weeklyCheckinInputs.weight),
     waist: numberInputValue(weeklyCheckinInputs.waist),
     belly: numberInputValue(weeklyCheckinInputs.belly),
     bloodGlucose: numberInputValue(weeklyCheckinInputs.bloodGlucose),
@@ -541,7 +554,11 @@ function saveCurrentWeeklyCheckin() {
     savedAt: nowStamp(),
   };
   saveWeeklyCheckins(checkins);
-  if (weeklyCheckinStatus) weeklyCheckinStatus.textContent = `Veckoincheckning sparad för vecka ${weekKey}.`;
+  const averageWeight = weeklyAverageWeight(weekKey);
+  if (weeklyCheckinStatus) {
+    const weightText = averageWeight === null ? "" : ` Medelvikt: ${decimal(averageWeight)} kg.`;
+    weeklyCheckinStatus.textContent = `Veckoincheckning sparad för vecka ${weekKey}.${weightText}`;
+  }
   setSaveStatus(`Veckoincheckning sparad för vecka ${weekKey}`);
 }
 
@@ -679,11 +696,11 @@ function measuredAmount(text, signal) {
       }
     }
     if (signal.mskGrams) {
-      const beforeMsk = before.match(/(\d+(?:[,.]\d+)?)\s*msk(?:\s|[a-zåäö%])*$/i);
-      const afterMsk = after.match(/^(?:\s|[a-zåäö%]){0,18}(\d+(?:[,.]\d+)?)\s*msk/i);
+      const beforeMsk = before.match(/(\d+(?:[,.]\d+)?|\d+\s*\/\s*\d+)\s*msk(?:\s|[a-zåäö%])*$/i);
+      const afterMsk = after.match(/^(?:\s|[a-zåäö%]){0,18}(\d+(?:[,.]\d+)?|\d+\s*\/\s*\d+)\s*msk/i);
       const mskAmount = beforeMsk?.[1] || afterMsk?.[1];
       if (mskAmount) {
-        const msk = Number(mskAmount.replace(",", "."));
+        const msk = numberFromText(mskAmount);
         if (Number.isFinite(msk) && msk > 0) {
           count += (msk * signal.mskGrams) / signal.servingGrams;
           amounts.msk += msk;
@@ -692,11 +709,11 @@ function measuredAmount(text, signal) {
       }
     }
     if (signal.tskGrams) {
-      const beforeTsk = before.match(/(\d+(?:[,.]\d+)?)\s*tsk(?:\s|[a-zåäö%])*$/i);
-      const afterTsk = after.match(/^(?:\s|[a-zåäö%]){0,18}(\d+(?:[,.]\d+)?)\s*tsk/i);
+      const beforeTsk = before.match(/(\d+(?:[,.]\d+)?|\d+\s*\/\s*\d+)\s*tsk(?:\s|[a-zåäö%])*$/i);
+      const afterTsk = after.match(/^(?:\s|[a-zåäö%]){0,18}(\d+(?:[,.]\d+)?|\d+\s*\/\s*\d+)\s*tsk/i);
       const tskAmount = beforeTsk?.[1] || afterTsk?.[1];
       if (tskAmount) {
-        const tsk = Number(tskAmount.replace(",", "."));
+        const tsk = numberFromText(tskAmount);
         if (Number.isFinite(tsk) && tsk > 0) {
           count += (tsk * signal.tskGrams) / signal.servingGrams;
           amounts.tsk += tsk;
@@ -1417,6 +1434,7 @@ function saveCurrentEntry(options = {}) {
   saveEntries(entries);
   render(entry.date);
   fillForm(entry);
+  if (weeklyCheckinPanel && !weeklyCheckinPanel.hidden) fillWeeklyCheckin();
   if (options.silent) return;
   setSaveStatus(`Sparat ${nowStamp()} · dag ${entry.date}`);
 }
@@ -1528,6 +1546,7 @@ function weeklyReportData(year, week) {
   const { range, entries } = entriesForWeek(year, week);
   const weekKey = `${year}-${String(week).padStart(2, "0")}`;
   const checkin = getWeeklyCheckins()[weekKey] || null;
+  const weightAverage = average(entries.map((entry) => (Number(entry.weight) > 0 ? Number(entry.weight) : NaN)));
   const meals = [
     ["Frukost", "breakfast"],
     ["Lunch", "lunch"],
@@ -1569,6 +1588,7 @@ function weeklyReportData(year, week) {
     year,
     week,
     checkin,
+    weightAverage,
     range,
     days: entries.length,
     rows,

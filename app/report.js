@@ -169,7 +169,7 @@ function renderWeekly(root) {
     ? `<section>
         <h2>Veckoincheckning</h2>
         <section class="summary" aria-label="Veckoincheckning">
-          <div><span>Vikt söndag</span><strong>${checkin.weight ? `${decimal(checkin.weight)} kg` : "--"}</strong></div>
+          <div><span>Medelvikt aktuell vecka</span><strong>${Number.isFinite(report.weightAverage) ? `${decimal(report.weightAverage)} kg` : "--"}</strong></div>
           <div><span>Midjemått</span><strong>${checkin.waist ? `${decimal(checkin.waist)} cm` : "--"}</strong></div>
           <div><span>Buk/navel</span><strong>${checkin.belly ? `${decimal(checkin.belly)} cm` : "--"}</strong></div>
           <div><span>Blodsocker</span><strong>${checkin.bloodGlucose ? `${decimal(checkin.bloodGlucose)} mmol/L` : "--"}</strong></div>
