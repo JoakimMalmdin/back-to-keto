@@ -4,7 +4,7 @@ const syncCodeKey = "btk.keto.syncCode.v1";
 const macroTargetsKey = "btk.keto.macroTargets.v1";
 const weeklyCheckinsKey = "btk.keto.weeklyCheckins.v1";
 const defaultMacroTargets = { proteinMin: 140, proteinMax: 140, fatMin: 140, fatMax: 150, carbsMin: 16, carbsMax: 16 };
-const appVersion = "157";
+const appVersion = "158";
 const appDisplayVersion = `v1.0 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -158,7 +158,7 @@ const foodSignals = [
   { match: /surkål|surkal|sauerkraut/i, kcal: 20, protein: 1, fat: 0.1, carbs: 2, servingGrams: 100, keto: 1 },
   { label: "Seltin", match: /(?:\d+(?:[,.]\d+)?\s*)?krm\s+seltin|seltin\s*(?:\d+(?:[,.]\d+)?\s*)?krm/i, quantity: [/(\d+(?:[,.]\d+)?)\s*krm\s+seltin/gi, /seltin\s*(\d+(?:[,.]\d+)?)\s*krm/gi], kcal: 0, protein: 0, fat: 0, carbs: 0, sodiumMg: 240, potassiumMg: 252, magnesiumMg: 12, keto: 1 },
   { label: "Seltin", match: /(?:\d+(?:[,.]\d+)?\s*)?tsk\s+seltin|seltin\s*(?:\d+(?:[,.]\d+)?\s*)?tsk/i, quantity: [/(\d+(?:[,.]\d+)?)\s*tsk\s+seltin/gi, /seltin\s*(\d+(?:[,.]\d+)?)\s*tsk/gi], kcal: 0, protein: 0, fat: 0, carbs: 0, sodiumMg: 1200, potassiumMg: 1260, magnesiumMg: 61, keto: 1 },
-  { label: "Magnesiumtablett", match: /(?:mg-?\s*)?magnesium(?:tablett|tabletter|tillskott)?|mg-?tablett/i, quantity: [/(\d+(?:[,.]\d+)?)\s*(?:st\s*)?magnesium(?:tabletter?|tillskott)?/gi, /(\d+(?:[,.]\d+)?)\s*(?:st\s*)?mg-?tabletter?/gi], kcal: 0, protein: 0, fat: 0, carbs: 0, magnesiumMg: 200, keto: 1 },
+  { label: "Magnesiumtablett", match: /(?:mg-?\s*)?magnesium(?:tablett|tabletter|tillskott)?|mg-?tablett/i, quantity: [/(\d+(?:[,.]\d+)?)\s*(?:st\s*)?(?:tabletter?\s+)?magnesium(?:tabletter?|tillskott)?/gi, /(\d+(?:[,.]\d+)?)\s*(?:st\s*)?mg-?tabletter?/gi], kcal: 0, protein: 0, fat: 0, carbs: 0, magnesiumMg: 200, keto: 1 },
   { label: "Salt", match: /(?:\d+(?:[,.]\d+)?\s*)?krm\s+salt|salt\s*(?:\d+(?:[,.]\d+)?\s*)?krm/i, quantity: [/(\d+(?:[,.]\d+)?)\s*krm\s+salt/gi, /salt\s*(\d+(?:[,.]\d+)?)\s*krm/gi], kcal: 0, protein: 0, fat: 0, carbs: 0, sodiumMg: 460, keto: 1 },
   { label: "Salt", match: /(?:\d+(?:[,.]\d+)?\s*)?tsk\s+salt|salt\s*(?:\d+(?:[,.]\d+)?\s*)?tsk/i, quantity: [/(\d+(?:[,.]\d+)?)\s*tsk\s+salt/gi, /salt\s*(\d+(?:[,.]\d+)?)\s*tsk/gi], kcal: 0, protein: 0, fat: 0, carbs: 0, sodiumMg: 2300, keto: 1 },
   { match: /buljong(?:tärning|tarning)?|köttbuljong|kottbuljong/i, quantity: [/(\d+(?:[,.]\d+)?)\s*glas\s*(?:buljong|köttbuljong|kottbuljong)/gi, /(\d+(?:[,.]\d+)?)\s*(?:st\s*)?(?:buljong)?(?:tärningar?|tarningar?)/gi, /(?:buljong(?:tärning|tarning)?|köttbuljong|kottbuljong)\s*(\d+(?:[,.]\d+)?)\s*(?:st|tärningar?|tarningar?)?/gi], kcal: 32, protein: 0.7, fat: 2.2, carbs: 2.3, sodiumMg: 1100, keto: 1 },
@@ -769,7 +769,7 @@ function multiplierAmount(text, signal) {
     const before = text.slice(Math.max(0, start - 18), start);
     const after = text.slice(end, Math.min(text.length, end + 18));
     const beforeAmount = before.match(/(\d+(?:[,.]\d+)?|en|ett|två|tva|tre|fyra|fem|sex|sju|åtta|atta|nio|tio)\s*(?:x|st|stycken)?\s*$/i);
-    const afterAmount = after.match(/^\s*(?:x|st|stycken)?\s*(\d+(?:[,.]\d+)?|en|ett|två|tva|tre|fyra|fem|sex|sju|åtta|atta|nio|tio)(?!\s*(?:g|gram|dl|msk|%))/i);
+    const afterAmount = after.match(/^\s*(?:x|st|stycken)?\s*(\d+(?:[,.]\d+)?|en|ett|två|tva|tre|fyra|fem|sex|sju|åtta|atta|nio|tio)(?!\s*(?:g|gram|mg|dl|msk|%))/i);
     const amount = beforeAmount?.[1] || afterAmount?.[1];
     if (!amount) continue;
     const value = numberFromText(amount);
