@@ -53,15 +53,31 @@ Each food will have one record containing:
 The visible food list, macro totals and electrolyte totals must eventually be
 generated from the same record.
 
+## Language Architecture
+
+- There will be one nutrition catalogue, not one catalogue per language.
+- Nutrition values, sources, standard portions and coaching tags are
+  language-independent.
+- Each catalogue item stores translated display names and input aliases for
+  `sv-SE` and `en-GB`.
+- Categories use stable internal ids and translated display names.
+- Units use language-independent internal ids such as `tablespoon`, `teaspoon`,
+  `pinch` and `tin`, while accepting translated input aliases such as
+  `msk`/`tbsp`, `tsk`/`tsp`, `krm`/`pinch` and `burk`/`tin`.
+- UI copy is kept in locale dictionaries outside the nutrition values.
+- Historical Swedish diary text must remain parsable even when the interface is
+  displayed in English, and vice versa.
+
 ## Migration Stages
 
 1. Establish the catalog schema and migrate product labels already supplied by
    the user.
-2. Add official generic foods after source verification.
-3. Add unified quantity parsing and assumption reporting.
-4. Recalculate both macros and electrolytes from the catalog.
-5. Generate the visible food list from the catalog.
-6. Replace the old signal arrays only after regression tests pass.
+2. Establish `sv-SE`/`en-GB` localisation fields before further migration.
+3. Add official generic foods after source verification.
+4. Add unified quantity parsing and assumption reporting.
+5. Recalculate both macros and electrolytes from the catalog.
+6. Generate the visible food list from the catalog and selected locale.
+7. Replace the old signal arrays only after regression tests pass.
 
 ## Required Regression Inputs
 
@@ -72,3 +88,5 @@ generated from the same record.
 - `1 dl grekisk yoghurt, 2 björnbär, 2 röda vinbär`
 - `2 tabletter magnesium 200 mg`
 - `0,7 buljong, 1 avokado, 1 burk tonfisk i vatten, 1 tsk salt`
+- `2 eggs, 1 tbsp mayonnaise, 1 avocado`
+- `1 tin tuna in water, 1 tbsp mayonnaise`
