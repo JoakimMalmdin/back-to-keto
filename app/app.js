@@ -4,7 +4,7 @@ const syncCodeKey = "btk.keto.syncCode.v1";
 const macroTargetsKey = "btk.keto.macroTargets.v1";
 const weeklyCheckinsKey = "btk.keto.weeklyCheckins.v1";
 const defaultMacroTargets = { proteinMin: 140, proteinMax: 140, fatMin: 140, fatMax: 150, carbsMin: 16, carbsMax: 16 };
-const appVersion = "159";
+const appVersion = "164";
 const appDisplayVersion = `v1.0 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -97,6 +97,7 @@ const foodSignals = [
   { match: /salami/i, kcal: 120, protein: 7, fat: 10, carbs: 0.5, servingGrams: 30, keto: 1 },
   { match: /hamburgare\s*90\s*g/i, kcal: 230, protein: 17, fat: 18, carbs: 0, keto: 2 },
   { match: /hamburgare\s*150\s*g/i, kcal: 385, protein: 28, fat: 30, carbs: 0, keto: 2 },
+  { label: "Bratwurst 87% kött, kummin & vitlök", match: /bratwurst(?:\s*87\s*%?\s*(?:kött|kott))?(?:\s*(?:kummin\s*(?:&|och)\s*vitlök|kummin\s*(?:&|och)\s*vitlok))?/i, kcal: 280, protein: 13, fat: 24, carbs: 2.8, sodiumMg: 760, servingGrams: 100, keto: 1 },
   { match: /grillkorv\s*85\s*%?\s*(?:kött|kott)?/i, kcal: 260, protein: 12, fat: 23, carbs: 2, servingGrams: 100, keto: 1 },
   { match: /korv\s*75\s*%?\s*(?:kött|kott)?/i, exclude: /falukorv/i, kcal: 250, protein: 11, fat: 22, carbs: 4, servingGrams: 100, keto: 0 },
   { match: /gräddfil\s*12\s*%|graddfil\s*12\s*%/i, kcal: 135, protein: 3, fat: 12, carbs: 3.5, servingGrams: 100, dlGrams: 100, mskGrams: 15, keto: 1 },
@@ -250,7 +251,7 @@ const additionalFoodSignals = [
   { label: "Kokosolja", match: /kokosolja/i, kcal: 135, protein: 0, fat: 15, carbs: 0, sodiumMg: 0, potassiumMg: 0, magnesiumMg: 0, servingGrams: 15, mskGrams: 15, keto: 2 },
   { label: "MCT-olja", match: /mct-?olja/i, kcal: 120, protein: 0, fat: 13.5, carbs: 0, sodiumMg: 0, potassiumMg: 0, magnesiumMg: 0, servingGrams: 15, mskGrams: 15, keto: 2 },
   { label: "Tahini", match: /tahini|sesampasta/i, kcal: 89, protein: 2.6, fat: 8.1, carbs: 3.2, sodiumMg: 15, potassiumMg: 62, magnesiumMg: 14, servingGrams: 15, mskGrams: 15, keto: 0 },
-  { label: "Kvarg", match: /kvarg|quark/i, kcal: 65, protein: 12, fat: 0.2, carbs: 4, sodiumMg: 35, potassiumMg: 150, magnesiumMg: 12, servingGrams: 100, dlGrams: 100, keto: 0 },
+  { label: "Milbona magerkvarg", match: /kvarg|quark/i, kcal: 61, protein: 10, fat: 0.3, carbs: 4, sodiumMg: 56, potassiumMg: 150, magnesiumMg: 12, servingGrams: 100, dlGrams: 100, mskGrams: 15, keto: 0 },
   { label: "Skyr", match: /skyr/i, kcal: 60, protein: 11, fat: 0.2, carbs: 4, sodiumMg: 50, potassiumMg: 150, magnesiumMg: 11, servingGrams: 100, dlGrams: 100, keto: 0 },
   { label: "Anka", match: /anka|ankbröst|ankbrost/i, kcal: 337, protein: 19, fat: 28, carbs: 0, sodiumMg: 75, potassiumMg: 270, magnesiumMg: 17, servingGrams: 100, keto: 2 },
   { label: "Ankfett/ister", match: /ankfett|ister/i, kcal: 135, protein: 0, fat: 15, carbs: 0, sodiumMg: 0, potassiumMg: 0, magnesiumMg: 0, servingGrams: 15, mskGrams: 15, keto: 2 },
@@ -656,7 +657,7 @@ function baselineWeight(entries) {
 }
 
 function mealText(entry) {
-  return [entry.breakfast, entry.lunch, entry.dinner, entry.extras, entry.notes].filter(Boolean).join(" ");
+  return [entry.breakfast, entry.lunch, entry.dinner, entry.extras, entry.notes].filter(Boolean).join("\n");
 }
 
 function formEntry() {
@@ -685,8 +686,8 @@ function measuredAmount(text, signal) {
     const before = text.slice(Math.max(0, start - 24), start);
     const after = text.slice(end, Math.min(text.length, end + 24));
     if (signal.dlGrams) {
-      const beforeDl = before.match(/(\d+(?:[,.]\d+)?)\s*dl(?:\s|[a-zåäö%])*$/i);
-      const afterDl = after.match(/^(?:\s|[a-zåäö%]){0,18}(\d+(?:[,.]\d+)?)\s*dl/i);
+      const beforeDl = before.match(/(\d+(?:[,.]\d+)?)[ \t]*dl(?:[ \t]|[a-zåäö%])*$/i);
+      const afterDl = after.match(/^(?:[ \t]|[a-zåäö%]){0,18}(\d+(?:[,.]\d+)?)[ \t]*dl/i);
       const dlAmount = beforeDl?.[1] || afterDl?.[1];
       if (dlAmount) {
         const dl = Number(dlAmount.replace(",", "."));
@@ -698,8 +699,8 @@ function measuredAmount(text, signal) {
       }
     }
     if (signal.mskGrams) {
-      const beforeMsk = before.match(/(\d+(?:[,.]\d+)?|\d+\s*\/\s*\d+)\s*msk(?:\s|[a-zåäö%])*$/i);
-      const afterMsk = after.match(/^(?:\s|[a-zåäö%]){0,18}(\d+(?:[,.]\d+)?|\d+\s*\/\s*\d+)\s*msk/i);
+      const beforeMsk = before.match(/(\d+(?:[,.]\d+)?|\d+[ \t]*\/[ \t]*\d+)[ \t]*msk(?:[ \t]|[a-zåäö%])*$/i);
+      const afterMsk = after.match(/^(?:[ \t]|[a-zåäö%]){0,18}(\d+(?:[,.]\d+)?|\d+[ \t]*\/[ \t]*\d+)[ \t]*msk/i);
       const mskAmount = beforeMsk?.[1] || afterMsk?.[1];
       if (mskAmount) {
         const msk = numberFromText(mskAmount);
@@ -711,8 +712,8 @@ function measuredAmount(text, signal) {
       }
     }
     if (signal.tskGrams) {
-      const beforeTsk = before.match(/(\d+(?:[,.]\d+)?|\d+\s*\/\s*\d+)\s*tsk(?:\s|[a-zåäö%])*$/i);
-      const afterTsk = after.match(/^(?:\s|[a-zåäö%]){0,18}(\d+(?:[,.]\d+)?|\d+\s*\/\s*\d+)\s*tsk/i);
+      const beforeTsk = before.match(/(\d+(?:[,.]\d+)?|\d+[ \t]*\/[ \t]*\d+)[ \t]*tsk(?:[ \t]|[a-zåäö%])*$/i);
+      const afterTsk = after.match(/^(?:[ \t]|[a-zåäö%]){0,18}(\d+(?:[,.]\d+)?|\d+[ \t]*\/[ \t]*\d+)[ \t]*tsk/i);
       const tskAmount = beforeTsk?.[1] || afterTsk?.[1];
       if (tskAmount) {
         const tsk = numberFromText(tskAmount);
@@ -724,9 +725,9 @@ function measuredAmount(text, signal) {
       }
     }
     if (signal.sliceGrams) {
-      const beforeSlice = before.match(/(\d+(?:[,.]\d+)?|en|ett|två|tva|tre|fyra|fem|sex|sju|åtta|atta|nio|tio)\s*(?:[a-zåäö]*skivor?|[a-zåäö]*skiva)\s*$/i);
-      const beforeNumber = before.match(/(\d+(?:[,.]\d+)?|en|ett|två|tva|tre|fyra|fem|sex|sju|åtta|atta|nio|tio)\s*$/i);
-      const afterSlice = after.match(/^\s*s?(?:skivor?|skiva)/i);
+      const beforeSlice = before.match(/(\d+(?:[,.]\d+)?|en|ett|två|tva|tre|fyra|fem|sex|sju|åtta|atta|nio|tio)[ \t]*(?:[a-zåäö]*skivor?|[a-zåäö]*skiva)[ \t]*$/i);
+      const beforeNumber = before.match(/(\d+(?:[,.]\d+)?|en|ett|två|tva|tre|fyra|fem|sex|sju|åtta|atta|nio|tio)[ \t]*$/i);
+      const afterSlice = after.match(/^[ \t]*s?(?:skivor?|skiva)/i);
       const sliceAmount = beforeSlice?.[1] || (afterSlice ? beforeNumber?.[1] : null);
       if (sliceAmount) {
         const slices = numberFromText(sliceAmount);
@@ -737,8 +738,8 @@ function measuredAmount(text, signal) {
         }
       }
     }
-    const beforeAmount = before.match(/(\d+(?:[,.]\d+)?)\s*g(?:ram)?(?:\s|[a-zåäö%])*$/i);
-    const afterAmount = after.match(/^(?:\s|[a-zåäö%]){0,18}(\d+(?:[,.]\d+)?)\s*g(?:ram)?/i);
+    const beforeAmount = before.match(/(\d+(?:[,.]\d+)?)[ \t]*g(?:ram)?(?:[ \t]|[a-zåäö%])*$/i);
+    const afterAmount = after.match(/^(?:[ \t]|[a-zåäö%]){0,18}(\d+(?:[,.]\d+)?)[ \t]*g(?:ram)?/i);
     const amount = beforeAmount?.[1] || afterAmount?.[1];
     if (!amount) continue;
     const grams = Number(amount.replace(",", "."));
@@ -769,8 +770,8 @@ function multiplierAmount(text, signal) {
     if (shouldSkipSignalMatch(text, signal, start, end)) continue;
     const before = text.slice(Math.max(0, start - 18), start);
     const after = text.slice(end, Math.min(text.length, end + 18));
-    const beforeAmount = before.match(/(\d+(?:[,.]\d+)?|en|ett|två|tva|tre|fyra|fem|sex|sju|åtta|atta|nio|tio)\s*(?:x|st|stycken)?\s*$/i);
-    const afterAmount = after.match(/^\s*(?:x|st|stycken)?\s*(\d+(?:[,.]\d+)?|en|ett|två|tva|tre|fyra|fem|sex|sju|åtta|atta|nio|tio)(?!\s*(?:g|gram|mg|dl|msk|%))/i);
+    const beforeAmount = before.match(/(\d+(?:[,.]\d+)?|en|ett|två|tva|tre|fyra|fem|sex|sju|åtta|atta|nio|tio)[ \t]*(?:x|st|stycken)?[ \t]*$/i);
+    const afterAmount = after.match(/^[ \t]*(?:x|st|stycken)?[ \t]*(\d+(?:[,.]\d+)?|en|ett|två|tva|tre|fyra|fem|sex|sju|åtta|atta|nio|tio)(?![ \t]*(?:g|gram|mg|dl|msk|%))/i);
     const amount = beforeAmount?.[1] || afterAmount?.[1];
     if (!amount) continue;
     const value = numberFromText(amount);
@@ -779,6 +780,35 @@ function multiplierAmount(text, signal) {
     }
   }
   return count > 0 ? { count, amountLabel: null } : null;
+}
+
+function unsupportedMeasuredAmounts(text, signal) {
+  if (!signal.servingGrams) return [];
+  const matcher = new RegExp(signal.match.source, signal.match.flags.includes("g") ? signal.match.flags : `${signal.match.flags}g`);
+  const amount = String.raw`(?:\d+(?:[,.]\d+)?|\d+\s*\/\s*\d+|en|ett|två|tva|tre|fyra|fem|sex|sju|åtta|atta|nio|tio)`;
+  const units = [
+    { unit: "dl", pattern: String.raw`dl`, supported: Boolean(signal.dlGrams) },
+    { unit: "msk", pattern: String.raw`msk`, supported: Boolean(signal.mskGrams) },
+    { unit: "tsk", pattern: String.raw`tsk`, supported: Boolean(signal.tskGrams) },
+    { unit: "skiva/skivor", pattern: String.raw`skivor?|skiva`, supported: Boolean(signal.sliceGrams) },
+  ];
+  const unsupported = [];
+
+  for (const match of text.matchAll(matcher)) {
+    const start = match.index ?? 0;
+    const end = start + match[0].length;
+    if (shouldSkipSignalMatch(text, signal, start, end)) continue;
+    const before = text.slice(Math.max(0, start - 30), start);
+    const after = text.slice(end, Math.min(text.length, end + 30));
+    for (const definition of units) {
+      if (definition.supported) continue;
+      const beforeMeasure = before.match(new RegExp(`(${amount})[ \\t]*(?:${definition.pattern})[ \\t]*$`, "i"));
+      const afterMeasure = after.match(new RegExp(`^[ \\t]*(${amount})[ \\t]*(?:${definition.pattern})`, "i"));
+      if (beforeMeasure || afterMeasure) unsupported.push(definition.unit);
+    }
+  }
+
+  return [...new Set(unsupported)];
 }
 
 function countSignal(text, signal) {
@@ -800,10 +830,12 @@ function countSignal(text, signal) {
     const total = quantities.reduce((sum, value) => sum + (Number.isFinite(value) ? value : 0), 0);
     if (total > 0) return { count: total, amountLabel: null };
   }
+  const unsupportedMeasures = unsupportedMeasuredAmounts(text, signal);
   const measured = measuredAmount(text, signal);
-  if (measured) return measured;
+  if (measured) return { ...measured, unsupportedMeasures };
   const multiplier = multiplierAmount(text, signal);
-  if (multiplier) return multiplier;
+  if (multiplier) return { ...multiplier, unsupportedMeasures };
+  if (unsupportedMeasures.length) return { count: 0, amountLabel: null, unsupportedMeasures };
   const matcher = new RegExp(signal.match.source, "gi");
   const matches = [...text.matchAll(matcher)].filter((match) => {
     const start = match.index ?? 0;
@@ -833,6 +865,7 @@ function signalLabel(signal) {
     [/bearnaise|bearnie|bea/, "Bearnaise"],
     [/salami/, "Salami"],
     [/hamburgare/, "Hamburgare"],
+    [/bratwurst/, "Bratwurst 87% kött, kummin & vitlök"],
     [/grillkorv/, "Grillkorv 85%"],
     [/falukorv/, "Falukorv"],
     [/korv/, "Korv 75%"],
@@ -936,9 +969,13 @@ function estimateMacros(entry) {
   const text = mealText(entry);
   const totals = { kcal: 0, protein: 0, fat: 0, carbs: 0, alcohol: 0, sodiumMg: 0, potassiumMg: 0, magnesiumMg: 0, score: 0 };
   const items = [];
+  const unresolvedMeasures = [];
 
   for (const signal of foodSignals) {
-    const { count, amountLabel } = countSignal(text, signal);
+    const { count, amountLabel, unsupportedMeasures = [] } = countSignal(text, signal);
+    if (unsupportedMeasures.length) {
+      unresolvedMeasures.push(`${signalLabel(signal)} (${unsupportedMeasures.join(", ")})`);
+    }
     if (count > 0) {
       const item = {
         label: signalLabel(signal),
@@ -979,6 +1016,7 @@ function estimateMacros(entry) {
   return {
     ...totals,
     items,
+    unresolvedMeasures: [...new Set(unresolvedMeasures)],
     source: "estimate",
     proteinPct: Math.round((macroCalories.protein / macroTotal) * 100),
     fatPct: Math.round((macroCalories.fat / macroTotal) * 100),
@@ -1108,8 +1146,11 @@ function renderMacroBreakdown(macros, hasContent) {
     breakdown.textContent = "Makron är manuellt ifyllda för hela dagen.";
     return;
   }
+  const unresolvedText = macros.unresolvedMeasures?.length
+    ? `Inte beräknat: ${macros.unresolvedMeasures.join("; ")} saknar måttdefinition. Ange gram eller välj ett mått som finns i livsmedelslistan.`
+    : "";
   if (!macros.items?.length) {
-    breakdown.textContent = "Inga kända livsmedel hittades i dagens text.";
+    breakdown.textContent = unresolvedText || "Inga kända livsmedel hittades i dagens text.";
     return;
   }
   const rows = [...macros.items]
@@ -1119,7 +1160,7 @@ function renderMacroBreakdown(macros, hasContent) {
       return `<div><strong>${item.label}</strong><span class="macro-count">${item.amountLabel || `x ${count}`}</span><span class="macro-value">${decimal(item.fat)} g F</span><span class="macro-value">${decimal(item.protein)} g P</span><span class="macro-value">${decimal(item.carbs)} g K</span></div>`;
     })
     .join("");
-  breakdown.innerHTML = rows;
+  breakdown.innerHTML = `${unresolvedText ? `<p class="measure-warning">${unresolvedText}</p>` : ""}${rows}`;
 }
 
 function renderElectrolyteBreakdown(macros, hasContent) {
@@ -1339,8 +1380,11 @@ function render(selectedDate = activeDate) {
       : "Dagens energiintag";
   }
   document.querySelector("#energyMetric").textContent = hasContent ? `${marker}${Math.round(macros.kcal)} kcal` : "--";
+  const measureWarning = macros.unresolvedMeasures?.length
+    ? `Kontrollera mängd: ${macros.unresolvedMeasures.join("; ")} kunde inte beräknas och ingår inte i summeringen.`
+    : "";
   document.querySelector("#coachLine").textContent = hasContent
-    ? coach(latest, macros, kind)
+    ? measureWarning || coach(latest, macros, kind)
     : "Fyll i dagens mat, vikt, sömn och vätska så börjar coachningen.";
   const compass = document.querySelector("#dinnerCompass");
   const compassText = document.querySelector("#dinnerCompassText");
@@ -1380,6 +1424,8 @@ function render(selectedDate = activeDate) {
   document.querySelector("#macroNote").textContent =
     macros.source === "manual"
       ? "Makron bygger på manuellt inmatade gram för fett, protein och kolhydrater."
+      : measureWarning
+        ? measureWarning
       : macros.alcohol > 0
         ? "Övre staplarna visar kaloriprocent. Alkohol ger energi men visas inte som fett, protein eller kolhydrater."
         : `Automatisk uppskattning. Personligt mål: ${targetRangeLabel(targets.proteinMin, targets.proteinMax)} g protein, ${targetRangeLabel(targets.fatMin, targets.fatMax)} g fett, ${targetRangeLabel(targets.carbsMin, targets.carbsMax)} g kolhydrater (${roundedKcal(kcalRange.min)}-${roundedKcal(kcalRange.max)} kcal).`;
