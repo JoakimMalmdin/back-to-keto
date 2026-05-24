@@ -93,6 +93,9 @@ generated from the same record.
   `1 msk = 15 g` and `1 tsk = 5 g`.
 - When a conversion can be derived reliably from an existing kitchen measure,
   it may be offered in the parser and labelled as an assumption.
+- Volume measures are compatible within an item when a density conversion has
+  been defined, for example yoghurt with `1 dl = 100 g` may accept `1 tsk =
+  5 g` as a visible derived conversion.
 - If a requested measure cannot be converted safely for that food, the entry
   must be flagged as unresolved and excluded from totals rather than silently
   replaced by a standard portion.
@@ -107,6 +110,19 @@ generated from the same record.
 5. Recalculate both macros and electrolytes from the catalog.
 6. Generate the visible food list from the catalog and selected locale.
 7. Replace the old signal arrays only after regression tests pass.
+
+## Parser Foundation Implemented
+
+- `app/nutrition-parser.mjs` now resolves Swedish and British English aliases
+  against the canonical catalogue without importing values from the live
+  signal arrays.
+- Grams are always accepted. Declared measures are used directly, and
+  compatible volume measures may be calculated from a defined density with an
+  explicit `derived_measure` status.
+- Recognised foods with missing or unsupported quantities are returned as
+  unresolved and excluded from totals.
+- `app/nutrition-parser.test.mjs` protects the known quantity failures around
+  kvarg, yoghurt, cream, Seltin, tuna and mayonnaise.
 
 ## Required Regression Inputs
 
