@@ -4,7 +4,7 @@ const syncCodeKey = "btk.keto.syncCode.v1";
 const macroTargetsKey = "btk.keto.macroTargets.v1";
 const weeklyCheckinsKey = "btk.keto.weeklyCheckins.v1";
 const defaultMacroTargets = { proteinMin: 140, proteinMax: 140, fatMin: 140, fatMax: 150, carbsMin: 16, carbsMax: 16 };
-const appVersion = "161";
+const appVersion = "162";
 const appDisplayVersion = `v1.0 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -97,6 +97,7 @@ const foodSignals = [
   { match: /salami/i, kcal: 120, protein: 7, fat: 10, carbs: 0.5, servingGrams: 30, keto: 1 },
   { match: /hamburgare\s*90\s*g/i, kcal: 230, protein: 17, fat: 18, carbs: 0, keto: 2 },
   { match: /hamburgare\s*150\s*g/i, kcal: 385, protein: 28, fat: 30, carbs: 0, keto: 2 },
+  { label: "Bratwurst 87% kött, kummin & vitlök", match: /bratwurst(?:\s*87\s*%?\s*(?:kött|kott))?(?:\s*(?:kummin\s*(?:&|och)\s*vitlök|kummin\s*(?:&|och)\s*vitlok))?/i, kcal: 280, protein: 13, fat: 24, carbs: 2.8, sodiumMg: 760, servingGrams: 100, keto: 1 },
   { match: /grillkorv\s*85\s*%?\s*(?:kött|kott)?/i, kcal: 260, protein: 12, fat: 23, carbs: 2, servingGrams: 100, keto: 1 },
   { match: /korv\s*75\s*%?\s*(?:kött|kott)?/i, exclude: /falukorv/i, kcal: 250, protein: 11, fat: 22, carbs: 4, servingGrams: 100, keto: 0 },
   { match: /gräddfil\s*12\s*%|graddfil\s*12\s*%/i, kcal: 135, protein: 3, fat: 12, carbs: 3.5, servingGrams: 100, dlGrams: 100, mskGrams: 15, keto: 1 },
@@ -864,6 +865,7 @@ function signalLabel(signal) {
     [/bearnaise|bearnie|bea/, "Bearnaise"],
     [/salami/, "Salami"],
     [/hamburgare/, "Hamburgare"],
+    [/bratwurst/, "Bratwurst 87% kött, kummin & vitlök"],
     [/grillkorv/, "Grillkorv 85%"],
     [/falukorv/, "Falukorv"],
     [/korv/, "Korv 75%"],
