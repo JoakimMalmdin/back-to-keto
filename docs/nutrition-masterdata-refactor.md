@@ -38,6 +38,28 @@ Categories are for finding foods in the UI. Coaching uses tags such as
 5. Proxy mineral values and estimated recipes must be labelled as such; they
    must never appear as product-label measurements.
 
+## Relevant Food Selection
+
+- `app/nutrition-selection.mjs` is the migration inventory, not a second
+  nutrition database. It identifies the foods the app should support first,
+  their priority and their intended authoritative source.
+- Generic foods are queued for resolution against Livsmedelsverkets
+  Livsmedelsdata API. Once resolved, their Livsmedelsverket identifier and
+  downloaded nutrient values belong in the canonical catalogue.
+- Branded products with supplied labels remain label-sourced and are never
+  overwritten by a similar generic database entry.
+- Priority 1 covers foods needed to re-evaluate the first logged days.
+  Priority 2 supports normal keto use and electrolyte coaching. Priority 3
+  makes less frequent foods and deviations loggable.
+- The API exposes foods through `/api/v1/livsmedel` and nutrient values through
+  `/api/v1/livsmedel/{nummer}/naringsvarden`; it provides Swedish and English
+  responses and is licensed under CC BY 4.0.
+- Official API documentation:
+  `https://dataportal.livsmedelsverket.se/livsmedel/swagger/v1/swagger.json`.
+- Imported generic data must be attributed to Livsmedelsverket,
+  Livsmedelsdatabasen, with the retrieved food identifier and retrieval date
+  retained in the canonical record.
+
 ## Canonical Record Shape
 
 Each food will have one record containing:
