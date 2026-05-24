@@ -60,6 +60,21 @@ Categories are for finding foods in the UI. Coaching uses tags such as
   Livsmedelsdatabasen, with the retrieved food identifier and retrieval date
   retained in the canonical record.
 
+## First SLV Mapping Cohort
+
+- `app/nutrition-slv-core.mjs` records the first resolved Livsmedelsverket
+  matches and their retrieved macro/electrolyte values, without yet switching
+  calculation output in the app.
+- The first resolved cohort contains 16 selection entries backed by 15
+  official foods; plommontomat shares the generic tomato nutrient base while
+  retaining a future separate portion rule.
+- Logged meat is presently mapped to a corresponding cooked item where a
+  defensible cooked entry exists, since diary gram amounts describe food on
+  the plate. This assumption remains visible in each staged record.
+- Nötfärs is held until a fat variant is chosen, köttfärsbiff is held for a
+  recipe decision, and fetaost is held because the database candidate is
+  salladsost rather than an unambiguous feta product.
+
 ## Canonical Record Shape
 
 Each food will have one record containing:
