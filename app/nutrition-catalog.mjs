@@ -146,7 +146,7 @@ export const NUTRITION_CATALOG = Object.freeze([
       "en-GB": ["quark", "low-fat quark", "natural quark", "milbona quark"],
     },
     nutrientsPer100g: { kcal: 61, fat: 0.3, protein: 10, carbs: 4 },
-    measures: [measure("dl", 1, 100), measure("tablespoon", 1, 15)],
+    measures: [measure("dl", 1, 100), measure("tablespoon", 1, 15), measure("teaspoon", 1, 5)],
     macroSource: source(SOURCE_TYPES.productLabel, "Milbona Magerkvarg Naturell", "2026-05-24", CONFIDENCE_LEVELS.label),
     electrolyteSource: source(SOURCE_TYPES.productLabel, "Milbona Magerkvarg Naturell", "2026-05-24", CONFIDENCE_LEVELS.calculated, "Natrium kan beräknas från deklarerat salt 0,14 g/100 g; kalium och magnesium saknas på etiketten."),
     tags: ["dairy", "complete_protein"],

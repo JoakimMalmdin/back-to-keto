@@ -82,6 +82,21 @@ generated from the same record.
   labelled values of their usual cream rather than deriving all nutrients from
   fat percentage alone.
 
+## Quantity Interpretation
+
+- Per-100-g values are the calculation base. Everyday units are conversions
+  into gram, not separate nutrient records.
+- The app should accept reasonable alternate measures even when they are not
+  the customary way to log the food. For example, kvarg may be written as
+  `100 g`, `1 msk` or `1 tsk`.
+- A directly defined conversion is preferred. For Milbona magerkvarg,
+  `1 msk = 15 g` and `1 tsk = 5 g`.
+- When a conversion can be derived reliably from an existing kitchen measure,
+  it may be offered in the parser and labelled as an assumption.
+- If a requested measure cannot be converted safely for that food, the entry
+  must be flagged as unresolved and excluded from totals rather than silently
+  replaced by a standard portion.
+
 ## Migration Stages
 
 1. Establish the catalog schema and migrate product labels already supplied by
