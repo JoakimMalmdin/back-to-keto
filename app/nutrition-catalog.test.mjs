@@ -56,6 +56,10 @@ const yoghurt = findFoodById("grekisk-yoghurt-10");
 assert(yoghurt.measures.some((entry) => entry.unit === "dl"), "Grekisk yoghurt ska stödja dl.");
 assert(foodName(yoghurt, "en-GB") === "Greek yoghurt 10%", "Brittisk stavning ska använda yoghurt.");
 
+const quark = findFoodById("milbona-magerkvarg-naturell");
+assert(quark.nutrientsPer100g.carbs === 4, "Milbona-kvarg ska ha etikettens kolhydrater per 100 g.");
+assert(quark.measures.some((entry) => entry.unit === "tablespoon" && entry.grams === 15), "Kvarg ska stödja matsked.");
+
 const cream36 = findFoodById("vispgradde-36");
 const cream40 = findFoodById("vispgradde-40");
 assert(cream36.nutrientsPer100g.fat === 36, "Vispgrädde 36% ska ha produktens angivna fetthalt.");
