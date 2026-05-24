@@ -69,11 +69,11 @@ const UNIT_SOURCE = Object.keys(UNIT_ALIAS_INDEX)
   .join("|");
 
 const BEFORE_AMOUNT = new RegExp(
-  String.raw`(?:^|[\s,(;])(?:ca\s+)?(${NUMBER_SOURCE})\s*(${UNIT_SOURCE})\s*(?:av\s+)?$`,
+  String.raw`(?:^|[ \t,(;])(?:ca[ \t]+)?(${NUMBER_SOURCE})[ \t]*(${UNIT_SOURCE})[ \t]*(?:av[ \t]+)?$`,
   "iu",
 );
 const AFTER_AMOUNT = new RegExp(
-  String.raw`^\s*(?:ca\s+)?(${NUMBER_SOURCE})\s*(${UNIT_SOURCE})(?=$|[\s,.;)])`,
+  String.raw`^[ \t]*(?:ca[ \t]+)?(${NUMBER_SOURCE})[ \t]*(${UNIT_SOURCE})(?=$|[ \t,.;)])`,
   "iu",
 );
 
@@ -103,9 +103,20 @@ function buildAliasMatches(text, catalogue) {
   return selected.sort((a, b) => a.start - b.start);
 }
 
+function sameLineBefore(text, start, length = 48) {
+  const lineStart = text.lastIndexOf("\n", start - 1) + 1;
+  return text.slice(Math.max(lineStart, start - length), start);
+}
+
+function sameLineAfter(text, end, length = 32) {
+  const nextLineStart = text.indexOf("\n", end);
+  const lineEnd = nextLineStart === -1 ? text.length : nextLineStart;
+  return text.slice(end, Math.min(lineEnd, end + length));
+}
+
 function amountNearMatch(text, match) {
-  const before = text.slice(Math.max(0, match.start - 48), match.start);
-  const after = text.slice(match.end, Math.min(text.length, match.end + 32));
+  const before = sameLineBefore(text, match.start);
+  const after = sameLineAfter(text, match.end);
   const foundBefore = before.match(BEFORE_AMOUNT);
   const foundAfter = after.match(AFTER_AMOUNT);
   const found = foundBefore || foundAfter;

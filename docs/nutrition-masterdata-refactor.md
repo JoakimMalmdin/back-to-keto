@@ -123,6 +123,18 @@ generated from the same record.
   unresolved and excluded from totals.
 - `app/nutrition-parser.test.mjs` protects the known quantity failures around
   kvarg, yoghurt, cream, Seltin, tuna and mayonnaise.
+- Quantity lookup is restricted to the same meal line as the matched food, so
+  an amount in lunch or dinner cannot leak into another meal.
+
+## Comparison Mode
+
+- On the development branch, append `?mastercheck=1` to the app URL to show an
+  opt-in panel for the new nutrition engine.
+- The ordinary macro display remains calculated by the current engine while
+  the comparison panel shows the subtotal for foods already migrated to the
+  canonical catalogue.
+- This mode is used to test real diary entries before the new engine is allowed
+  to replace production calculations.
 
 ## Required Regression Inputs
 

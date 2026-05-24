@@ -317,6 +317,23 @@
           </details>
         </section>
 
+        <section id="masterComparisonPanel" class="macro-panel master-comparison-panel" aria-labelledby="masterComparisonTitle" hidden>
+          <details class="info-details" open>
+            <summary id="masterComparisonTitle">
+              <span>Test: ny näringsmotor</span>
+              <span class="badge">arbetsläge</span>
+            </summary>
+            <div class="macro-content">
+              <p class="note">Kontrollvy. De ordinarie siffrorna ovan ändras inte. Ny subtotal omfattar endast livsmedel som hittills finns i masterkatalogen.</p>
+              <div id="masterComparisonTotals" class="engine-comparison-totals"></div>
+              <details class="macro-breakdown" open>
+                <summary>Hittat av nya motorn</summary>
+                <div id="masterComparisonBreakdown"></div>
+              </details>
+            </div>
+          </details>
+        </section>
+
         <section class="electrolyte-panel macro-panel" aria-labelledby="electrolyteTitle">
           <details class="info-details">
             <summary id="electrolyteTitle">
@@ -656,6 +673,6 @@
       </main>
     </div>
 
-    <script src="app.js?v=164-meal-boundary" type="module"></script>
+    <script src="app.js?v=164-master-comparison" type="module"></script>
   </body>
 </html>

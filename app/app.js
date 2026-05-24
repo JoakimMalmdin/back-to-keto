@@ -1,3 +1,5 @@
+import { parseNutritionText } from "./nutrition-parser.mjs";
+
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
@@ -6,6 +8,7 @@ const weeklyCheckinsKey = "btk.keto.weeklyCheckins.v1";
 const defaultMacroTargets = { proteinMin: 140, proteinMax: 140, fatMin: 140, fatMax: 150, carbsMin: 16, carbsMax: 16 };
 const appVersion = "164";
 const appDisplayVersion = `v1.0 beta · build ${appVersion}`;
+const masterComparisonEnabled = new URLSearchParams(window.location.search).get("mastercheck") === "1";
 let activeDate = "";
 let supabaseClient = null;
 let cloudSyncTimer = null;
@@ -1024,6 +1027,70 @@ function estimateMacros(entry) {
   };
 }
 
+function masterAmountLabel(item) {
+  const labels = {
+    g: "g",
+    kg: "kg",
+    ml: "ml",
+    cl: "cl",
+    dl: "dl",
+    litre: "liter",
+    tablespoon: "msk",
+    teaspoon: "tsk",
+    pinch: "krm",
+    piece: "st",
+    portion: "portion",
+    tin: "burk",
+    glass: "glas",
+    bottle: "flaska",
+    tablet: "tablett",
+    slice: "skiva",
+    cube: "tärning",
+  };
+  return `${decimal(item.amount)} ${labels[item.unit] || item.unit}`;
+}
+
+function estimateMasterMacros(entry) {
+  const parsed = parseNutritionText(mealText(entry));
+  const totals = {
+    kcal: parsed.totals.kcal || 0,
+    protein: parsed.totals.protein || 0,
+    fat: parsed.totals.fat || 0,
+    carbs: parsed.totals.carbs || 0,
+    sodiumMg: parsed.totals.sodiumMg || 0,
+    potassiumMg: parsed.totals.potassiumMg || 0,
+    magnesiumMg: parsed.totals.magnesiumMg || 0,
+  };
+  const macroCalories = {
+    protein: totals.protein * 4,
+    fat: totals.fat * 9,
+    carbs: totals.carbs * 4,
+  };
+  const macroTotal = macroCalories.protein + macroCalories.fat + macroCalories.carbs || 1;
+  const items = parsed.items.map((item) => ({
+    label: item.label,
+    count: item.grams / 100,
+    amountLabel: masterAmountLabel(item),
+    kcal: item.nutrients.kcal || 0,
+    protein: item.nutrients.protein || 0,
+    fat: item.nutrients.fat || 0,
+    carbs: item.nutrients.carbs || 0,
+    sodiumMg: item.nutrients.sodiumMg || 0,
+    potassiumMg: item.nutrients.potassiumMg || 0,
+    magnesiumMg: item.nutrients.magnesiumMg || 0,
+    assumption: item.assumption,
+  }));
+  return {
+    ...totals,
+    items,
+    unresolved: parsed.unresolved,
+    source: "master-preview",
+    proteinPct: Math.round((macroCalories.protein / macroTotal) * 100),
+    fatPct: Math.round((macroCalories.fat / macroTotal) * 100),
+    carbPct: Math.round((macroCalories.carbs / macroTotal) * 100),
+  };
+}
+
 function partialEntry(entry, keys) {
   const partial = emptyEntry(entry.date || todayIso());
   for (const key of keys) {
@@ -1190,6 +1257,47 @@ function renderElectrolyteBreakdown(macros, hasContent) {
     })
     .join("");
   breakdown.innerHTML = rows;
+}
+
+function renderMasterComparison(entry, legacyMacros, hasContent) {
+  const panel = document.querySelector("#masterComparisonPanel");
+  if (!panel) return;
+  panel.hidden = !masterComparisonEnabled;
+  if (!masterComparisonEnabled) return;
+
+  const totals = document.querySelector("#masterComparisonTotals");
+  const breakdown = document.querySelector("#masterComparisonBreakdown");
+  if (!hasContent) {
+    totals.textContent = "Ingen dagsinmatning att jämföra.";
+    breakdown.textContent = "";
+    return;
+  }
+
+  const master = estimateMasterMacros(entry);
+  const delta = {
+    fat: master.fat - legacyMacros.fat,
+    protein: master.protein - legacyMacros.protein,
+    carbs: master.carbs - legacyMacros.carbs,
+    kcal: master.kcal - legacyMacros.kcal,
+  };
+  const signed = (value) => `${value > 0 ? "+" : ""}${decimal(value)}`;
+  totals.innerHTML = `
+    <div><span>Nuvarande motor</span><strong>${decimal(legacyMacros.fat)} F · ${decimal(legacyMacros.protein)} P · ${decimal(legacyMacros.carbs)} K · ${Math.round(legacyMacros.kcal)} kcal</strong></div>
+    <div><span>Ny motor, hittade poster</span><strong>${decimal(master.fat)} F · ${decimal(master.protein)} P · ${decimal(master.carbs)} K · ${Math.round(master.kcal)} kcal</strong></div>
+    <p>Skillnad ny minus nuvarande: ${signed(delta.fat)} F · ${signed(delta.protein)} P · ${signed(delta.carbs)} K · ${signed(Math.round(delta.kcal))} kcal.</p>`;
+
+  const unresolved = master.unresolved.map((item) => {
+    if (item.reason === "unsupported_measure") return `${item.label}: ${decimal(item.amount)} ${item.unit} saknar omräkning`;
+    return `${item.label}: mängd saknas`;
+  });
+  const rows = master.items
+    .sort(foodItemSort)
+    .map((item) => `<div><strong>${item.label}</strong><span class="macro-count">${item.amountLabel}</span><span class="macro-value">${decimal(item.fat)} g F</span><span class="macro-value">${decimal(item.protein)} g P</span><span class="macro-value">${decimal(item.carbs)} g K</span></div>`)
+    .join("");
+  const warning = unresolved.length
+    ? `<p class="measure-warning">Ny motor räknade inte: ${unresolved.join("; ")}.</p>`
+    : "";
+  breakdown.innerHTML = warning + (rows || "<p>Inga katalogposter hittades av den nya motorn.</p>");
 }
 
 function chartPath(points) {
@@ -1431,6 +1539,7 @@ function render(selectedDate = activeDate) {
         : `Automatisk uppskattning. Personligt mål: ${targetRangeLabel(targets.proteinMin, targets.proteinMax)} g protein, ${targetRangeLabel(targets.fatMin, targets.fatMax)} g fett, ${targetRangeLabel(targets.carbsMin, targets.carbsMax)} g kolhydrater (${roundedKcal(kcalRange.min)}-${roundedKcal(kcalRange.max)} kcal).`;
   renderMacroBreakdown(macros, hasContent);
   renderElectrolyteBreakdown(macros, hasContent);
+  renderMasterComparison(latest, macros, hasContent);
   renderTrendChart(entries);
 
   const history = document.querySelector("#historyList");

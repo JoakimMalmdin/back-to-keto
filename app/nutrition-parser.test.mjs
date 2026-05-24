@@ -63,4 +63,12 @@ parsed = parseNutritionText("kvarg");
 assert(parsed.items.length === 0, "Kvarg utan mängd får inte beräknas.");
 assert(parsed.unresolved[0].reason === "missing_quantity", "Kvarg utan mängd ska flaggas.");
 
+parsed = parseNutritionText("25 g halloumi\n1 dl grekisk yoghurt");
+near(parsed.items.find((item) => item.foodId === "halloumi-zeta").grams, 25, "Halloumi får inte ärva nästa måltids dl-mått");
+near(parsed.items.find((item) => item.foodId === "grekisk-yoghurt-10").grams, 100, "Yoghurt på ny måltidsrad ska behålla eget dl-mått");
+
+parsed = parseNutritionText("halloumi\n1 dl grekisk yoghurt");
+assert(parsed.unresolved.some((item) => item.foodId === "halloumi-zeta"), "Halloumi utan egen mängd får inte ärva nästa måltids mått.");
+near(parsed.items.find((item) => item.foodId === "grekisk-yoghurt-10").grams, 100, "Yoghurt ska fortsatt beräknas från sitt egna mått.");
+
 console.log("Nutrition parser verified: explicit, derived and unresolved measures behave as intended.");
