@@ -4,7 +4,7 @@ const syncCodeKey = "btk.keto.syncCode.v1";
 const macroTargetsKey = "btk.keto.macroTargets.v1";
 const weeklyCheckinsKey = "btk.keto.weeklyCheckins.v1";
 const defaultMacroTargets = { proteinMin: 140, proteinMax: 140, fatMin: 140, fatMax: 150, carbsMin: 16, carbsMax: 16 };
-const appVersion = "162";
+const appVersion = "163";
 const appDisplayVersion = `v1.0 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -686,8 +686,8 @@ function measuredAmount(text, signal) {
     const before = text.slice(Math.max(0, start - 24), start);
     const after = text.slice(end, Math.min(text.length, end + 24));
     if (signal.dlGrams) {
-      const beforeDl = before.match(/(\d+(?:[,.]\d+)?)\s*dl(?:\s|[a-zåäö%])*$/i);
-      const afterDl = after.match(/^(?:\s|[a-zåäö%]){0,18}(\d+(?:[,.]\d+)?)\s*dl/i);
+      const beforeDl = before.match(/(\d+(?:[,.]\d+)?)[ \t]*dl(?:[ \t]|[a-zåäö%])*$/i);
+      const afterDl = after.match(/^(?:[ \t]|[a-zåäö%]){0,18}(\d+(?:[,.]\d+)?)[ \t]*dl/i);
       const dlAmount = beforeDl?.[1] || afterDl?.[1];
       if (dlAmount) {
         const dl = Number(dlAmount.replace(",", "."));
@@ -699,8 +699,8 @@ function measuredAmount(text, signal) {
       }
     }
     if (signal.mskGrams) {
-      const beforeMsk = before.match(/(\d+(?:[,.]\d+)?|\d+\s*\/\s*\d+)\s*msk(?:\s|[a-zåäö%])*$/i);
-      const afterMsk = after.match(/^(?:\s|[a-zåäö%]){0,18}(\d+(?:[,.]\d+)?|\d+\s*\/\s*\d+)\s*msk/i);
+      const beforeMsk = before.match(/(\d+(?:[,.]\d+)?|\d+[ \t]*\/[ \t]*\d+)[ \t]*msk(?:[ \t]|[a-zåäö%])*$/i);
+      const afterMsk = after.match(/^(?:[ \t]|[a-zåäö%]){0,18}(\d+(?:[,.]\d+)?|\d+[ \t]*\/[ \t]*\d+)[ \t]*msk/i);
       const mskAmount = beforeMsk?.[1] || afterMsk?.[1];
       if (mskAmount) {
         const msk = numberFromText(mskAmount);
@@ -712,8 +712,8 @@ function measuredAmount(text, signal) {
       }
     }
     if (signal.tskGrams) {
-      const beforeTsk = before.match(/(\d+(?:[,.]\d+)?|\d+\s*\/\s*\d+)\s*tsk(?:\s|[a-zåäö%])*$/i);
-      const afterTsk = after.match(/^(?:\s|[a-zåäö%]){0,18}(\d+(?:[,.]\d+)?|\d+\s*\/\s*\d+)\s*tsk/i);
+      const beforeTsk = before.match(/(\d+(?:[,.]\d+)?|\d+[ \t]*\/[ \t]*\d+)[ \t]*tsk(?:[ \t]|[a-zåäö%])*$/i);
+      const afterTsk = after.match(/^(?:[ \t]|[a-zåäö%]){0,18}(\d+(?:[,.]\d+)?|\d+[ \t]*\/[ \t]*\d+)[ \t]*tsk/i);
       const tskAmount = beforeTsk?.[1] || afterTsk?.[1];
       if (tskAmount) {
         const tsk = numberFromText(tskAmount);
@@ -725,9 +725,9 @@ function measuredAmount(text, signal) {
       }
     }
     if (signal.sliceGrams) {
-      const beforeSlice = before.match(/(\d+(?:[,.]\d+)?|en|ett|två|tva|tre|fyra|fem|sex|sju|åtta|atta|nio|tio)\s*(?:[a-zåäö]*skivor?|[a-zåäö]*skiva)\s*$/i);
-      const beforeNumber = before.match(/(\d+(?:[,.]\d+)?|en|ett|två|tva|tre|fyra|fem|sex|sju|åtta|atta|nio|tio)\s*$/i);
-      const afterSlice = after.match(/^\s*s?(?:skivor?|skiva)/i);
+      const beforeSlice = before.match(/(\d+(?:[,.]\d+)?|en|ett|två|tva|tre|fyra|fem|sex|sju|åtta|atta|nio|tio)[ \t]*(?:[a-zåäö]*skivor?|[a-zåäö]*skiva)[ \t]*$/i);
+      const beforeNumber = before.match(/(\d+(?:[,.]\d+)?|en|ett|två|tva|tre|fyra|fem|sex|sju|åtta|atta|nio|tio)[ \t]*$/i);
+      const afterSlice = after.match(/^[ \t]*s?(?:skivor?|skiva)/i);
       const sliceAmount = beforeSlice?.[1] || (afterSlice ? beforeNumber?.[1] : null);
       if (sliceAmount) {
         const slices = numberFromText(sliceAmount);
@@ -738,8 +738,8 @@ function measuredAmount(text, signal) {
         }
       }
     }
-    const beforeAmount = before.match(/(\d+(?:[,.]\d+)?)\s*g(?:ram)?(?:\s|[a-zåäö%])*$/i);
-    const afterAmount = after.match(/^(?:\s|[a-zåäö%]){0,18}(\d+(?:[,.]\d+)?)\s*g(?:ram)?/i);
+    const beforeAmount = before.match(/(\d+(?:[,.]\d+)?)[ \t]*g(?:ram)?(?:[ \t]|[a-zåäö%])*$/i);
+    const afterAmount = after.match(/^(?:[ \t]|[a-zåäö%]){0,18}(\d+(?:[,.]\d+)?)[ \t]*g(?:ram)?/i);
     const amount = beforeAmount?.[1] || afterAmount?.[1];
     if (!amount) continue;
     const grams = Number(amount.replace(",", "."));
@@ -770,8 +770,8 @@ function multiplierAmount(text, signal) {
     if (shouldSkipSignalMatch(text, signal, start, end)) continue;
     const before = text.slice(Math.max(0, start - 18), start);
     const after = text.slice(end, Math.min(text.length, end + 18));
-    const beforeAmount = before.match(/(\d+(?:[,.]\d+)?|en|ett|två|tva|tre|fyra|fem|sex|sju|åtta|atta|nio|tio)\s*(?:x|st|stycken)?\s*$/i);
-    const afterAmount = after.match(/^\s*(?:x|st|stycken)?\s*(\d+(?:[,.]\d+)?|en|ett|två|tva|tre|fyra|fem|sex|sju|åtta|atta|nio|tio)(?!\s*(?:g|gram|mg|dl|msk|%))/i);
+    const beforeAmount = before.match(/(\d+(?:[,.]\d+)?|en|ett|två|tva|tre|fyra|fem|sex|sju|åtta|atta|nio|tio)[ \t]*(?:x|st|stycken)?[ \t]*$/i);
+    const afterAmount = after.match(/^[ \t]*(?:x|st|stycken)?[ \t]*(\d+(?:[,.]\d+)?|en|ett|två|tva|tre|fyra|fem|sex|sju|åtta|atta|nio|tio)(?![ \t]*(?:g|gram|mg|dl|msk|%))/i);
     const amount = beforeAmount?.[1] || afterAmount?.[1];
     if (!amount) continue;
     const value = numberFromText(amount);
@@ -802,8 +802,8 @@ function unsupportedMeasuredAmounts(text, signal) {
     const after = text.slice(end, Math.min(text.length, end + 30));
     for (const definition of units) {
       if (definition.supported) continue;
-      const beforeMeasure = before.match(new RegExp(`(${amount})\\s*(?:${definition.pattern})\\s*$`, "i"));
-      const afterMeasure = after.match(new RegExp(`^\\s*(${amount})\\s*(?:${definition.pattern})`, "i"));
+      const beforeMeasure = before.match(new RegExp(`(${amount})[ \\t]*(?:${definition.pattern})[ \\t]*$`, "i"));
+      const afterMeasure = after.match(new RegExp(`^[ \\t]*(${amount})[ \\t]*(?:${definition.pattern})`, "i"));
       if (beforeMeasure || afterMeasure) unsupported.push(definition.unit);
     }
   }
