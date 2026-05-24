@@ -4,7 +4,7 @@ const syncCodeKey = "btk.keto.syncCode.v1";
 const macroTargetsKey = "btk.keto.macroTargets.v1";
 const weeklyCheckinsKey = "btk.keto.weeklyCheckins.v1";
 const defaultMacroTargets = { proteinMin: 140, proteinMax: 140, fatMin: 140, fatMax: 150, carbsMin: 16, carbsMax: 16 };
-const appVersion = "160";
+const appVersion = "161";
 const appDisplayVersion = `v1.0 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -781,6 +781,35 @@ function multiplierAmount(text, signal) {
   return count > 0 ? { count, amountLabel: null } : null;
 }
 
+function unsupportedMeasuredAmounts(text, signal) {
+  if (!signal.servingGrams) return [];
+  const matcher = new RegExp(signal.match.source, signal.match.flags.includes("g") ? signal.match.flags : `${signal.match.flags}g`);
+  const amount = String.raw`(?:\d+(?:[,.]\d+)?|\d+\s*\/\s*\d+|en|ett|två|tva|tre|fyra|fem|sex|sju|åtta|atta|nio|tio)`;
+  const units = [
+    { unit: "dl", pattern: String.raw`dl`, supported: Boolean(signal.dlGrams) },
+    { unit: "msk", pattern: String.raw`msk`, supported: Boolean(signal.mskGrams) },
+    { unit: "tsk", pattern: String.raw`tsk`, supported: Boolean(signal.tskGrams) },
+    { unit: "skiva/skivor", pattern: String.raw`skivor?|skiva`, supported: Boolean(signal.sliceGrams) },
+  ];
+  const unsupported = [];
+
+  for (const match of text.matchAll(matcher)) {
+    const start = match.index ?? 0;
+    const end = start + match[0].length;
+    if (shouldSkipSignalMatch(text, signal, start, end)) continue;
+    const before = text.slice(Math.max(0, start - 30), start);
+    const after = text.slice(end, Math.min(text.length, end + 30));
+    for (const definition of units) {
+      if (definition.supported) continue;
+      const beforeMeasure = before.match(new RegExp(`(${amount})\\s*(?:${definition.pattern})\\s*$`, "i"));
+      const afterMeasure = after.match(new RegExp(`^\\s*(${amount})\\s*(?:${definition.pattern})`, "i"));
+      if (beforeMeasure || afterMeasure) unsupported.push(definition.unit);
+    }
+  }
+
+  return [...new Set(unsupported)];
+}
+
 function countSignal(text, signal) {
   if (signal.exclude?.test(text)) return { count: 0, amountLabel: null };
   if (signal.quantity) {
@@ -800,10 +829,12 @@ function countSignal(text, signal) {
     const total = quantities.reduce((sum, value) => sum + (Number.isFinite(value) ? value : 0), 0);
     if (total > 0) return { count: total, amountLabel: null };
   }
+  const unsupportedMeasures = unsupportedMeasuredAmounts(text, signal);
   const measured = measuredAmount(text, signal);
-  if (measured) return measured;
+  if (measured) return { ...measured, unsupportedMeasures };
   const multiplier = multiplierAmount(text, signal);
-  if (multiplier) return multiplier;
+  if (multiplier) return { ...multiplier, unsupportedMeasures };
+  if (unsupportedMeasures.length) return { count: 0, amountLabel: null, unsupportedMeasures };
   const matcher = new RegExp(signal.match.source, "gi");
   const matches = [...text.matchAll(matcher)].filter((match) => {
     const start = match.index ?? 0;
@@ -936,9 +967,13 @@ function estimateMacros(entry) {
   const text = mealText(entry);
   const totals = { kcal: 0, protein: 0, fat: 0, carbs: 0, alcohol: 0, sodiumMg: 0, potassiumMg: 0, magnesiumMg: 0, score: 0 };
   const items = [];
+  const unresolvedMeasures = [];
 
   for (const signal of foodSignals) {
-    const { count, amountLabel } = countSignal(text, signal);
+    const { count, amountLabel, unsupportedMeasures = [] } = countSignal(text, signal);
+    if (unsupportedMeasures.length) {
+      unresolvedMeasures.push(`${signalLabel(signal)} (${unsupportedMeasures.join(", ")})`);
+    }
     if (count > 0) {
       const item = {
         label: signalLabel(signal),
@@ -979,6 +1014,7 @@ function estimateMacros(entry) {
   return {
     ...totals,
     items,
+    unresolvedMeasures: [...new Set(unresolvedMeasures)],
     source: "estimate",
     proteinPct: Math.round((macroCalories.protein / macroTotal) * 100),
     fatPct: Math.round((macroCalories.fat / macroTotal) * 100),
@@ -1108,8 +1144,11 @@ function renderMacroBreakdown(macros, hasContent) {
     breakdown.textContent = "Makron är manuellt ifyllda för hela dagen.";
     return;
   }
+  const unresolvedText = macros.unresolvedMeasures?.length
+    ? `Inte beräknat: ${macros.unresolvedMeasures.join("; ")} saknar måttdefinition. Ange gram eller välj ett mått som finns i livsmedelslistan.`
+    : "";
   if (!macros.items?.length) {
-    breakdown.textContent = "Inga kända livsmedel hittades i dagens text.";
+    breakdown.textContent = unresolvedText || "Inga kända livsmedel hittades i dagens text.";
     return;
   }
   const rows = [...macros.items]
@@ -1119,7 +1158,7 @@ function renderMacroBreakdown(macros, hasContent) {
       return `<div><strong>${item.label}</strong><span class="macro-count">${item.amountLabel || `x ${count}`}</span><span class="macro-value">${decimal(item.fat)} g F</span><span class="macro-value">${decimal(item.protein)} g P</span><span class="macro-value">${decimal(item.carbs)} g K</span></div>`;
     })
     .join("");
-  breakdown.innerHTML = rows;
+  breakdown.innerHTML = `${unresolvedText ? `<p class="measure-warning">${unresolvedText}</p>` : ""}${rows}`;
 }
 
 function renderElectrolyteBreakdown(macros, hasContent) {
@@ -1339,8 +1378,11 @@ function render(selectedDate = activeDate) {
       : "Dagens energiintag";
   }
   document.querySelector("#energyMetric").textContent = hasContent ? `${marker}${Math.round(macros.kcal)} kcal` : "--";
+  const measureWarning = macros.unresolvedMeasures?.length
+    ? `Kontrollera mängd: ${macros.unresolvedMeasures.join("; ")} kunde inte beräknas och ingår inte i summeringen.`
+    : "";
   document.querySelector("#coachLine").textContent = hasContent
-    ? coach(latest, macros, kind)
+    ? measureWarning || coach(latest, macros, kind)
     : "Fyll i dagens mat, vikt, sömn och vätska så börjar coachningen.";
   const compass = document.querySelector("#dinnerCompass");
   const compassText = document.querySelector("#dinnerCompassText");
@@ -1380,6 +1422,8 @@ function render(selectedDate = activeDate) {
   document.querySelector("#macroNote").textContent =
     macros.source === "manual"
       ? "Makron bygger på manuellt inmatade gram för fett, protein och kolhydrater."
+      : measureWarning
+        ? measureWarning
       : macros.alcohol > 0
         ? "Övre staplarna visar kaloriprocent. Alkohol ger energi men visas inte som fett, protein eller kolhydrater."
         : `Automatisk uppskattning. Personligt mål: ${targetRangeLabel(targets.proteinMin, targets.proteinMax)} g protein, ${targetRangeLabel(targets.fatMin, targets.fatMax)} g fett, ${targetRangeLabel(targets.carbsMin, targets.carbsMax)} g kolhydrater (${roundedKcal(kcalRange.min)}-${roundedKcal(kcalRange.max)} kcal).`;
