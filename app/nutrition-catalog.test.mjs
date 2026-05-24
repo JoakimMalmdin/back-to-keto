@@ -56,6 +56,13 @@ const yoghurt = findFoodById("grekisk-yoghurt-10");
 assert(yoghurt.measures.some((entry) => entry.unit === "dl"), "Grekisk yoghurt ska stödja dl.");
 assert(foodName(yoghurt, "en-GB") === "Greek yoghurt 10%", "Brittisk stavning ska använda yoghurt.");
 
+const cream36 = findFoodById("vispgradde-36");
+const cream40 = findFoodById("vispgradde-40");
+assert(cream36.nutrientsPer100g.fat === 36, "Vispgrädde 36% ska ha produktens angivna fetthalt.");
+assert(cream40.nutrientsPer100g.fat === 40, "Vispgrädde 40% ska ha produktens angivna fetthalt.");
+assert(!foodAliases(cream36).includes("grädde"), "Grädde utan fetthalt får inte implicit betyda 36%.");
+assert(!foodAliases(cream40).includes("grädde"), "Grädde utan fetthalt får inte implicit betyda 40%.");
+
 assert(uiText("sv-SE", "currentMacros") === "Aktuell makrobild", "Svensk UI-text saknas.");
 assert(uiText("en-GB", "currentMacros") === "Current macros", "Engelsk UI-text saknas.");
 

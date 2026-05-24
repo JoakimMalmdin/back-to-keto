@@ -68,6 +68,20 @@ generated from the same record.
 - Historical Swedish diary text must remain parsable even when the interface is
   displayed in English, and vice versa.
 
+## Personal Defaults And Product Variants
+
+- Generic products that materially differ in macros are separate catalogue
+  records. `Vispgrädde 36%` and `Vispgrädde 40%` must therefore not share a
+  single generic nutrient record.
+- Input that explicitly states a variant, such as `0,5 dl grädde 40%`, resolves
+  directly to that catalogue record.
+- Ambiguous input such as `0,5 dl grädde` must not silently change between 36%
+  and 40%. The future parser should use a personal default only if the user has
+  chosen one, otherwise show the assumption as unresolved.
+- A future personal-products option should allow a user to register the
+  labelled values of their usual cream rather than deriving all nutrients from
+  fat percentage alone.
+
 ## Migration Stages
 
 1. Establish the catalog schema and migrate product labels already supplied by
