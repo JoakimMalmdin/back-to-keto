@@ -4,7 +4,7 @@ const syncCodeKey = "btk.keto.syncCode.v1";
 const macroTargetsKey = "btk.keto.macroTargets.v1";
 const weeklyCheckinsKey = "btk.keto.weeklyCheckins.v1";
 const defaultMacroTargets = { proteinMin: 140, proteinMax: 140, fatMin: 140, fatMax: 150, carbsMin: 16, carbsMax: 16 };
-const appVersion = "159";
+const appVersion = "160";
 const appDisplayVersion = `v1.0 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -250,7 +250,7 @@ const additionalFoodSignals = [
   { label: "Kokosolja", match: /kokosolja/i, kcal: 135, protein: 0, fat: 15, carbs: 0, sodiumMg: 0, potassiumMg: 0, magnesiumMg: 0, servingGrams: 15, mskGrams: 15, keto: 2 },
   { label: "MCT-olja", match: /mct-?olja/i, kcal: 120, protein: 0, fat: 13.5, carbs: 0, sodiumMg: 0, potassiumMg: 0, magnesiumMg: 0, servingGrams: 15, mskGrams: 15, keto: 2 },
   { label: "Tahini", match: /tahini|sesampasta/i, kcal: 89, protein: 2.6, fat: 8.1, carbs: 3.2, sodiumMg: 15, potassiumMg: 62, magnesiumMg: 14, servingGrams: 15, mskGrams: 15, keto: 0 },
-  { label: "Kvarg", match: /kvarg|quark/i, kcal: 65, protein: 12, fat: 0.2, carbs: 4, sodiumMg: 35, potassiumMg: 150, magnesiumMg: 12, servingGrams: 100, dlGrams: 100, keto: 0 },
+  { label: "Milbona magerkvarg", match: /kvarg|quark/i, kcal: 61, protein: 10, fat: 0.3, carbs: 4, sodiumMg: 56, potassiumMg: 150, magnesiumMg: 12, servingGrams: 100, dlGrams: 100, mskGrams: 15, keto: 0 },
   { label: "Skyr", match: /skyr/i, kcal: 60, protein: 11, fat: 0.2, carbs: 4, sodiumMg: 50, potassiumMg: 150, magnesiumMg: 11, servingGrams: 100, dlGrams: 100, keto: 0 },
   { label: "Anka", match: /anka|ankbröst|ankbrost/i, kcal: 337, protein: 19, fat: 28, carbs: 0, sodiumMg: 75, potassiumMg: 270, magnesiumMg: 17, servingGrams: 100, keto: 2 },
   { label: "Ankfett/ister", match: /ankfett|ister/i, kcal: 135, protein: 0, fat: 15, carbs: 0, sodiumMg: 0, potassiumMg: 0, magnesiumMg: 0, servingGrams: 15, mskGrams: 15, keto: 2 },
