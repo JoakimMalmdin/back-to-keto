@@ -208,6 +208,19 @@ export const NUTRITION_CATALOG = Object.freeze([
     tags: ["dairy", "sodium_source", "protein"],
   }),
   defineFood({
+    id: "bratwurst-87-kott-kummin-vitlok",
+    names: translations("Bratwurst 87% kött, kummin & vitlök", "Bratwurst 87% meat, cumin & garlic"),
+    category: "charcuterie",
+    aliases: {
+      "sv-SE": ["bratwurst", "bratwurst 87% kött", "bratwurst kummin och vitlök", "bratwurst kummin & vitlök"],
+      "en-GB": ["bratwurst", "bratwurst 87% meat", "bratwurst cumin and garlic"],
+    },
+    nutrientsPer100g: { kcal: 280, fat: 24, protein: 13, carbs: 2.8, sodiumMg: 760 },
+    macroSource: source(SOURCE_TYPES.productLabel, "Bratwurst kummin & vitlök, fotograferad etikett", "2026-05-24", CONFIDENCE_LEVELS.label),
+    electrolyteSource: source(SOURCE_TYPES.productLabel, "Bratwurst kummin & vitlök, salt 1,9 g/100 g", "2026-05-24", CONFIDENCE_LEVELS.calculated, "Natrium beräknat från deklarerat salt; kalium och magnesium saknas på etiketten."),
+    tags: ["charcuterie", "protein", "sodium_source"],
+  }),
+  defineFood({
     id: "ica-makrill-tomatsas",
     names: translations("ICA spansk makrillfilé i tomatsås", "ICA Spanish mackerel fillet in tomato sauce"),
     category: "seafood",

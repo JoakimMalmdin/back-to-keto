@@ -45,6 +45,12 @@ parsed = parseNutritionText("20 g halloumi");
 assert(parsed.unresolved.length === 0, "Gram ska alltid kunna användas för livsmedel.");
 near(parsed.totals.protein, 4.6, "20 g halloumi ska beräknas från värde per 100 g");
 
+parsed = parseNutritionText("120 g bratwurst");
+assert(parsed.unresolved.length === 0, "Bratwurst i gram ska kunna beräknas.");
+near(parsed.totals.fat, 28.8, "120 g bratwurst ska använda etikettens fettvärde");
+near(parsed.totals.protein, 15.6, "120 g bratwurst ska använda etikettens proteinvärde");
+near(parsed.totals.carbs, 3.36, "120 g bratwurst ska använda etikettens kolhydratvärde");
+
 parsed = parseNutritionText("1 tbsp mayonnaise", { locale: "en-GB" });
 assert(parsed.items[0].label === "Hellmann's mayonnaise", "Engelsk text ska lösas mot samma produkt.");
 near(parsed.items[0].grams, 15, "En engelsk matsked majonnäs ska bli 15 g");

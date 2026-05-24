@@ -52,6 +52,11 @@ const tuna = findFoodById("ica-tonfisk-i-vatten");
 assert(tuna.measures.some((entry) => entry.unit === "tin"), "Tonfisk i vatten ska stödja burk/tin.");
 assert(foodAliases(tuna).includes("tuna in water"), "Tonfisk i vatten ska kunna kännas igen på engelska.");
 
+const bratwurst = findFoodById("bratwurst-87-kott-kummin-vitlok");
+assert(bratwurst.nutrientsPer100g.fat === 24, "Bratwurst ska använda etikettens fettvärde.");
+assert(bratwurst.nutrientsPer100g.sodiumMg === 760, "Bratwurst ska härleda natrium från deklarerat salt.");
+assert(bratwurst.electrolyteSource.confidence === CONFIDENCE_LEVELS.calculated, "Bratwurstnatrium ska markeras som beräknat.");
+
 const yoghurt = findFoodById("grekisk-yoghurt-10");
 assert(yoghurt.measures.some((entry) => entry.unit === "dl"), "Grekisk yoghurt ska stödja dl.");
 assert(foodName(yoghurt, "en-GB") === "Greek yoghurt 10%", "Brittisk stavning ska använda yoghurt.");
