@@ -110,9 +110,10 @@ parsed = parseNutritionText("150 g köttfärs");
 assert(parsed.items.length === 0, "Köttfärs utan fetthalt får inte beräknas.");
 assert(parsed.unresolved[0].reason === "variant_required", "Köttfärs utan fetthalt ska kräva variant.");
 
-parsed = parseNutritionText("150 g köttfärs 12%");
-assert(parsed.items.length === 0, "Köttfärs 12% ska vänta på verifierad källa.");
-assert(parsed.unresolved[0].reason === "variant_required", "Saknad färsvariant ska flaggas i stället för att gissas.");
+parsed = parseNutritionText("180 g köttfärs 12%");
+assert(parsed.unresolved.length === 0, "Köttfärs 12% med angiven fetthalt ska kunna beräknas med markerad schablon.");
+assert(parsed.items[0].foodId === "notfars-12", "Köttfärs 12% ska matcha den schablonmärkta 12%-posten.");
+near(parsed.totals.fat, 23.04, "180 g köttfärs 12% ska använda 12%-schablonen");
 
 parsed = parseNutritionText("1 tbsp mayonnaise", { locale: "en-GB" });
 assert(parsed.items[0].label === "Hellmann's mayonnaise", "Engelsk text ska lösas mot samma produkt.");

@@ -16,7 +16,7 @@ const defaultMacroTargets = {
   kcalTarget: 1900,
   kcalMax: 2000,
 };
-const appVersion = "176";
+const appVersion = "177";
 const appDisplayVersion = `v1.1 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -671,7 +671,7 @@ function estimateMasterMacros(entry) {
   }));
   const unresolvedMeasures = parsed.unresolved.map((item) => {
     if (item.reason === "unsupported_measure") return `${item.label} (${item.unit})`;
-    if (item.reason === "variant_required") return `${item.label} (ange fetthalt)`;
+    if (item.reason === "variant_required") return item.label.includes("(ange fetthalt)") ? item.label : `${item.label} (ange fetthalt)`;
     return `${item.label} (mängd saknas)`;
   });
   return {

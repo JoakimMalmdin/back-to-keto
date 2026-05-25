@@ -80,4 +80,10 @@ near(item(parsed, "hardost-proxy").grams, 15, "Ost i gram ska behålla sin angiv
 near(item(parsed, "linfron-proxy").grams, 2.5, "Halv tesked linfrön ska härledas från matsked");
 near(item(parsed, "chianti-proxy").grams, 300, "Två glas Chianti ska ge två glas");
 
+parsed = parseNutritionText("Köttfärs 12% 180 g, 1 burk ICA spansk makrillfilé i tomatsås, 20 g bär");
+assert(parsed.unresolved.length === 0, "Den historiska noteringen från 19 maj ska beräknas utan bortfall.");
+near(item(parsed, "notfars-12").grams, 180, "Köttfärs 12% ska läsa angiven gramvikt efter produktnamnet.");
+near(item(parsed, "ica-makrill-tomatsas").grams, 125, "ICA spansk makrillfilé ska känna igen en hel burk.");
+near(item(parsed, "bar-allmant-proxy").grams, 20, "Ospecificerade bär ska läsa angiven gramvikt.");
+
 console.log("Diary regressions verified: photographed meals and known amount failures are guarded.");

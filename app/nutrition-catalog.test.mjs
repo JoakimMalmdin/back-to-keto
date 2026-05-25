@@ -97,10 +97,12 @@ assert(patty.measures.some((entry) => entry.unit === "piece" && entry.grams === 
 
 const mincedBeefRule = findFoodById("notfars-fat-required");
 const mincedBeef10 = findFoodById("notfars-10");
+const mincedBeef12 = findFoodById("notfars-12");
 const mincedBeef15 = findFoodById("notfars-15");
 assert(mincedBeefRule.requiresVariant === "fat_percentage", "Köttfärs utan fetthalt ska blockeras i stället för att beräknas.");
 assert(mincedBeef10.macroSource.type === SOURCE_TYPES.livsmedelsverket, "Nötfärs 10% ska använda officiell källa.");
 assert(mincedBeef10.nutrientsPer100g.fat === 11.3, "Nötfärs 10% ska behålla SLV-postens analyserade fettvärde.");
+assert(mincedBeef12.macroSource.type === SOURCE_TYPES.proxy, "Nötfärs 12% ska vara synligt schablonmärkt tills etikett finns.");
 assert(mincedBeef15.nutrientsPer100g.fat === 15, "Nötfärs 15% ska använda officiellt fettvärde.");
 
 assert(uiText("sv-SE", "currentMacros") === "Aktuell makrobild", "Svensk UI-text saknas.");
