@@ -310,6 +310,16 @@ main {
   font-size: 0.82rem;
 }
 
+.dinner-proposal .proposal-day-total {
+  margin-top: 4px;
+  color: var(--leaf-strong);
+  font-weight: 600;
+}
+
+.dinner-proposal .proposal-day-total.over-limit {
+  color: var(--warn);
+}
+
 .dinner-note {
   padding-top: 9px;
   border-top: 1px solid var(--line);

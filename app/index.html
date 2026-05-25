@@ -9,13 +9,13 @@
     <title>Back to Keto</title>
     <script>
       if (window.location.protocol === "file:") {
-        window.location.replace("https://joakimmalmdin.github.io/back-to-keto/app/?cache=175");
+        window.location.replace("https://joakimmalmdin.github.io/back-to-keto/app/?cache=176");
       }
     </script>
-    <link rel="manifest" href="manifest.webmanifest?v=175" />
+    <link rel="manifest" href="manifest.webmanifest?v=176" />
     <link rel="icon" href="icon.svg?v=146" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="apple-touch-icon.png?v=146" />
-    <link rel="stylesheet" href="styles.css?v=175" />
+    <link rel="stylesheet" href="styles.css?v=176" />
   </head>
   <body>
     <div class="app-shell">
@@ -24,7 +24,7 @@
           <p class="eyebrow">Back to Keto</p>
           <h1>Daglig keto-logg</h1>
           <div class="version-row">
-            <p class="version-pill">v1.1 beta · build 175</p>
+            <p class="version-pill">v1.1 beta · build 176</p>
             <span class="version-info">
               <button class="version-info-trigger" type="button" aria-label="Vad är nytt i v1.1 beta?" aria-describedby="versionInfoText">Info</button>
               <span class="version-info-text" id="versionInfoText" role="tooltip">
@@ -178,6 +178,16 @@
                   <label>
                     Kolh. max g
                     <input id="targetCarbsMaxInput" type="number" step="1" inputmode="numeric" />
+                  </label>
+                </div>
+                <div class="macro-target-pair">
+                  <label>
+                    Energi mål kcal
+                    <input id="targetKcalInput" type="number" step="10" inputmode="numeric" />
+                  </label>
+                  <label>
+                    Energi max kcal
+                    <input id="maxKcalInput" type="number" step="10" inputmode="numeric" />
                   </label>
                 </div>
               </div>
@@ -539,6 +549,6 @@
       </main>
     </div>
 
-    <script src="app.js?v=175" type="module"></script>
+    <script src="app.js?v=176" type="module"></script>
   </body>
 </html>

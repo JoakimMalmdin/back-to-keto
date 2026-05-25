@@ -6,8 +6,17 @@ const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
 const macroTargetsKey = "btk.keto.macroTargets.v1";
 const weeklyCheckinsKey = "btk.keto.weeklyCheckins.v1";
-const defaultMacroTargets = { proteinMin: 140, proteinMax: 140, fatMin: 140, fatMax: 150, carbsMin: 16, carbsMax: 16 };
-const appVersion = "175";
+const defaultMacroTargets = {
+  proteinMin: 140,
+  proteinMax: 140,
+  fatMin: 140,
+  fatMax: 150,
+  carbsMin: 16,
+  carbsMax: 16,
+  kcalTarget: 1900,
+  kcalMax: 2000,
+};
+const appVersion = "176";
 const appDisplayVersion = `v1.1 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -117,6 +126,8 @@ const macroTargetInputs = {
   fatMax: document.querySelector("#targetFatMaxInput"),
   carbsMin: document.querySelector("#targetCarbsMinInput"),
   carbsMax: document.querySelector("#targetCarbsMaxInput"),
+  kcalTarget: document.querySelector("#targetKcalInput"),
+  kcalMax: document.querySelector("#maxKcalInput"),
 };
 const syncCodeInput = document.querySelector("#syncCodeInput");
 const syncStatus = document.querySelector("#syncStatus");
@@ -465,6 +476,9 @@ function normalizeMacroTargets(targets = {}) {
   if (next.carbsMax < next.carbsMin) {
     [next.carbsMin, next.carbsMax] = [next.carbsMax, next.carbsMin];
   }
+  if (next.kcalMax < next.kcalTarget) {
+    [next.kcalTarget, next.kcalMax] = [next.kcalMax, next.kcalTarget];
+  }
   return next;
 }
 
@@ -723,6 +737,11 @@ function dinnerGaps(macros, entry, macroTargets) {
     sodium: Math.max(0, electrolyteTargets.sodiumMg[0] - (macros.sodiumMg || 0)),
     potassium: Math.max(0, electrolyteTargets.potassiumMg[0] - (macros.potassiumMg || 0)),
     magnesium: Math.max(0, electrolyteTargets.magnesiumMg[0] - (macros.magnesiumMg || 0)),
+    kcalTarget: Math.max(0, macroTargets.kcalTarget - macros.kcal),
+    kcalMax: Math.max(0, macroTargets.kcalMax - macros.kcal),
+    kcalCurrent: macros.kcal,
+    kcalTargetTotal: macroTargets.kcalTarget,
+    kcalMaxTotal: macroTargets.kcalMax,
   };
 }
 
@@ -736,6 +755,17 @@ function proposalMacros(items, date) {
   return estimateMasterMacros(proposal);
 }
 
+function proposalFitsEnergyLimit(macros, gaps) {
+  return macros.kcal <= gaps.kcalMax + 0.5;
+}
+
+function addProposalItemIfWithinEnergy(items, item, entry, gaps) {
+  const candidate = proposalMacros([...items, item], entry.date);
+  if (!proposalFitsEnergyLimit(candidate, gaps)) return null;
+  items.push(item);
+  return candidate;
+}
+
 function buildDinnerProposal(entry, gaps, title, food, favorAvocado = false) {
   const items = [];
   const baseMacros = proposalMacros([`100 g ${food}`], entry.date);
@@ -747,22 +777,27 @@ function buildDinnerProposal(entry, gaps, title, food, favorAvocado = false) {
   const potassiumStillNeeded = Math.max(0, gaps.potassium - macros.potassiumMg);
   const carbsAfterAvocado = macros.carbs + 3.3;
   if (favorAvocado && potassiumStillNeeded >= 350 && carbsAfterAvocado <= gaps.carbs) {
-    items.push("1 avokado");
-    macros = proposalMacros(items, entry.date);
+    macros = addProposalItemIfWithinEnergy(items, "1 avokado", entry, gaps) || macros;
   }
 
   const fatStillNeeded = Math.max(0, gaps.fat - macros.fat);
-  const mayonnaiseTablespoons = Math.min(5, Math.ceil((fatStillNeeded / 11.85) * 2) / 2);
-  if (mayonnaiseTablespoons >= 0.5) {
-    items.push(`${decimal(mayonnaiseTablespoons)} msk majonnäs`);
-    macros = proposalMacros(items, entry.date);
+  let mayonnaiseTablespoons = Math.min(5, Math.ceil((fatStillNeeded / 11.85) * 2) / 2);
+  while (mayonnaiseTablespoons >= 0.5) {
+    const candidate = addProposalItemIfWithinEnergy(items, `${decimal(mayonnaiseTablespoons)} msk majonnäs`, entry, gaps);
+    if (candidate) {
+      macros = candidate;
+      break;
+    }
+    mayonnaiseTablespoons -= 0.5;
   }
 
   let sodiumStillNeeded = Math.max(0, gaps.sodium - macros.sodiumMg);
   if (sodiumStillNeeded >= 700 && macros.carbs + 2.3 <= gaps.carbs) {
-    items.push("1 glas buljong");
-    macros = proposalMacros(items, entry.date);
-    sodiumStillNeeded = Math.max(0, gaps.sodium - macros.sodiumMg);
+    const candidate = addProposalItemIfWithinEnergy(items, "1 glas buljong", entry, gaps);
+    if (candidate) {
+      macros = candidate;
+      sodiumStillNeeded = Math.max(0, gaps.sodium - macros.sodiumMg);
+    }
   }
 
   const potassiumAfterMeal = Math.max(0, gaps.potassium - macros.potassiumMg);
@@ -784,17 +819,25 @@ function buildDinnerProposal(entry, gaps, title, food, favorAvocado = false) {
     macros = proposalMacros(items, entry.date);
   }
 
-  return { title, meal: items.join(", "), macros };
+  return {
+    title,
+    meal: items.join(", "),
+    macros,
+    dayKcal: gaps.kcalCurrent + macros.kcal,
+    kcalTarget: gaps.kcalTargetTotal,
+    kcalMax: gaps.kcalMaxTotal,
+  };
 }
 
 function dinnerCompassMarkup(compass) {
   const proposals = compass.proposals
-    .map(({ title, meal, macros }) => `
+    .map(({ title, meal, macros, dayKcal, kcalTarget, kcalMax }) => `
       <div class="dinner-proposal">
         <strong>${title}</strong>
         <p>${meal}</p>
         <p class="proposal-macros">Ger ca ${decimal(macros.protein)} g protein · ${decimal(macros.fat)} g fett · ${decimal(macros.carbs)} g kolhydrater · ${Math.round(macros.kcal)} kcal</p>
         <p class="proposal-electrolytes">Na ${Math.round(macros.sodiumMg)} mg · Ka ${Math.round(macros.potassiumMg)} mg · Mg ${Math.round(macros.magnesiumMg)} mg</p>
+        <p class="proposal-day-total${dayKcal > kcalMax ? " over-limit" : ""}">Dagen totalt: ca ${Math.round(dayKcal)} kcal (${dayKcal <= kcalTarget ? "inom mål" : dayKcal <= kcalMax ? "inom maxgräns" : "över maxgräns"})</p>
       </div>`)
     .join("");
   return `<p class="dinner-balance">${compass.balance}</p>${proposals}${compass.note ? `<p class="dinner-note">${compass.note}</p>` : ""}`;
@@ -812,6 +855,7 @@ function dinnerCompass(entry) {
   const gaps = dinnerGaps(macros, entry, targets);
   const balance =
     `Kvar mot dagens mål: ca ${Math.round(gaps.protein)} g protein, ${Math.round(gaps.fat)} g fett och högst ${decimal(gaps.carbs)} g kolhydrater. ` +
+    `Energi kvar: ca ${Math.round(gaps.kcalTarget)} kcal till målet ${targets.kcalTarget} kcal, högst ${Math.round(gaps.kcalMax)} kcal till gränsen ${targets.kcalMax} kcal. ` +
     `Elektrolyter kvar: Na ${Math.round(gaps.sodium)} mg, Ka ${Math.round(gaps.potassium)} mg, Mg ${Math.round(gaps.magnesium)} mg.`;
   const note = collagen > 0 ? `Kollagen (${decimal(collagen)} g) räknas inte in som fullvärdigt protein.` : "";
 
@@ -834,7 +878,13 @@ function classify(entry, macros) {
 
 function coach(entry, macros, kind) {
   const notes = [];
+  const targets = getMacroTargets();
   const isToday = entry.date === todayIso();
+  if (macros.kcal > targets.kcalMax) {
+    notes.push(`Energi: ${Math.round(macros.kcal)} kcal, över din övre gräns på ${targets.kcalMax} kcal.`);
+  } else if (macros.kcal >= targets.kcalTarget) {
+    notes.push(`Energi: ${Math.round(macros.kcal)} kcal, inom accepterat spann men över målet ${targets.kcalTarget} kcal.`);
+  }
   if (kind === "strikt keto") notes.push("Stark keto-dag: låg kolhydratnivå och bra fettbas.");
   if (kind === "keto-ish") notes.push("Bra riktning, men håll koll på yoghurt, bär, tomat och processat.");
   if (kind === "riskzon") notes.push("Här behöver nästa måltid bli enklare: protein plus tydlig fettkälla, minimalt med kolhydrater.");
@@ -1081,10 +1131,12 @@ function render(selectedDate = activeDate) {
   if (macroTargetInputs.fatMax) macroTargetInputs.fatMax.value = targets.fatMax;
   if (macroTargetInputs.carbsMin) macroTargetInputs.carbsMin.value = targets.carbsMin;
   if (macroTargetInputs.carbsMax) macroTargetInputs.carbsMax.value = targets.carbsMax;
+  if (macroTargetInputs.kcalTarget) macroTargetInputs.kcalTarget.value = targets.kcalTarget;
+  if (macroTargetInputs.kcalMax) macroTargetInputs.kcalMax.value = targets.kcalMax;
   const macroTargetKcalNote = document.querySelector("#macroTargetKcalNote");
   if (macroTargetKcalNote) {
     macroTargetKcalNote.textContent =
-      `Dessa makron ger ett uppskattat kaloriintag på ${roundedKcal(kcalRange.min)} till ${roundedKcal(kcalRange.max)} kcal och ${fatEnergyShareLabel(targets, kcalRange)} av det totala kaloriintaget utgörs av fett.`;
+      `Dessa makron ger ett uppskattat kaloriintag på ${roundedKcal(kcalRange.min)} till ${roundedKcal(kcalRange.max)} kcal och ${fatEnergyShareLabel(targets, kcalRange)} av det totala kaloriintaget utgörs av fett. Dagens energimål är ${targets.kcalTarget} kcal; ${targets.kcalMax} kcal är övre gräns.`;
   }
   const marker = macros.source === "manual" ? "" : "~";
   document.querySelector("#carbMetric").textContent = hasContent ? `${marker}${decimal(macros.carbs)} g` : "--";
@@ -1161,7 +1213,7 @@ function render(selectedDate = activeDate) {
         ? measureWarning
       : macros.alcohol > 0
         ? "Övre staplarna visar kaloriprocent. Alkohol ger energi men visas inte som fett, protein eller kolhydrater."
-        : `Automatisk uppskattning. Personligt mål: ${targetRangeLabel(targets.proteinMin, targets.proteinMax)} g protein, ${targetRangeLabel(targets.fatMin, targets.fatMax)} g fett, ${targetRangeLabel(targets.carbsMin, targets.carbsMax)} g kolhydrater (${roundedKcal(kcalRange.min)}-${roundedKcal(kcalRange.max)} kcal).`;
+        : `Automatisk uppskattning. Personligt mål: ${targetRangeLabel(targets.proteinMin, targets.proteinMax)} g protein, ${targetRangeLabel(targets.fatMin, targets.fatMax)} g fett, ${targetRangeLabel(targets.carbsMin, targets.carbsMax)} g kolhydrater (${roundedKcal(kcalRange.min)}-${roundedKcal(kcalRange.max)} kcal). Energimål ${targets.kcalTarget} kcal, max ${targets.kcalMax} kcal.`;
   renderMacroBreakdown(macros, hasContent);
   renderElectrolyteBreakdown(macros, hasContent);
   renderTrendChart(entries);
@@ -1198,6 +1250,8 @@ function fillForm(entry) {
   if (macroTargetInputs.fatMax) macroTargetInputs.fatMax.value = targets.fatMax;
   if (macroTargetInputs.carbsMin) macroTargetInputs.carbsMin.value = targets.carbsMin;
   if (macroTargetInputs.carbsMax) macroTargetInputs.carbsMax.value = targets.carbsMax;
+  if (macroTargetInputs.kcalTarget) macroTargetInputs.kcalTarget.value = targets.kcalTarget;
+  if (macroTargetInputs.kcalMax) macroTargetInputs.kcalMax.value = targets.kcalMax;
 }
 
 function setSaveStatus(message, isError = false) {
@@ -1554,6 +1608,8 @@ function currentMacroTargetInputs() {
     fatMax: macroTargetInputs.fatMax?.value,
     carbsMin: macroTargetInputs.carbsMin?.value,
     carbsMax: macroTargetInputs.carbsMax?.value,
+    kcalTarget: macroTargetInputs.kcalTarget?.value,
+    kcalMax: macroTargetInputs.kcalMax?.value,
   };
 }
 
@@ -1562,7 +1618,7 @@ for (const input of Object.values(macroTargetInputs)) {
     const targets = saveMacroTargets(currentMacroTargetInputs());
     render(activeDate);
     setSaveStatus(
-      `Makromål sparade: ${targetRangeLabel(targets.proteinMin, targets.proteinMax)} g protein, ${targetRangeLabel(targets.fatMin, targets.fatMax)} g fett, ${targetRangeLabel(targets.carbsMin, targets.carbsMax)} g kolhydrater`
+      `Makromål sparade: ${targetRangeLabel(targets.proteinMin, targets.proteinMax)} g protein, ${targetRangeLabel(targets.fatMin, targets.fatMax)} g fett, ${targetRangeLabel(targets.carbsMin, targets.carbsMax)} g kolhydrater; energimål ${targets.kcalTarget} kcal, max ${targets.kcalMax} kcal`
     );
   });
 
