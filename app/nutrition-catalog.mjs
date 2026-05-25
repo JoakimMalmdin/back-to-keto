@@ -1,3 +1,5 @@
+import { SLV_CORE_RESOLVED, SLV_SOURCE } from "./nutrition-slv-core.mjs";
+
 export const SUPPORTED_LOCALES = Object.freeze(["sv-SE", "en-GB"]);
 export const DEFAULT_LOCALE = "sv-SE";
 
@@ -38,6 +40,7 @@ export const UNIT_DEFINITIONS = Object.freeze({
   tablet: { labels: translations("tablett", "tablet"), aliases: { "sv-SE": ["tablett", "tabletter"], "en-GB": ["tablet", "tablets"] } },
   slice: { labels: translations("skiva", "slice"), aliases: { "sv-SE": ["skiva", "skivor"], "en-GB": ["slice", "slices"] } },
   cube: { labels: translations("tärning", "cube"), aliases: { "sv-SE": ["tärning", "tärningar"], "en-GB": ["cube", "cubes"] } },
+  leaf: { labels: translations("blad", "leaf"), aliases: { "sv-SE": ["blad"], "en-GB": ["leaf", "leaves"] } },
 });
 
 export const SOURCE_TYPES = Object.freeze({
@@ -78,8 +81,45 @@ function defineFood(food) {
   });
 }
 
-// Initial high-confidence cohort: products whose labels have been supplied in
-// this project. This catalog is intentionally not wired into calculations yet.
+function slvNutrients(selectionId) {
+  const resolved = SLV_CORE_RESOLVED.find((food) => food.selectionId === selectionId);
+  if (!resolved) throw new Error(`SLV-katalogpost saknas: ${selectionId}`);
+  return resolved;
+}
+
+function defineSlvFood(selectionId, food) {
+  const resolved = slvNutrients(selectionId);
+  return defineFood({
+    ...food,
+    id: selectionId,
+    nutrientsPer100g: resolved.nutrientsPer100g,
+    macroSource: source(
+      SOURCE_TYPES.livsmedelsverket,
+      `${SLV_SOURCE.authority}, livsmedelsnummer ${resolved.slvFoodNumber}`,
+      SLV_SOURCE.retrievedDate,
+      CONFIDENCE_LEVELS.analysed,
+      resolved.note,
+    ),
+    electrolyteSource: source(
+      SOURCE_TYPES.livsmedelsverket,
+      `${SLV_SOURCE.authority}, livsmedelsnummer ${resolved.slvFoodNumber}`,
+      SLV_SOURCE.retrievedDate,
+      CONFIDENCE_LEVELS.analysed,
+      resolved.note,
+    ),
+  });
+}
+
+function defineProxyFood(food, note = "Provisorisk schablon tills etikett eller officiell databaspost har verifierats.") {
+  return defineFood({
+    ...food,
+    macroSource: source(SOURCE_TYPES.proxy, "BTK provisorisk näringsschablon", "2026-05-25", CONFIDENCE_LEVELS.proxy, note),
+    electrolyteSource: source(SOURCE_TYPES.proxy, "BTK provisorisk näringsschablon", "2026-05-25", CONFIDENCE_LEVELS.proxy, note),
+  });
+}
+
+// Label-sourced products and promoted official generic ingredients share this
+// catalogue. Parsing and future UI output must be calculated from these records.
 export const NUTRITION_CATALOG = Object.freeze([
   defineFood({
     id: "hellmanns-majonnas",
@@ -289,6 +329,252 @@ export const NUTRITION_CATALOG = Object.freeze([
     macroSource: source(SOURCE_TYPES.productLabel, "Nyttoteket Clean Collagen", "2026-05-21", CONFIDENCE_LEVELS.label),
     electrolyteSource: source(SOURCE_TYPES.unknown, "Mineraler ej relevanta/deklarerade", "2026-05-23", CONFIDENCE_LEVELS.proxy),
     tags: ["supplement", "incomplete_protein"],
+  }),
+  defineFood({
+    id: "knorr-kottbuljong",
+    names: translations("Köttbuljongtärning", "Beef stock cube"),
+    category: "drinks",
+    aliases: {
+      "sv-SE": ["buljong", "köttbuljong", "kottbuljong", "buljongtärning", "buljongtarning"],
+      "en-GB": ["beef stock", "stock cube", "beef stock cube"],
+    },
+    nutrientsPer100g: { kcal: 318, fat: 22, protein: 7.1, carbs: 23, sodiumMg: 10000 },
+    measures: [measure("cube", 1, 10), measure("glass", 1, 10, translations("1 tärning i 3,5 dl vatten", "1 cube in 350 ml water"))],
+    implicitUnit: "cube",
+    macroSource: source(SOURCE_TYPES.productLabel, "Knorr köttbuljong, fotograferad etikett", "2026-05-21", CONFIDENCE_LEVELS.label),
+    electrolyteSource: source(SOURCE_TYPES.proxy, "Användarens angivna portionsschablon", "2026-05-21", CONFIDENCE_LEVELS.proxy, "1 glas med 1 tärning räknas som cirka 1000 mg natrium."),
+    tags: ["sodium_source"],
+  }),
+  defineFood({
+    id: "magnesiumtablett-200",
+    names: translations("Magnesiumtablett 200 mg", "Magnesium tablet 200 mg"),
+    category: "supplements",
+    aliases: {
+      "sv-SE": ["magnesiumtablett 200 mg", "magnesiumtablett", "magnesium tablett", "magnesium"],
+      "en-GB": ["magnesium tablet 200 mg", "magnesium tablet", "magnesium"],
+    },
+    nutrientsPer100g: { kcal: 0, fat: 0, protein: 0, carbs: 0, magnesiumMg: 20000 },
+    measures: [measure("tablet", 1, 1)],
+    implicitUnit: "tablet",
+    macroSource: source(SOURCE_TYPES.unknown, "Tillskott utan energi", "2026-05-24", CONFIDENCE_LEVELS.estimated),
+    electrolyteSource: source(SOURCE_TYPES.proxy, "Angiven dos: 200 mg per tablett", "2026-05-24", CONFIDENCE_LEVELS.proxy),
+    tags: ["magnesium_source", "supplement"],
+  }),
+  defineFood({
+    id: "salt",
+    names: translations("Salt", "Salt"),
+    category: "seasonings",
+    aliases: { "sv-SE": ["salt"], "en-GB": ["salt"] },
+    nutrientsPer100g: { kcal: 0, fat: 0, protein: 0, carbs: 0, sodiumMg: 39300 },
+    measures: [measure("pinch", 1, 1.2), measure("teaspoon", 1, 6)],
+    macroSource: source(SOURCE_TYPES.officialFallback, "Natriumklorid", "2026-05-25", CONFIDENCE_LEVELS.calculated),
+    electrolyteSource: source(SOURCE_TYPES.officialFallback, "Natriumklorid", "2026-05-25", CONFIDENCE_LEVELS.calculated),
+    tags: ["sodium_source"],
+  }),
+  defineSlvFood("agg", {
+    names: translations("Ägg", "Egg"),
+    category: "meat",
+    aliases: {
+      "sv-SE": ["ägg", "agg", "stekt ägg", "stekta ägg", "kokt ägg", "kokta ägg", "pocherat ägg", "pocherade ägg"],
+      "en-GB": ["egg", "eggs", "fried egg", "fried eggs", "boiled egg", "boiled eggs", "poached egg", "poached eggs"],
+    },
+    measures: [measure("piece", 1, 51)],
+    implicitUnit: "piece",
+    tags: ["complete_protein"],
+  }),
+  defineSlvFood("bacon", {
+    names: translations("Bacon", "Bacon"),
+    category: "charcuterie",
+    aliases: { "sv-SE": ["bacon"], "en-GB": ["bacon"] },
+    measures: [measure("slice", 1, 25)],
+    tags: ["protein", "sodium_source"],
+  }),
+  defineSlvFood("avokado", {
+    names: translations("Avokado", "Avocado"),
+    category: "vegetables",
+    aliases: { "sv-SE": ["avokado"], "en-GB": ["avocado"] },
+    measures: [measure("piece", 1, 165)],
+    implicitUnit: "piece",
+    tags: ["potassium_source", "magnesium_source"],
+  }),
+  defineSlvFood("spenat", {
+    names: translations("Spenat", "Spinach"),
+    category: "vegetables",
+    aliases: { "sv-SE": ["spenat", "spenatblad"], "en-GB": ["spinach", "spinach leaves"] },
+    measures: [measure("leaf", 1, 1.5)],
+    tags: ["potassium_source", "magnesium_source"],
+  }),
+  defineSlvFood("surkal", {
+    names: translations("Surkål", "Sauerkraut"),
+    category: "vegetables",
+    aliases: { "sv-SE": ["surkål", "surkal"], "en-GB": ["sauerkraut"] },
+    measures: [measure("tablespoon", 1, 15), measure("dl", 1, 100)],
+    tags: ["sodium_source"],
+  }),
+  defineSlvFood("kycklingfile", {
+    names: translations("Kycklingfilé utan skinn", "Skinless chicken breast"),
+    category: "meat",
+    aliases: { "sv-SE": ["kycklingfilé", "kycklingfile", "kycklingfilé utan skinn", "kycklingfile utan skinn"], "en-GB": ["skinless chicken breast", "chicken breast"] },
+    tags: ["complete_protein"],
+  }),
+  defineSlvFood("oxfile", {
+    names: translations("Oxfilé", "Beef fillet"),
+    category: "meat",
+    aliases: { "sv-SE": ["oxfilé", "oxfile"], "en-GB": ["beef fillet", "beef tenderloin"] },
+    tags: ["complete_protein", "potassium_source"],
+  }),
+  defineSlvFood("flaskkotlett-benfri", {
+    names: translations("Benfri fläskkotlett", "Boneless pork chop"),
+    category: "meat",
+    aliases: { "sv-SE": ["benfri fläskkotlett", "benfria fläskkotletter", "benfri flaskkotlett", "benfria flaskkotletter"], "en-GB": ["boneless pork chop", "boneless pork chops"] },
+    tags: ["complete_protein", "potassium_source"],
+  }),
+  defineSlvFood("parmesan", {
+    names: translations("Parmesan", "Parmesan"),
+    category: "dairy",
+    aliases: { "sv-SE": ["parmesan", "parmesanost"], "en-GB": ["parmesan", "parmesan cheese"] },
+    measures: [measure("tablespoon", 1, 5)],
+    tags: ["protein", "sodium_source"],
+  }),
+  defineSlvFood("smor", {
+    names: translations("Smör", "Butter"),
+    category: "fats",
+    aliases: { "sv-SE": ["smör", "smor"], "en-GB": ["butter"] },
+    measures: [measure("tablespoon", 1, 15), measure("teaspoon", 1, 5)],
+    tags: ["fat_source"],
+  }),
+  defineSlvFood("olivolja", {
+    names: translations("Olivolja", "Olive oil"),
+    category: "fats",
+    aliases: { "sv-SE": ["olivolja"], "en-GB": ["olive oil"] },
+    measures: [measure("tablespoon", 1, 15), measure("teaspoon", 1, 5)],
+    tags: ["fat_source"],
+  }),
+  defineSlvFood("tomat", {
+    names: translations("Tomat", "Tomato"),
+    category: "vegetables",
+    aliases: { "sv-SE": ["tomat", "tomater"], "en-GB": ["tomato", "tomatoes"] },
+    tags: ["potassium_source"],
+  }),
+  defineSlvFood("plommontomat", {
+    names: translations("Plommontomat", "Plum tomato"),
+    category: "vegetables",
+    aliases: { "sv-SE": ["plommontomat", "plommontomater"], "en-GB": ["plum tomato", "plum tomatoes"] },
+    measures: [measure("piece", 1, 20)],
+    implicitUnit: "piece",
+    tags: ["potassium_source"],
+  }),
+  defineSlvFood("zucchini", {
+    names: translations("Zucchini", "Courgette"),
+    category: "vegetables",
+    aliases: { "sv-SE": ["zucchini"], "en-GB": ["courgette", "zucchini"] },
+    tags: ["vegetable"],
+  }),
+  defineSlvFood("gurka", {
+    names: translations("Gurka", "Cucumber"),
+    category: "vegetables",
+    aliases: { "sv-SE": ["gurka"], "en-GB": ["cucumber"] },
+    tags: ["vegetable"],
+  }),
+  defineSlvFood("jordgubbar", {
+    names: translations("Jordgubbar", "Strawberries"),
+    category: "fruitBerries",
+    aliases: { "sv-SE": ["jordgubbe", "jordgubbar", "små jordgubbar"], "en-GB": ["strawberry", "strawberries", "small strawberries"] },
+    measures: [measure("piece", 1, 9)],
+    implicitUnit: "piece",
+    tags: ["berry"],
+  }),
+  defineFood({
+    id: "valnotter-proxy",
+    names: translations("Valnötter", "Walnuts"),
+    category: "nutsSeeds",
+    aliases: { "sv-SE": ["valnöt", "valnötter", "valnot", "valnotter"], "en-GB": ["walnut", "walnuts"] },
+    nutrientsPer100g: { kcal: 654, fat: 65, protein: 15, carbs: 14, sodiumMg: 2, potassiumMg: 441, magnesiumMg: 158 },
+    measures: [measure("piece", 1, 4)],
+    implicitUnit: "piece",
+    macroSource: source(SOURCE_TYPES.proxy, "Tillfällig näringsschablon i väntan på SLV-matchning", "2026-05-25", CONFIDENCE_LEVELS.proxy),
+    electrolyteSource: source(SOURCE_TYPES.proxy, "Tillfällig näringsschablon i väntan på SLV-matchning", "2026-05-25", CONFIDENCE_LEVELS.proxy),
+    tags: ["magnesium_source"],
+  }),
+  defineFood({
+    id: "bjornbar-proxy",
+    names: translations("Björnbär", "Blackberries"),
+    category: "fruitBerries",
+    aliases: { "sv-SE": ["björnbär", "bjornbar"], "en-GB": ["blackberry", "blackberries"] },
+    nutrientsPer100g: { kcal: 45, fat: 0.4, protein: 0.8, carbs: 8, sodiumMg: 1, potassiumMg: 160, magnesiumMg: 20 },
+    measures: [measure("piece", 1, 5)],
+    implicitUnit: "piece",
+    macroSource: source(SOURCE_TYPES.proxy, "Tillfällig bärschablon i väntan på SLV-matchning", "2026-05-25", CONFIDENCE_LEVELS.proxy),
+    electrolyteSource: source(SOURCE_TYPES.proxy, "Tillfällig bärschablon i väntan på SLV-matchning", "2026-05-25", CONFIDENCE_LEVELS.proxy),
+    tags: ["berry"],
+  }),
+  defineFood({
+    id: "roda-vinbar-proxy",
+    names: translations("Röda vinbär", "Redcurrants"),
+    category: "fruitBerries",
+    aliases: { "sv-SE": ["röda vinbär", "roda vinbar", "vinbär", "vinbar"], "en-GB": ["redcurrant", "redcurrants"] },
+    nutrientsPer100g: { kcal: 45, fat: 0.4, protein: 0.8, carbs: 8, sodiumMg: 1, potassiumMg: 270, magnesiumMg: 13 },
+    measures: [measure("piece", 1, 0.5)],
+    implicitUnit: "piece",
+    macroSource: source(SOURCE_TYPES.proxy, "Tillfällig bärschablon i väntan på SLV-matchning", "2026-05-25", CONFIDENCE_LEVELS.proxy),
+    electrolyteSource: source(SOURCE_TYPES.proxy, "Tillfällig bärschablon i väntan på SLV-matchning", "2026-05-25", CONFIDENCE_LEVELS.proxy),
+    tags: ["berry"],
+  }),
+  defineProxyFood({
+    id: "fetaost-proxy",
+    names: translations("Fetaost", "Feta cheese"),
+    category: "dairy",
+    aliases: { "sv-SE": ["fetaost", "feta"], "en-GB": ["feta", "feta cheese"] },
+    nutrientsPer100g: { kcal: 267, fat: 21.3, protein: 14.3, carbs: 4, sodiumMg: 1200, potassiumMg: 95, magnesiumMg: 19 },
+    measures: [measure("tablespoon", 1, 15)],
+    tags: ["sodium_source"],
+  }),
+  defineProxyFood({
+    id: "hardost-proxy",
+    names: translations("Ost", "Cheese"),
+    category: "dairy",
+    aliases: { "sv-SE": ["ost", "gruyere"], "en-GB": ["cheese", "gruyere"] },
+    nutrientsPer100g: { kcal: 400, fat: 33.3, protein: 23.3, carbs: 1.7, sodiumMg: 1600, potassiumMg: 90, magnesiumMg: 44 },
+    measures: [measure("slice", 1, 10)],
+    tags: ["fat_source", "sodium_source"],
+  }),
+  defineProxyFood({
+    id: "falukorv-proxy",
+    names: translations("Falukorv", "Falukorv sausage"),
+    category: "charcuterie",
+    aliases: { "sv-SE": ["falukorv", "falukorvsskiva", "falukorvsskivor"], "en-GB": ["falukorv", "falukorv sausage"] },
+    nutrientsPer100g: { kcal: 260, fat: 23, protein: 10, carbs: 4, sodiumMg: 1100, potassiumMg: 180, magnesiumMg: 14 },
+    measures: [measure("slice", 1, 20)],
+    implicitUnit: "slice",
+    implicitAliases: ["falukorvsskiva", "falukorvsskivor"],
+    tags: ["sodium_source"],
+  }),
+  defineProxyFood({
+    id: "salami-proxy",
+    names: translations("Salami", "Salami"),
+    category: "charcuterie",
+    aliases: { "sv-SE": ["salami"], "en-GB": ["salami"] },
+    nutrientsPer100g: { kcal: 400, fat: 33.3, protein: 23.3, carbs: 1.7, sodiumMg: 1900, potassiumMg: 300, magnesiumMg: 18 },
+    measures: [measure("slice", 1, 10)],
+    tags: ["sodium_source"],
+  }, "Näringsvärden är provisoriska; en salamiskiva räknas tills vidare som 10 g."),
+  defineProxyFood({
+    id: "linfron-proxy",
+    names: translations("Linfrön", "Linseed"),
+    category: "nutsSeeds",
+    aliases: { "sv-SE": ["linfrö", "linfrön", "linfro", "linfron"], "en-GB": ["linseed", "flaxseed"] },
+    nutrientsPer100g: { kcal: 534, fat: 42, protein: 18, carbs: 29, sodiumMg: 30, potassiumMg: 813, magnesiumMg: 392 },
+    measures: [measure("tablespoon", 1, 15)],
+    tags: ["magnesium_source"],
+  }),
+  defineProxyFood({
+    id: "chianti-proxy",
+    names: translations("Chianti", "Chianti"),
+    category: "drinks",
+    aliases: { "sv-SE": ["chianti"], "en-GB": ["chianti"] },
+    nutrientsPer100g: { kcal: 83, fat: 0, protein: 0, carbs: 2, sodiumMg: 5, potassiumMg: 127, magnesiumMg: 18, alcoholKcal: 75.3 },
+    measures: [measure("glass", 1, 150)],
+    tags: ["alcohol"],
   }),
 ]);
 

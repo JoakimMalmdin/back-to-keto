@@ -73,7 +73,18 @@ assert(cream40.nutrientsPer100g.fat === 40, "Vispgrädde 40% ska ha produktens a
 assert(!foodAliases(cream36).includes("grädde"), "Grädde utan fetthalt får inte implicit betyda 36%.");
 assert(!foodAliases(cream40).includes("grädde"), "Grädde utan fetthalt får inte implicit betyda 40%.");
 
+const walnut = findFoodById("valnotter-proxy");
+assert(walnut.measures.some((entry) => entry.unit === "piece" && entry.grams === 4), "Valnöt ska ha kontrollerat styckmått.");
+assert(walnut.implicitUnit === "piece", "Valnöt utan enhetsord ska bara få använda stycklogik när antal anges.");
+
+const avocado = findFoodById("avokado");
+assert(avocado.macroSource.type === SOURCE_TYPES.livsmedelsverket, "Avokado ska vara importerad från SLV-kärnan.");
+assert(avocado.nutrientsPer100g.potassiumMg === 600, "Avokado ska bära officiellt kaliumvärde i masterkatalogen.");
+
+const egg = findFoodById("agg");
+assert(egg.measures.some((entry) => entry.unit === "piece"), "Ägg ska stödja tydliga styckeangivelser.");
+
 assert(uiText("sv-SE", "currentMacros") === "Aktuell makrobild", "Svensk UI-text saknas.");
 assert(uiText("en-GB", "currentMacros") === "Current macros", "Engelsk UI-text saknas.");
 
-console.log(`Nutrition catalogue foundation verified: ${NUTRITION_CATALOG.length} labelled products, ${categoryIds.size} categories, ${SUPPORTED_LOCALES.length} locales.`);
+console.log(`Nutrition catalogue foundation verified: ${NUTRITION_CATALOG.length} canonical foods, ${categoryIds.size} categories, ${SUPPORTED_LOCALES.length} locales.`);

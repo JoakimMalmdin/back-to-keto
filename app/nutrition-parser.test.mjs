@@ -23,9 +23,30 @@ assert(parsed.unresolved.length === 0, "Tonfisk och majonnäs ska kunna beräkna
 near(parsed.items.find((item) => item.foodId === "ica-tonfisk-i-vatten").grams, 240, "Två burkar tonfisk ska ge två standardburkar");
 near(parsed.items.find((item) => item.foodId === "hellmanns-majonnas").grams, 22.5, "1,5 msk majonnäs ska bli gram");
 
+parsed = parseNutritionText("1 valnöt");
+assert(parsed.unresolved.length === 0, "En valnöt ska räknas som ett deklarerat styckmått.");
+near(parsed.items[0].grams, 4, "En valnöt ska vara cirka 4 g");
+near(parsed.totals.carbs, 0.56, "En valnöt får inte räknas som en 30-gramsportion");
+
+parsed = parseNutritionText("30 g valnötter");
+near(parsed.items[0].grams, 30, "Valnötter i gram ska fortfarande använda angiven vikt");
+
+parsed = parseNutritionText("1 falukorv");
+assert(parsed.items.length === 0, "En hel falukorv utan gram får inte räknas som en skiva.");
+assert(parsed.unresolved.length === 1, "Otydlig falukorv ska markeras för komplettering.");
+
+parsed = parseNutritionText("2 stekta ägg, 0,5 avokado och 5 små jordgubbar");
+near(parsed.items.find((item) => item.foodId === "agg").grams, 102, "Två ägg ska tolkas som två stycken");
+near(parsed.items.find((item) => item.foodId === "avokado").grams, 82.5, "En halv avokado ska använda styckmått");
+near(parsed.items.find((item) => item.foodId === "jordgubbar").grams, 45, "Fem små jordgubbar ska använda styckmått");
+
 parsed = parseNutritionText("4 krm seltin");
 near(parsed.items[0].grams, 4.8, "Fyra krm Seltin ska ge rätt gram");
 near(parsed.totals.potassiumMg, 1008, "Fyra krm Seltin ska ge kalium från etiketten");
+
+parsed = parseNutritionText("0,7 buljong");
+near(parsed.items[0].grams, 7, "Buljong utan utskrivet mått ska bara använda uttryckligt implicit tärningsmått");
+near(parsed.totals.carbs, 1.61, "0,7 buljong ska beräknas från torr tärning utan att bli en hel portion");
 
 parsed = parseNutritionText("0,5 dl grädde 40%");
 assert(parsed.unresolved.length === 0, "Grädde med angiven fetthalt ska kunna beräknas.");

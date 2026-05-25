@@ -4,6 +4,7 @@ export const SOURCE_INTENTS = Object.freeze({
   productLabel: "product_label",
   producer: "producer",
   livsmedelsverket: "livsmedelsverket",
+  proxy: "proxy",
 });
 
 export const SELECTION_STATUSES = Object.freeze({
@@ -55,6 +56,21 @@ function slv(id, svName, enName, category, priority, slvQuery, note = "") {
   });
 }
 
+function slvPromoted(id, svName, enName, category, priority, slvQuery, note = "") {
+  return selectedFood(id, svName, enName, category, priority, SOURCE_INTENTS.livsmedelsverket, SELECTION_STATUSES.inCatalogue, {
+    existingCatalogId: id,
+    slvQuery,
+    note,
+  });
+}
+
+function proxy(id, svName, enName, category, priority, existingCatalogId, note = "") {
+  return selectedFood(id, svName, enName, category, priority, SOURCE_INTENTS.proxy, SELECTION_STATUSES.inCatalogue, {
+    existingCatalogId,
+    note,
+  });
+}
+
 // Priority 1 is the first-week calculation cohort. Priority 2 broadens normal
 // keto use and coaching. Priority 3 makes common deviations loggable.
 export const NUTRITION_SELECTION = Object.freeze([
@@ -72,29 +88,31 @@ export const NUTRITION_SELECTION = Object.freeze([
   labelled("ica-tonfisk-i-vatten", "ICA tonfisk i vatten", "ICA tuna in spring water", "seafood", 1, SELECTION_STATUSES.inCatalogue, "ica-tonfisk-i-vatten"),
   labelled("kalamataoliver-etikett", "Kalamataoliver", "Kalamata olives", "vegetables", 2, SELECTION_STATUSES.inCatalogue, "kalamataoliver-etikett"),
   labelled("seltin", "Seltin", "Seltin reduced-sodium salt", "seasonings", 1, SELECTION_STATUSES.inCatalogue, "seltin"),
+  proxy("salt", "Salt", "Salt", "seasonings", 1, "salt", "Natrium beräknat från natriumklorid; stödjer krm och tsk."),
   labelled("collagen-nyttoteket", "Collagen", "Collagen", "supplements", 1, SELECTION_STATUSES.inCatalogue, "collagen-nyttoteket"),
-  labelled("knorr-kottbuljong", "Köttbuljongtärning", "Beef stock cube", "drinks", 1, SELECTION_STATUSES.labelToMigrate, null, "Fotograferad etikett; standardportion 1 tärning i 3,5 dl vatten."),
-  labelled("magnesiumtablett-200", "Magnesiumtablett 200 mg", "Magnesium tablet 200 mg", "supplements", 1, SELECTION_STATUSES.labelNeeded, null, "Registreras som tillskott när etikett eller exakt produkt är bekräftad."),
+  labelled("knorr-kottbuljong", "Köttbuljongtärning", "Beef stock cube", "drinks", 1, SELECTION_STATUSES.inCatalogue, "knorr-kottbuljong", "Fotograferad etikett; standardportion 1 tärning i 3,5 dl vatten."),
+  proxy("magnesiumtablett-200", "Magnesiumtablett 200 mg", "Magnesium tablet 200 mg", "supplements", 1, "magnesiumtablett-200", "Dosen 200 mg används som angiven tillskottsdos; produktetikett behöver fortfarande läggas in."),
 
-  slv("agg", "Ägg", "Egg", "meat", 1, "Ägg", "Välj lämplig generisk post för tillagat eller rått ägg."),
-  slv("bacon", "Bacon", "Bacon", "charcuterie", 1, "Bacon"),
-  slv("avokado", "Avokado", "Avocado", "vegetables", 1, "Avokado"),
-  slv("spenat", "Spenat", "Spinach", "vegetables", 1, "Spenat"),
-  slv("surkal", "Surkål", "Sauerkraut", "vegetables", 1, "Surkål"),
-  slv("kycklingfile", "Kycklingfilé utan skinn", "Skinless chicken breast", "meat", 1, "Kyckling bröstfilé utan skinn"),
-  slv("oxfile", "Oxfilé", "Beef fillet", "meat", 1, "Nöt oxfilé"),
-  slv("flaskkotlett-benfri", "Benfri fläskkotlett", "Boneless pork chop", "meat", 1, "Gris kotlett benfri"),
+  slvPromoted("agg", "Ägg", "Egg", "meat", 1, "Ägg", "Neutral grundpost för ägg; extra stekfett registreras separat."),
+  slvPromoted("bacon", "Bacon", "Bacon", "charcuterie", 1, "Bacon"),
+  slvPromoted("avokado", "Avokado", "Avocado", "vegetables", 1, "Avokado"),
+  slvPromoted("spenat", "Spenat", "Spinach", "vegetables", 1, "Spenat"),
+  slvPromoted("surkal", "Surkål", "Sauerkraut", "vegetables", 1, "Surkål"),
+  slvPromoted("kycklingfile", "Kycklingfilé utan skinn", "Skinless chicken breast", "meat", 1, "Kyckling bröstfilé utan skinn"),
+  slvPromoted("oxfile", "Oxfilé", "Beef fillet", "meat", 1, "Nöt oxfilé"),
+  slvPromoted("flaskkotlett-benfri", "Benfri fläskkotlett", "Boneless pork chop", "meat", 1, "Gris kotlett benfri"),
   slv("notfars", "Nötfärs", "Minced beef", "meat", 1, "Nötfärs"),
   slv("kottfarsbiff", "Köttfärsbiff", "Beef patty", "meat", 1, "Köttfärsbiff", "Behöver avgöras om den ska räknas som råvara eller egen standardrätt."),
-  slv("fetaost", "Fetaost", "Feta cheese", "dairy", 1, "Fetaost"),
-  slv("parmesan", "Parmesan", "Parmesan", "dairy", 1, "Parmesanost"),
-  slv("smor", "Smör", "Butter", "fats", 1, "Smör"),
-  slv("olivolja", "Olivolja", "Olive oil", "fats", 1, "Olivolja"),
-  slv("tomat", "Tomat", "Tomato", "vegetables", 1, "Tomat"),
-  slv("plommontomat", "Plommontomat", "Plum tomato", "vegetables", 1, "Tomat", "Portionsmått för plommontomat läggs ovanpå vald generisk tomatpost."),
-  slv("zucchini", "Zucchini", "Courgette", "vegetables", 1, "Squash zucchini"),
-  slv("gurka", "Gurka", "Cucumber", "vegetables", 1, "Gurka"),
-  slv("jordgubbar", "Jordgubbar", "Strawberries", "fruitBerries", 1, "Jordgubbar"),
+  proxy("fetaost", "Fetaost", "Feta cheese", "dairy", 1, "fetaost-proxy", "Provisorisk post tills etikett eller entydig officiell matchning finns."),
+  proxy("hardost", "Ost", "Cheese", "dairy", 1, "hardost-proxy", "Generisk hårdostpost tills ostsort anges eller etikett finns."),
+  slvPromoted("parmesan", "Parmesan", "Parmesan", "dairy", 1, "Parmesanost"),
+  slvPromoted("smor", "Smör", "Butter", "fats", 1, "Smör"),
+  slvPromoted("olivolja", "Olivolja", "Olive oil", "fats", 1, "Olivolja"),
+  slvPromoted("tomat", "Tomat", "Tomato", "vegetables", 1, "Tomat"),
+  slvPromoted("plommontomat", "Plommontomat", "Plum tomato", "vegetables", 1, "Tomat", "Portionsmått för plommontomat läggs ovanpå vald generisk tomatpost."),
+  slvPromoted("zucchini", "Zucchini", "Courgette", "vegetables", 1, "Squash zucchini"),
+  slvPromoted("gurka", "Gurka", "Cucumber", "vegetables", 1, "Gurka"),
+  slvPromoted("jordgubbar", "Jordgubbar", "Strawberries", "fruitBerries", 1, "Jordgubbar"),
 
   slv("bearnaise", "Bearnaisesås", "Bearnaise sauce", "seasonings", 2, "Bearnaisesås"),
   slv("aioli", "Aioli", "Aioli", "seasonings", 2, "Aioli"),
@@ -111,9 +129,9 @@ export const NUTRITION_SELECTION = Object.freeze([
   slv("laxfile", "Laxfilé", "Salmon fillet", "seafood", 2, "Lax"),
   slv("torsk", "Torsk", "Cod", "seafood", 2, "Torsk"),
   slv("rakor", "Räkor", "Prawns", "seafood", 2, "Räkor"),
-  slv("falukorv", "Falukorv", "Falukorv sausage", "charcuterie", 2, "Falukorv"),
+  proxy("falukorv", "Falukorv", "Falukorv sausage", "charcuterie", 2, "falukorv-proxy", "Provisorisk post tills etikett eller officiell matchning har importerats."),
   slv("grillkorv", "Grillkorv", "Grilling sausage", "charcuterie", 2, "Grillkorv"),
-  slv("salami", "Salami", "Salami", "charcuterie", 2, "Salami"),
+  proxy("salami", "Salami", "Salami", "charcuterie", 2, "salami-proxy", "Provisorisk post med skivmått tills produktetikett finns."),
   slv("palaggsskinka", "Påläggsskinka", "Sliced ham", "charcuterie", 2, "Skinka rökt"),
   slv("leverpastej", "Leverpastej", "Liver pate", "charcuterie", 2, "Leverpastej"),
   slv("inlagd-sill", "Inlagd sill", "Pickled herring", "seafood", 2, "Sill inlagd"),
@@ -126,18 +144,18 @@ export const NUTRITION_SELECTION = Object.freeze([
   slv("bladgront", "Bladgrönt", "Leafy greens", "vegetables", 2, "Sallat"),
   slv("pumpakarnor", "Pumpakärnor", "Pumpkin seeds", "nutsSeeds", 2, "Pumpafrö"),
   slv("mandel", "Mandel", "Almonds", "nutsSeeds", 2, "Mandel"),
-  slv("linfron", "Linfrön", "Linseed", "nutsSeeds", 2, "Linfrö"),
+  proxy("linfron", "Linfrön", "Linseed", "nutsSeeds", 2, "linfron-proxy", "Provisorisk post tills officiell matchning har importerats."),
   slv("solrosfron", "Solrosfrön", "Sunflower seeds", "nutsSeeds", 2, "Solrosfrö"),
-  slv("valnotter", "Valnötter", "Walnuts", "nutsSeeds", 2, "Valnötter"),
+  proxy("valnotter", "Valnötter", "Walnuts", "nutsSeeds", 2, "valnotter-proxy", "Provisorisk portionspost tills officiell SLV-matchning har importerats."),
   slv("macadamia", "Macadamianötter", "Macadamia nuts", "nutsSeeds", 2, "Macadamianötter"),
   slv("hallon", "Hallon", "Raspberries", "fruitBerries", 2, "Hallon"),
-  slv("bjornbar", "Björnbär", "Blackberries", "fruitBerries", 2, "Björnbär"),
-  slv("roda-vinbar", "Röda vinbär", "Redcurrants", "fruitBerries", 2, "Vinbär röda"),
+  proxy("bjornbar", "Björnbär", "Blackberries", "fruitBerries", 2, "bjornbar-proxy", "Provisorisk styckpost tills officiell SLV-matchning har importerats."),
+  proxy("roda-vinbar", "Röda vinbär", "Redcurrants", "fruitBerries", 2, "roda-vinbar-proxy", "Provisorisk styckpost tills officiell SLV-matchning har importerats."),
   slv("blabar", "Blåbär", "Blueberries", "fruitBerries", 2, "Blåbär"),
   slv("pesto", "Pesto", "Pesto", "seasonings", 2, "Pesto"),
   slv("kaviar", "Kaviar", "Smoked cod roe spread", "seasonings", 2, "Kaviar"),
   slv("kaffe", "Kaffe", "Coffee", "drinks", 2, "Kaffe"),
-  slv("rodvin-torrt", "Rödvin torrt", "Dry red wine", "drinks", 2, "Vin rött"),
+  proxy("rodvin-torrt", "Chianti", "Chianti", "drinks", 2, "chianti-proxy", "Provisorisk Chianti-post; alkoholkcal redovisas separat i framtida skarp motor."),
 
   slv("jordnotter", "Jordnötter", "Peanuts", "nutsSeeds", 3, "Jordnötter"),
   slv("cashewnotter", "Cashewnötter", "Cashew nuts", "nutsSeeds", 3, "Cashewnötter"),
@@ -156,4 +174,3 @@ export const NUTRITION_SELECTION = Object.freeze([
 export function selectedFoodsAtPriority(maxPriority = SELECTION_PRIORITIES.core) {
   return NUTRITION_SELECTION.filter((food) => food.priority <= maxPriority);
 }
-

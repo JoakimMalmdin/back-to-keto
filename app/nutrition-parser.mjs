@@ -76,6 +76,10 @@ const AFTER_AMOUNT = new RegExp(
   String.raw`^[ \t]*(?:ca[ \t]+)?(${NUMBER_SOURCE})[ \t]*(${UNIT_SOURCE})(?=$|[ \t,.;)])`,
   "iu",
 );
+const IMPLICIT_AMOUNT_BEFORE = new RegExp(
+  String.raw`(?:^|[ \t,(;])(?:ca[ \t]+)?(${NUMBER_SOURCE})[ \t]*$`,
+  "iu",
+);
 
 function buildAliasMatches(text, catalogue) {
   const candidates = [];
@@ -120,11 +124,24 @@ function amountNearMatch(text, match) {
   const foundBefore = before.match(BEFORE_AMOUNT);
   const foundAfter = after.match(AFTER_AMOUNT);
   const found = foundBefore || foundAfter;
-  if (!found) return null;
+  if (found) {
+    return {
+      amount: parseNumber(found[1]),
+      unit: UNIT_ALIAS_INDEX[found[2].toLocaleLowerCase("sv-SE")],
+      inputUnit: found[2],
+    };
+  }
+  const implicitAllowed =
+    !match.food.implicitAliases ||
+    match.food.implicitAliases.some(
+      (alias) => alias.toLocaleLowerCase("sv-SE") === match.alias.toLocaleLowerCase("sv-SE"),
+    );
+  const implicit = implicitAllowed && match.food.implicitUnit && before.match(IMPLICIT_AMOUNT_BEFORE);
+  if (!implicit) return null;
   return {
-    amount: parseNumber(found[1]),
-    unit: UNIT_ALIAS_INDEX[found[2].toLocaleLowerCase("sv-SE")],
-    inputUnit: found[2],
+    amount: parseNumber(implicit[1]),
+    unit: match.food.implicitUnit,
+    inputUnit: UNIT_DEFINITIONS[match.food.implicitUnit].labels[DEFAULT_LOCALE],
   };
 }
 

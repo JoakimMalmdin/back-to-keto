@@ -21,7 +21,10 @@ for (const food of NUTRITION_SELECTION) {
   assert(food.names["sv-SE"] && food.names["en-GB"], `Språknamn saknas: ${food.id}`);
   assert(Object.values(SOURCE_INTENTS).includes(food.sourceIntent), `Källstrategi saknas: ${food.id}`);
   if (food.sourceIntent === SOURCE_INTENTS.livsmedelsverket) {
-    assert(food.status === SELECTION_STATUSES.resolveSlv, `SLV-post ska matchas: ${food.id}`);
+    assert(
+      food.status === SELECTION_STATUSES.resolveSlv || food.status === SELECTION_STATUSES.inCatalogue,
+      `SLV-post ska vara matchad eller kvar i kön: ${food.id}`,
+    );
     assert(food.slvQuery, `SLV-sökterm saknas: ${food.id}`);
   }
   if (food.status === SELECTION_STATUSES.inCatalogue) {

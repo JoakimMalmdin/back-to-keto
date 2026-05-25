@@ -63,8 +63,10 @@ Categories are for finding foods in the UI. Coaching uses tags such as
 ## First SLV Mapping Cohort
 
 - `app/nutrition-slv-core.mjs` records the first resolved Livsmedelsverket
-  matches and their retrieved macro/electrolyte values, without yet switching
-  calculation output in the app.
+  matches and their retrieved macro/electrolyte values.
+- The resolved first cohort is now promoted into `app/nutrition-catalog.mjs`,
+  so those official values are read by the new parser from the canonical
+  catalogue rather than being copied into ad hoc rules.
 - The first resolved cohort contains 16 selection entries backed by 15
   official foods; plommontomat shares the generic tomato nutrient base while
   retaining a future separate portion rule.
@@ -136,6 +138,11 @@ generated from the same record.
 - If a requested measure cannot be converted safely for that food, the entry
   must be flagged as unresolved and excluded from totals rather than silently
   replaced by a standard portion.
+- A bare number may only be interpreted when the catalogue record declares an
+  unambiguous implicit unit, optionally limited to specific aliases. Examples
+  are `2 ägg`, `1 avokado`, `1 valnöt`, `0,7 buljong` and
+  `8 falukorvsskivor`; `1 falukorv` is deliberately not interpreted as one
+  slice. This is not a general normal-portion fallback.
 
 ## Migration Stages
 
@@ -160,8 +167,24 @@ generated from the same record.
   unresolved and excluded from totals.
 - `app/nutrition-parser.test.mjs` protects the known quantity failures around
   kvarg, yoghurt, cream, Seltin, tuna and mayonnaise.
+- `app/nutrition-diary-regression.test.mjs` protects meal-level failures
+  already encountered in use: walnuts counted as portions, falukorv slices,
+  sauerkraut grams, Seltin and salt, tuna tins, berries counted by piece,
+  Chianti glasses and magnesium tablets.
 - Quantity lookup is restricted to the same meal line as the matched food, so
   an amount in lunch or dinner cannot leak into another meal.
+
+## Current Cutover Gate
+
+- The canonical catalogue currently covers the labelled products, the first
+  official Livsmedelsverket cohort and explicitly marked provisional entries
+  needed for known amount regressions.
+- Provisional values remain visibly sourced as `proxy` until a product label
+  or an official Livsmedelsverket match replaces them.
+- The current live calculation is not switched to the master engine until
+  diary-relevant remaining foods have canonical entries and the regression
+  suite passes. This prevents a partial catalogue from silently lowering old
+  day totals.
 
 ## Comparison Mode
 
