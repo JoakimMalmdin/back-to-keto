@@ -7,7 +7,7 @@ const syncCodeKey = "btk.keto.syncCode.v1";
 const macroTargetsKey = "btk.keto.macroTargets.v1";
 const weeklyCheckinsKey = "btk.keto.weeklyCheckins.v1";
 const defaultMacroTargets = { proteinMin: 140, proteinMax: 140, fatMin: 140, fatMax: 150, carbsMin: 16, carbsMax: 16 };
-const appVersion = "173";
+const appVersion = "174";
 const appDisplayVersion = `v1.1 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -714,26 +714,90 @@ function hasElectrolyteSignal(text, type) {
   return hasKeywordSignal(text, electrolyteKeywords[type] || []);
 }
 
-function dinnerElectrolyteAdvice(macros, entry) {
-  const targets = electrolyteTargetsForDate(entry.date, getEntries(), isTrainingEntry(entry));
-  const sodiumGap = Math.max(0, targets.sodiumMg[0] - (macros.sodiumMg || 0));
-  const potassiumGap = Math.max(0, targets.potassiumMg[0] - (macros.potassiumMg || 0));
-  const magnesiumGap = Math.max(0, targets.magnesiumMg[0] - (macros.magnesiumMg || 0));
-  const liters = parseLiters(entry.water || "");
-  const symptoms = hasSymptomSignal(entry);
-  const advice = [];
+function dinnerGaps(macros, entry, macroTargets) {
+  const electrolyteTargets = electrolyteTargetsForDate(entry.date, getEntries(), isTrainingEntry(entry));
+  return {
+    protein: Math.max(0, macroTargets.proteinMin - fullProtein(macros)),
+    fat: Math.max(0, macroTargets.fatMin - macros.fat),
+    carbs: Math.max(0, macroTargets.carbsMax - macros.carbs),
+    sodium: Math.max(0, electrolyteTargets.sodiumMg[0] - (macros.sodiumMg || 0)),
+    potassium: Math.max(0, electrolyteTargets.potassiumMg[0] - (macros.potassiumMg || 0)),
+    magnesium: Math.max(0, electrolyteTargets.magnesiumMg[0] - (macros.magnesiumMg || 0)),
+  };
+}
 
-  if (sodiumGap > 600 || symptoms || (Number.isFinite(liters) && liters < 1.5)) {
-    advice.push("natrium: buljong eller salta maten");
-  }
-  if (potassiumGap >= 800) {
-    advice.push("uppmärksamma kalium inför middagen: avokado, spenat, lax, svamp eller broccoli");
-  }
-  if (magnesiumGap >= 120) {
-    advice.push("ta en magnesiumtablett om 200 mg");
+function roundUp(value, step) {
+  return Math.ceil(value / step) * step;
+}
+
+function proposalMacros(items, date) {
+  const proposal = emptyEntry(date);
+  proposal.dinner = items.join(", ");
+  return estimateMasterMacros(proposal);
+}
+
+function buildDinnerProposal(entry, gaps, title, food, favorAvocado = false) {
+  const items = [];
+  const baseMacros = proposalMacros([`100 g ${food}`], entry.date);
+  const proteinPerGram = baseMacros.protein > 0 ? baseMacros.protein / 100 : 0.2;
+  const proteinGrams = Math.min(550, Math.max(125, roundUp(Math.max(gaps.protein, 25) / proteinPerGram, 25)));
+  items.push(`${proteinGrams} g ${food}`);
+  let macros = proposalMacros(items, entry.date);
+
+  const potassiumStillNeeded = Math.max(0, gaps.potassium - macros.potassiumMg);
+  const carbsAfterAvocado = macros.carbs + 3.3;
+  if (favorAvocado && potassiumStillNeeded >= 350 && carbsAfterAvocado <= gaps.carbs) {
+    items.push("1 avokado");
+    macros = proposalMacros(items, entry.date);
   }
 
-  return advice.length ? `Elektrolyter: ${advice.join("; ")}.` : "Elektrolyter: okej.";
+  const fatStillNeeded = Math.max(0, gaps.fat - macros.fat);
+  const mayonnaiseTablespoons = Math.min(5, Math.ceil((fatStillNeeded / 11.85) * 2) / 2);
+  if (mayonnaiseTablespoons >= 0.5) {
+    items.push(`${decimal(mayonnaiseTablespoons)} msk majonnäs`);
+    macros = proposalMacros(items, entry.date);
+  }
+
+  let sodiumStillNeeded = Math.max(0, gaps.sodium - macros.sodiumMg);
+  if (sodiumStillNeeded >= 700 && macros.carbs + 2.3 <= gaps.carbs) {
+    items.push("1 glas buljong");
+    macros = proposalMacros(items, entry.date);
+    sodiumStillNeeded = Math.max(0, gaps.sodium - macros.sodiumMg);
+  }
+
+  const potassiumAfterMeal = Math.max(0, gaps.potassium - macros.potassiumMg);
+  if (potassiumAfterMeal >= 180) {
+    const seltinPinches = Math.min(4, Math.ceil(potassiumAfterMeal / 252));
+    items.push(`${seltinPinches} krm seltin`);
+    macros = proposalMacros(items, entry.date);
+    sodiumStillNeeded = Math.max(0, gaps.sodium - macros.sodiumMg);
+  }
+
+  if (sodiumStillNeeded >= 300) {
+    const saltPinches = Math.min(5, Math.ceil(sodiumStillNeeded / 472));
+    items.push(`${saltPinches} krm salt`);
+    macros = proposalMacros(items, entry.date);
+  }
+
+  if (Math.max(0, gaps.magnesium - macros.magnesiumMg) >= 100) {
+    items.push("1 magnesiumtablett 200 mg");
+    macros = proposalMacros(items, entry.date);
+  }
+
+  return { title, meal: items.join(", "), macros };
+}
+
+function dinnerCompassMarkup(compass) {
+  const proposals = compass.proposals
+    .map(({ title, meal, macros }) => `
+      <div class="dinner-proposal">
+        <strong>${title}</strong>
+        <p>${meal}</p>
+        <p class="proposal-macros">Ger ca ${decimal(macros.protein)} g protein · ${decimal(macros.fat)} g fett · ${decimal(macros.carbs)} g kolhydrater · ${Math.round(macros.kcal)} kcal</p>
+        <p class="proposal-electrolytes">Na ${Math.round(macros.sodiumMg)} mg · Ka ${Math.round(macros.potassiumMg)} mg · Mg ${Math.round(macros.magnesiumMg)} mg</p>
+      </div>`)
+    .join("");
+  return `<p class="dinner-balance">${compass.balance}</p>${proposals}${compass.note ? `<p class="dinner-note">${compass.note}</p>` : ""}`;
 }
 
 function dinnerCompass(entry) {
@@ -744,18 +808,21 @@ function dinnerCompass(entry) {
   const targets = getMacroTargets();
   const beforeDinnerEntry = partialEntry(entry, ["breakfast", "lunch", "extras"]);
   const macros = estimateMacros(beforeDinnerEntry);
-  const completeProtein = fullProtein(macros);
   const collagen = collagenProtein(macros);
-  const proteinTarget = targets.proteinMin;
-  const proteinNeeded = Math.max(0, proteinTarget - completeProtein);
-  const carbRoom = Math.max(0, targets.carbsMax - macros.carbs);
+  const gaps = dinnerGaps(macros, entry, targets);
+  const balance =
+    `Kvar mot dagens mål: ca ${Math.round(gaps.protein)} g protein, ${Math.round(gaps.fat)} g fett och högst ${decimal(gaps.carbs)} g kolhydrater. ` +
+    `Elektrolyter kvar: Na ${Math.round(gaps.sodium)} mg, Ka ${Math.round(gaps.potassium)} mg, Mg ${Math.round(gaps.magnesium)} mg.`;
+  const note = collagen > 0 ? `Kollagen (${decimal(collagen)} g) räknas inte in som fullvärdigt protein.` : "";
 
-  const proteinAdvice = proteinNeeded >= 35 ? `Protein: ca ${Math.round(proteinNeeded)} g kvar.` : "Protein: läget är okej.";
-  const carbAdvice = macros.carbs >= targets.carbsMax - 2 ? "Kolhydrater: håll middagen strikt." : `Kolhydrater: ca ${decimal(carbRoom)} g kvar.`;
-  const electrolyteAdvice = dinnerElectrolyteAdvice(macros, entry);
-  const collagenAdvice = collagen > 0 ? ` Kollagen (${decimal(collagen)} g) räknas inte som fullvärdigt protein.` : "";
-
-  return `${proteinAdvice} ${carbAdvice} ${electrolyteAdvice}${collagenAdvice}`;
+  return {
+    balance,
+    proposals: [
+      buildDinnerProposal(entry, gaps, "Laxförslag", "laxfilé", true),
+      buildDinnerProposal(entry, gaps, "Kycklingförslag", "kycklingfilé utan skinn", true),
+    ],
+    note,
+  };
 }
 
 function classify(entry, macros) {
@@ -1041,7 +1108,7 @@ function render(selectedDate = activeDate) {
   if (compass) {
     const compassMessage = hasContent ? dinnerCompass(latest) : null;
     compass.hidden = !compassMessage;
-    if (compassText) compassText.textContent = compassMessage || "";
+    if (compassText) compassText.innerHTML = compassMessage ? dinnerCompassMarkup(compassMessage) : "";
   }
 
   const badge = document.querySelector("#strictnessBadge");

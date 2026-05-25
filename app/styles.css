@@ -275,9 +275,44 @@ main {
   color: var(--leaf-strong);
 }
 
-.dinner-compass p {
-  margin: 8px 0 0;
+.dinner-compass-content {
+  margin-top: 9px;
   color: var(--muted);
+}
+
+.dinner-compass-content p {
+  margin: 0;
+}
+
+.dinner-balance {
+  padding-bottom: 9px;
+}
+
+.dinner-proposal {
+  padding: 9px 0;
+  border-top: 1px solid var(--line);
+}
+
+.dinner-proposal strong {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.dinner-proposal .proposal-macros {
+  margin-top: 4px;
+  color: var(--ink);
+}
+
+.dinner-proposal .proposal-electrolytes {
+  margin-top: 2px;
+  font-size: 0.82rem;
+}
+
+.dinner-note {
+  padding-top: 9px;
+  border-top: 1px solid var(--line);
 }
 
 .hero-sync-button {
