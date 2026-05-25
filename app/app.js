@@ -7,7 +7,7 @@ const syncCodeKey = "btk.keto.syncCode.v1";
 const macroTargetsKey = "btk.keto.macroTargets.v1";
 const weeklyCheckinsKey = "btk.keto.weeklyCheckins.v1";
 const defaultMacroTargets = { proteinMin: 140, proteinMax: 140, fatMin: 140, fatMax: 150, carbsMin: 16, carbsMax: 16 };
-const appVersion = "174";
+const appVersion = "175";
 const appDisplayVersion = `v1.1 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -774,7 +774,7 @@ function buildDinnerProposal(entry, gaps, title, food, favorAvocado = false) {
   }
 
   if (sodiumStillNeeded >= 300) {
-    const saltPinches = Math.min(5, Math.ceil(sodiumStillNeeded / 472));
+    const saltPinches = Math.max(1, Math.min(5, Math.round(sodiumStillNeeded / 472)));
     items.push(`${saltPinches} krm salt`);
     macros = proposalMacros(items, entry.date);
   }
