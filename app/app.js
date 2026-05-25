@@ -7,7 +7,7 @@ const syncCodeKey = "btk.keto.syncCode.v1";
 const macroTargetsKey = "btk.keto.macroTargets.v1";
 const weeklyCheckinsKey = "btk.keto.weeklyCheckins.v1";
 const defaultMacroTargets = { proteinMin: 140, proteinMax: 140, fatMin: 140, fatMax: 150, carbsMin: 16, carbsMax: 16 };
-const appVersion = "172";
+const appVersion = "173";
 const appDisplayVersion = `v1.1 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -16,7 +16,7 @@ let applyingRemoteData = false;
 
 const electrolyteTargetPhases = [
   { label: "Vecka 1", days: 7, sodiumMg: [4500, 5000], potassiumMg: [3000, 3500], magnesiumMg: [350, 400] },
-  { label: "Vecka 2", days: 14, sodiumMg: [4000, 4500], potassiumMg: [2800, 3200], magnesiumMg: [350, 350] },
+  { label: "Vecka 2", days: 14, sodiumMg: [4000, 4000], potassiumMg: [2800, 3200], magnesiumMg: [350, 350] },
   { label: "Vecka 3", days: 21, sodiumMg: [3500, 4000], potassiumMg: [2800, 3000], magnesiumMg: [350, 350] },
   { label: "Vecka 4+", days: Infinity, sodiumMg: [3000, 3000], potassiumMg: [2800, 2800], magnesiumMg: [350, 350] },
 ];
