@@ -4,7 +4,7 @@ const syncCodeKey = "btk.keto.syncCode.v1";
 const macroTargetsKey = "btk.keto.macroTargets.v1";
 const weeklyCheckinsKey = "btk.keto.weeklyCheckins.v1";
 const defaultMacroTargets = { proteinMin: 140, proteinMax: 140, fatMin: 140, fatMax: 150, carbsMin: 16, carbsMax: 16 };
-const appVersion = "164";
+const appVersion = "165";
 const appDisplayVersion = `v1.0 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -157,11 +157,11 @@ const foodSignals = [
   { match: /bladgrönt|bladgront|sallad|ruccola/i, kcal: 20, protein: 2, fat: 0.3, carbs: 1.5, servingGrams: 100, keto: 1 },
   { match: /gurka/i, kcal: 15, protein: 0.7, fat: 0.1, carbs: 3, servingGrams: 100, keto: 1 },
   { match: /surkål|surkal|sauerkraut/i, kcal: 20, protein: 1, fat: 0.1, carbs: 2, servingGrams: 100, keto: 1 },
-  { label: "Seltin", match: /(?:\d+(?:[,.]\d+)?\s*)?krm\s+seltin|seltin\s*(?:\d+(?:[,.]\d+)?\s*)?krm/i, quantity: [/(\d+(?:[,.]\d+)?)\s*krm\s+seltin/gi, /seltin\s*(\d+(?:[,.]\d+)?)\s*krm/gi], kcal: 0, protein: 0, fat: 0, carbs: 0, sodiumMg: 240, potassiumMg: 252, magnesiumMg: 12, keto: 1 },
-  { label: "Seltin", match: /(?:\d+(?:[,.]\d+)?\s*)?tsk\s+seltin|seltin\s*(?:\d+(?:[,.]\d+)?\s*)?tsk/i, quantity: [/(\d+(?:[,.]\d+)?)\s*tsk\s+seltin/gi, /seltin\s*(\d+(?:[,.]\d+)?)\s*tsk/gi], kcal: 0, protein: 0, fat: 0, carbs: 0, sodiumMg: 1200, potassiumMg: 1260, magnesiumMg: 61, keto: 1 },
+  { label: "Seltin", match: /(?:\d+(?:[,.]\d+)?\s*)?krm\s+seltin|seltin\s*(?:\d+(?:[,.]\d+)?\s*)?krm/i, quantity: [/(\d+(?:[,.]\d+)?)\s*krm\s+seltin/gi, /seltin\s*(\d+(?:[,.]\d+)?)\s*krm/gi], quantityUnit: "krm", kcal: 0, protein: 0, fat: 0, carbs: 0, sodiumMg: 240, potassiumMg: 252, magnesiumMg: 12, keto: 1 },
+  { label: "Seltin", match: /(?:\d+(?:[,.]\d+)?\s*)?tsk\s+seltin|seltin\s*(?:\d+(?:[,.]\d+)?\s*)?tsk/i, quantity: [/(\d+(?:[,.]\d+)?)\s*tsk\s+seltin/gi, /seltin\s*(\d+(?:[,.]\d+)?)\s*tsk/gi], quantityUnit: "tsk", kcal: 0, protein: 0, fat: 0, carbs: 0, sodiumMg: 1200, potassiumMg: 1260, magnesiumMg: 61, keto: 1 },
   { label: "Magnesiumtablett", match: /(?:mg-?\s*)?magnesium(?:tablett|tabletter|tillskott)?|mg-?tablett/i, quantity: [/(\d+(?:[,.]\d+)?)\s*(?:st\s*)?(?:tabletter?\s+)?magnesium(?:tabletter?|tillskott)?/gi, /(\d+(?:[,.]\d+)?)\s*(?:st\s*)?mg-?tabletter?/gi], kcal: 0, protein: 0, fat: 0, carbs: 0, magnesiumMg: 200, keto: 1 },
-  { label: "Salt", match: /(?:\d+(?:[,.]\d+)?\s*)?krm\s+salt|salt\s*(?:\d+(?:[,.]\d+)?\s*)?krm/i, quantity: [/(\d+(?:[,.]\d+)?)\s*krm\s+salt/gi, /salt\s*(\d+(?:[,.]\d+)?)\s*krm/gi], kcal: 0, protein: 0, fat: 0, carbs: 0, sodiumMg: 460, keto: 1 },
-  { label: "Salt", match: /(?:\d+(?:[,.]\d+)?\s*)?tsk\s+salt|salt\s*(?:\d+(?:[,.]\d+)?\s*)?tsk/i, quantity: [/(\d+(?:[,.]\d+)?)\s*tsk\s+salt/gi, /salt\s*(\d+(?:[,.]\d+)?)\s*tsk/gi], kcal: 0, protein: 0, fat: 0, carbs: 0, sodiumMg: 2300, keto: 1 },
+  { label: "Salt", match: /(?:\d+(?:[,.]\d+)?\s*)?krm\s+salt|salt\s*(?:\d+(?:[,.]\d+)?\s*)?krm/i, quantity: [/(\d+(?:[,.]\d+)?)\s*krm\s+salt/gi, /salt\s*(\d+(?:[,.]\d+)?)\s*krm/gi], quantityUnit: "krm", kcal: 0, protein: 0, fat: 0, carbs: 0, sodiumMg: 460, keto: 1 },
+  { label: "Salt", match: /(?:\d+(?:[,.]\d+)?\s*)?tsk\s+salt|salt\s*(?:\d+(?:[,.]\d+)?\s*)?tsk/i, quantity: [/(\d+(?:[,.]\d+)?)\s*tsk\s+salt/gi, /salt\s*(\d+(?:[,.]\d+)?)\s*tsk/gi], quantityUnit: "tsk", kcal: 0, protein: 0, fat: 0, carbs: 0, sodiumMg: 2300, keto: 1 },
   { match: /buljong(?:tärning|tarning)?|köttbuljong|kottbuljong/i, quantity: [/(\d+(?:[,.]\d+)?)\s*glas\s*(?:buljong|köttbuljong|kottbuljong)/gi, /(\d+(?:[,.]\d+)?)\s*(?:st\s*)?(?:buljong)?(?:tärningar?|tarningar?)/gi, /(?:buljong(?:tärning|tarning)?|köttbuljong|kottbuljong)\s*(\d+(?:[,.]\d+)?)\s*(?:st|tärningar?|tarningar?)?/gi], kcal: 32, protein: 0.7, fat: 2.2, carbs: 2.3, sodiumMg: 1100, keto: 1 },
   { match: /balsamico/i, kcal: 5, protein: 0, fat: 0, carbs: 1, servingGrams: 5, mskGrams: 15, keto: -1 },
   { match: /osötad\s+ketchup|osotad\s+ketchup|felix\s+(?:tomat)?ketchup\s+osötad|felix\s+(?:tomat)?ketchup\s+osotad/i, kcal: 7.5, protein: 0.2, fat: 0, carbs: 1.5, servingGrams: 15, mskGrams: 15, keto: 0 },
@@ -828,7 +828,12 @@ function countSignal(text, signal) {
       }
     }
     const total = quantities.reduce((sum, value) => sum + (Number.isFinite(value) ? value : 0), 0);
-    if (total > 0) return { count: total, amountLabel: null };
+    if (total > 0) {
+      return {
+        count: total,
+        amountLabel: signal.quantityUnit ? `${decimalMeasure(total)} ${signal.quantityUnit}` : null,
+      };
+    }
   }
   const unsupportedMeasures = unsupportedMeasuredAmounts(text, signal);
   const measured = measuredAmount(text, signal);
