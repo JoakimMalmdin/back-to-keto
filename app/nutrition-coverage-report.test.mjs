@@ -8,7 +8,11 @@ const summary = nutritionCoverageSummary();
 const core = summary.find((entry) => entry.priority === 1);
 assert(core.total === 35, "Kärnurvalets storlek ska vara stabil under migreringen.");
 assert(core.covered === 34, "Kärnurvalet ska bara ha en kvarvarande lucka efter köttfärsbiff.");
-assert(core.missingIds.length === 1 && core.missingIds[0] === "notfars", "Nötfärs ska vara synlig kärnblockering tills fetthalt har valts.");
+assert(core.missingIds.length === 1 && core.missingIds[0] === "notfars", "Nötfärs/köttfärs ska vara synlig kärnblockering tills fetthalt har valts.");
+
+const mincedBeef = nutritionCoverageRows().find((entry) => entry.id === "notfars");
+assert(mincedBeef.name === "Nötfärs/köttfärs", "Rapporten ska synliggöra användarens synonymregel för färs.");
+assert(mincedBeef.note.includes("Fetthalt måste anges"), "Rapporten ska påminna om att färsfett inte får gissas.");
 
 const patty = nutritionCoverageRows().find((entry) => entry.id === "kottfarsbiff");
 assert(patty.status === "covered", "Köttfärsbiff ska redovisas som katalogtäckt.");

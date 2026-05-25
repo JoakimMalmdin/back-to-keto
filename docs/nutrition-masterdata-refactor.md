@@ -73,9 +73,13 @@ Categories are for finding foods in the UI. Coaching uses tags such as
 - Logged meat is presently mapped to a corresponding cooked item where a
   defensible cooked entry exists, since diary gram amounts describe food on
   the plate. This assumption remains visible in each staged record.
-- Nötfärs is held until a fat variant is chosen, köttfärsbiff is held for a
-  recipe decision, and fetaost is held because the database candidate is
-  salladsost rather than an unambiguous feta product.
+- `Köttfärs` means `nötfärs` in this user's logging convention. This raw
+  ingredient remains held until a fat variant is specified; `blandfärs`,
+  `fläskfärs` and `kycklingfärs` must remain separate ingredients.
+- `Köttfärsbit`/`köttfärsbiff` is a prepared-item estimate, not an alias for
+  raw minced beef, and may therefore use its own explicit piece measure.
+- Fetaost is held because the database candidate is salladsost rather than
+  an unambiguous feta product.
 
 ## Canonical Record Shape
 

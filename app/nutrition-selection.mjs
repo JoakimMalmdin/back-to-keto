@@ -101,7 +101,7 @@ export const NUTRITION_SELECTION = Object.freeze([
   slvPromoted("kycklingfile", "Kycklingfilé utan skinn", "Skinless chicken breast", "meat", 1, "Kyckling bröstfilé utan skinn"),
   slvPromoted("oxfile", "Oxfilé", "Beef fillet", "meat", 1, "Nöt oxfilé"),
   slvPromoted("flaskkotlett-benfri", "Benfri fläskkotlett", "Boneless pork chop", "meat", 1, "Gris kotlett benfri"),
-  slv("notfars", "Nötfärs", "Minced beef", "meat", 1, "Nötfärs"),
+  slv("notfars", "Nötfärs/köttfärs", "Minced beef", "meat", 1, "Nötfärs", "I användarens logg betyder köttfärs nötfärs. Fetthalt måste anges eller en uttrycklig produktvariant väljas; blandfärs, fläskfärs och kycklingfärs är egna råvaror."),
   proxy("kottfarsbiff", "Köttfärsbiff", "Beef patty", "meat", 1, "kottfarsbiff-proxy", "Standardpost för en tillagad köttfärsbit om cirka 80 g; fetthalt/recept kan förfinas."),
   proxy("fetaost", "Fetaost", "Feta cheese", "dairy", 1, "fetaost-proxy", "Provisorisk post tills etikett eller entydig officiell matchning finns."),
   proxy("hardost", "Ost", "Cheese", "dairy", 1, "hardost-proxy", "Generisk hårdostpost tills ostsort anges eller etikett finns."),
