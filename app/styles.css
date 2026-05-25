@@ -112,6 +112,22 @@ textarea {
   display: block;
 }
 
+.panel-title-group {
+  position: relative;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.electrolyte-info {
+  position: static;
+}
+
+.electrolyte-info .version-info-text {
+  left: 0;
+  width: min(370px, calc(100vw - 52px));
+}
+
 h1,
 h2,
 p {

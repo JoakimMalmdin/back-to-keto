@@ -106,6 +106,9 @@ function renderDaily(root) {
       <div><span>Vatten</span><strong>${escapeHtml(entry.water || "--")}</strong></div>
       <div><span>Kaffe</span><strong>${escapeHtml(entry.coffee || "--")}</strong></div>
       <div><span>Promenad</span><strong>${escapeHtml(entry.walk || "--")}</strong></div>
+      <div><span>Motion</span><strong>${escapeHtml(entry.motion || "--")}</strong></div>
+      <div><span>Midjemått</span><strong>${entry.waist ? `${decimal(entry.waist)} cm` : "--"}</strong></div>
+      <div><span>Navelmått</span><strong>${entry.belly ? `${decimal(entry.belly)} cm` : "--"}</strong></div>
       <div><span>Blodsocker</span><strong>${entry.bloodGlucose ? `${decimal(entry.bloodGlucose)} mmol/L` : "--"}</strong></div>
       <div><span>Ketoner</span><strong>${entry.ketones ? `${decimal(entry.ketones)} mmol/L` : "--"}</strong></div>
     </section>
@@ -164,14 +167,15 @@ function renderWeekly(root) {
         </tr>`
     )
     .join("");
-  const hasCheckin = Object.values(checkin).some((value) => value !== "" && value !== null && value !== undefined);
+  const hasCheckin = Number.isFinite(report.waistAverage) || Number.isFinite(report.bellyAverage) ||
+    Object.values(checkin).some((value) => value !== "" && value !== null && value !== undefined);
   const checkinSection = hasCheckin
     ? `<section>
         <h2>Veckoincheckning</h2>
         <section class="summary" aria-label="Veckoincheckning">
           <div><span>Medelvikt aktuell vecka</span><strong>${Number.isFinite(report.weightAverage) ? `${decimal(report.weightAverage)} kg` : "--"}</strong></div>
-          <div><span>Midjemått</span><strong>${checkin.waist ? `${decimal(checkin.waist)} cm` : "--"}</strong></div>
-          <div><span>Buk/navel</span><strong>${checkin.belly ? `${decimal(checkin.belly)} cm` : "--"}</strong></div>
+          <div><span>Medelmidja aktuell vecka</span><strong>${Number.isFinite(report.waistAverage) ? `${decimal(report.waistAverage)} cm` : checkin.waist ? `${decimal(checkin.waist)} cm` : "--"}</strong></div>
+          <div><span>Medelnavelmått aktuell vecka</span><strong>${Number.isFinite(report.bellyAverage) ? `${decimal(report.bellyAverage)} cm` : checkin.belly ? `${decimal(checkin.belly)} cm` : "--"}</strong></div>
           <div><span>Blodsocker</span><strong>${checkin.bloodGlucose ? `${decimal(checkin.bloodGlucose)} mmol/L` : "--"}</strong></div>
           <div><span>Ketoner</span><strong>${checkin.ketones ? `${decimal(checkin.ketones)} mmol/L` : "--"}</strong></div>
           <div><span>Energi</span><strong>${checkin.energy || "--"}</strong></div>
@@ -193,6 +197,7 @@ function renderWeekly(root) {
       <div><span>Loggade dagar</span><strong>${report.days || 0}</strong></div>
       <div><span>Typvärde sömn</span><strong>${escapeHtml(report.sleepMode || "--")}</strong></div>
       <div><span>Typvärde promenad</span><strong>${escapeHtml(report.walkMode || "--")}</strong></div>
+      <div><span>Typvärde motion</span><strong>${escapeHtml(report.motionMode || "--")}</strong></div>
       <div><span>Vatten/dag</span><strong>${report.waterAverage === null ? "--" : `${decimal(report.waterAverage)} liter`}</strong></div>
       <div><span>Kaffe/dag</span><strong>${report.coffeeAverage === null ? "--" : `${decimal(report.coffeeAverage)} koppar`}</strong></div>
       <div><span>Blodsocker snitt</span><strong>${report.bloodGlucoseAverage === null ? "--" : `${decimal(report.bloodGlucoseAverage)} mmol/L`}</strong></div>

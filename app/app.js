@@ -7,7 +7,7 @@ const syncCodeKey = "btk.keto.syncCode.v1";
 const macroTargetsKey = "btk.keto.macroTargets.v1";
 const weeklyCheckinsKey = "btk.keto.weeklyCheckins.v1";
 const defaultMacroTargets = { proteinMin: 140, proteinMax: 140, fatMin: 140, fatMax: 150, carbsMin: 16, carbsMax: 16 };
-const appVersion = "171";
+const appVersion = "172";
 const appDisplayVersion = `v1.1 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -101,9 +101,12 @@ const fields = {
   water: document.querySelector("#waterInput"),
   coffee: document.querySelector("#coffeeInput"),
   walk: document.querySelectorAll('input[name="walk"]'),
-  trainingDay: document.querySelectorAll('input[name="trainingDay"]'),
+  motion: document.querySelectorAll('input[name="motion"]'),
+  trainingDay: document.querySelector("#legacyTrainingDayInput"),
   bloodGlucose: document.querySelector("#bloodGlucoseInput"),
   ketones: document.querySelector("#ketonesInput"),
+  waist: document.querySelector("#waistInput"),
+  belly: document.querySelector("#bellyInput"),
   notes: document.querySelector("#notesInput"),
 };
 const goalInput = document.querySelector("#goalInput");
@@ -143,6 +146,7 @@ const saveTrendPngButton = document.querySelector("#saveTrendPngButton");
 const trendModeInput = document.querySelector("#trendModeInput");
 const trendStartWeekInput = document.querySelector("#trendStartWeekInput");
 const trendEndWeekInput = document.querySelector("#trendEndWeekInput");
+const electrolyteInfoButton = document.querySelector("#electrolyteInfoButton");
 let autosaveTimer = null;
 
 function stableAppUrl() {
@@ -317,9 +321,12 @@ function emptyEntry(date = todayIso()) {
     water: "",
     coffee: "",
     walk: "",
+    motion: "",
     trainingDay: "",
     bloodGlucose: "",
     ketones: "",
+    waist: "",
+    belly: "",
     notes: "",
   };
 }
@@ -363,19 +370,25 @@ function numberInputValue(input) {
   return value ? Number(value) : "";
 }
 
-function weeklyAverageWeight(weekKey = currentWeekKey()) {
+function weeklyAverageField(field, weekKey = currentWeekKey()) {
   const parsed = parseWeekInput(weekKey);
   if (!parsed) return null;
   const { entries } = entriesForWeek(parsed.year, parsed.week);
-  return average(entries.map((entry) => (Number(entry.weight) > 0 ? Number(entry.weight) : NaN)));
+  return average(entries.map((entry) => (Number(entry[field]) > 0 ? Number(entry[field]) : NaN)));
+}
+
+function weeklyAverageWeight(weekKey = currentWeekKey()) {
+  return weeklyAverageField("weight", weekKey);
 }
 
 function fillWeeklyCheckin(weekKey = currentWeekKey()) {
   const checkin = getWeeklyCheckins()[weekKey] || {};
   const averageWeight = weeklyAverageWeight(weekKey);
+  const averageWaist = weeklyAverageField("waist", weekKey);
+  const averageBelly = weeklyAverageField("belly", weekKey);
   if (weeklyCheckinInputs.averageWeight) weeklyCheckinInputs.averageWeight.value = averageWeight === null ? "" : decimal(averageWeight);
-  if (weeklyCheckinInputs.waist) weeklyCheckinInputs.waist.value = checkin.waist ?? "";
-  if (weeklyCheckinInputs.belly) weeklyCheckinInputs.belly.value = checkin.belly ?? "";
+  if (weeklyCheckinInputs.waist) weeklyCheckinInputs.waist.value = averageWaist === null ? (checkin.waist ?? "") : decimal(averageWaist);
+  if (weeklyCheckinInputs.belly) weeklyCheckinInputs.belly.value = averageBelly === null ? (checkin.belly ?? "") : decimal(averageBelly);
   if (weeklyCheckinInputs.bloodGlucose) weeklyCheckinInputs.bloodGlucose.value = checkin.bloodGlucose ?? "";
   if (weeklyCheckinInputs.ketones) weeklyCheckinInputs.ketones.value = checkin.ketones ?? "";
   if (weeklyCheckinInputs.energy) weeklyCheckinInputs.energy.value = checkin.energy ?? "";
@@ -383,17 +396,20 @@ function fillWeeklyCheckin(weekKey = currentWeekKey()) {
   if (weeklyCheckinInputs.notes) weeklyCheckinInputs.notes.value = checkin.notes ?? "";
   if (weeklyCheckinStatus) {
     const weightText = averageWeight === null ? " Ingen vikt registrerad ännu." : ` Medelvikt: ${decimal(averageWeight)} kg.`;
-    weeklyCheckinStatus.textContent = `Veckoincheckning för vecka ${weekKey}.${weightText}`;
+    const measurementText = averageWaist === null && averageBelly === null ? "" : " Kroppsmått är medelvärden av dagarna i veckan.";
+    weeklyCheckinStatus.textContent = `Veckoincheckning för vecka ${weekKey}.${weightText}${measurementText}`;
   }
 }
 
 function saveCurrentWeeklyCheckin() {
   const weekKey = currentWeekKey();
   const checkins = getWeeklyCheckins();
+  const averageWaist = weeklyAverageField("waist", weekKey);
+  const averageBelly = weeklyAverageField("belly", weekKey);
   checkins[weekKey] = {
     week: weekKey,
-    waist: numberInputValue(weeklyCheckinInputs.waist),
-    belly: numberInputValue(weeklyCheckinInputs.belly),
+    waist: averageWaist === null ? "" : averageWaist,
+    belly: averageBelly === null ? "" : averageBelly,
     bloodGlucose: numberInputValue(weeklyCheckinInputs.bloodGlucose),
     ketones: numberInputValue(weeklyCheckinInputs.ketones),
     energy: numberInputValue(weeklyCheckinInputs.energy),
@@ -514,6 +530,10 @@ function electrolyteTargetsForDate(date, entries, trainingDay = false) {
   };
 }
 
+function isTrainingEntry(entry) {
+  return Boolean(entry?.motion) || entry?.trainingDay === "Ja";
+}
+
 function electrolyteRangeLabel(range) {
   return Number(range[0]) === Number(range[1]) ? `${range[0]}` : `${range[0]}-${range[1]}`;
 }
@@ -539,7 +559,7 @@ function formEntry() {
       input instanceof NodeList
         ? [...input].find((option) => option.checked)?.value || ""
         : input.value.trim();
-    entry[key] = ["weight", "fat", "protein", "carbs", "bloodGlucose", "ketones"].includes(key) && value ? Number(value) : value;
+    entry[key] = ["weight", "fat", "protein", "carbs", "bloodGlucose", "ketones", "waist", "belly"].includes(key) && value ? Number(value) : value;
   }
   entry.date ||= todayIso();
   return entry;
@@ -695,7 +715,7 @@ function hasElectrolyteSignal(text, type) {
 }
 
 function dinnerElectrolyteAdvice(macros, entry) {
-  const targets = electrolyteTargetsForDate(entry.date, getEntries(), entry.trainingDay === "Ja");
+  const targets = electrolyteTargetsForDate(entry.date, getEntries(), isTrainingEntry(entry));
   const sodiumGap = Math.max(0, targets.sodiumMg[0] - (macros.sodiumMg || 0));
   const potassiumGap = Math.max(0, targets.potassiumMg[0] - (macros.potassiumMg || 0));
   const magnesiumGap = Math.max(0, targets.magnesiumMg[0] - (macros.magnesiumMg || 0));
@@ -977,7 +997,7 @@ function render(selectedDate = activeDate) {
   const delta = latest.weight && startWeight ? latest.weight - startWeight : 0;
   const goalWeight = getGoalWeight();
   const targets = getMacroTargets();
-  const electrolyteTargets = electrolyteTargetsForDate(latest.date, entries, latest.trainingDay === "Ja");
+  const electrolyteTargets = electrolyteTargetsForDate(latest.date, entries, isTrainingEntry(latest));
   const kcalRange = macroKcalRange(targets);
   const toGoal = latest.weight && goalWeight ? latest.weight - goalWeight : 0;
 
@@ -1051,7 +1071,7 @@ function render(selectedDate = activeDate) {
   document.querySelector("#sodiumText").textContent = hasContent ? `${Math.round(macros.sodiumMg)} mg` : "--";
   document.querySelector("#potassiumText").textContent = hasContent ? `${Math.round(macros.potassiumMg)} mg` : "--";
   document.querySelector("#magnesiumText").textContent = hasContent ? `${Math.round(macros.magnesiumMg)} mg` : "--";
-  const phaseExtra = electrolyteTargets.trainingAddition ? " Träningsdag: +500 mg natrium." : "";
+  const phaseExtra = electrolyteTargets.trainingAddition ? " Motion: +500 mg natrium." : "";
   document.querySelector("#electrolyteNote").textContent = hasContent
     ? `${electrolyteTargets.label} från start ${electrolyteTargets.startDate}.${phaseExtra} Elektrolyter uppskattas från kända poster.`
     : `${electrolyteTargets.label} från start ${electrolyteTargets.startDate}.${phaseExtra} Fyll i mat och dryck för uppskattad elektrolytbild.`;
@@ -1242,6 +1262,8 @@ function weeklyReportData(year, week) {
   const weekKey = `${year}-${String(week).padStart(2, "0")}`;
   const checkin = getWeeklyCheckins()[weekKey] || null;
   const weightAverage = average(entries.map((entry) => (Number(entry.weight) > 0 ? Number(entry.weight) : NaN)));
+  const waistAverage = average(entries.map((entry) => (Number(entry.waist) > 0 ? Number(entry.waist) : NaN)));
+  const bellyAverage = average(entries.map((entry) => (Number(entry.belly) > 0 ? Number(entry.belly) : NaN)));
   const meals = [
     ["Frukost", "breakfast"],
     ["Lunch", "lunch"],
@@ -1284,12 +1306,15 @@ function weeklyReportData(year, week) {
     week,
     checkin,
     weightAverage,
+    waistAverage,
+    bellyAverage,
     range,
     days: entries.length,
     rows,
     totals,
     sleepMode: sleepMode(entries.map((entry) => entry.sleep)),
     walkMode: mode(entries.map((entry) => entry.walk || "Ingen")),
+    motionMode: mode(entries.map((entry) => entry.motion || "Ingen")),
     waterAverage,
     coffeeAverage,
     bloodGlucoseAverage,
@@ -1335,6 +1360,10 @@ weeklyCheckinButton?.addEventListener("click", () => {
   if (willOpen) fillWeeklyCheckin();
 });
 saveWeeklyCheckinButton?.addEventListener("click", saveCurrentWeeklyCheckin);
+electrolyteInfoButton?.addEventListener("click", (event) => {
+  event.preventDefault();
+  event.stopPropagation();
+});
 
 function printTrendChart() {
   document.querySelector(".trend-panel details")?.setAttribute("open", "");
