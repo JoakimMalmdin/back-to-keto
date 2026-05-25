@@ -171,6 +171,8 @@ generated from the same record.
   already encountered in use: walnuts counted as portions, falukorv slices,
   sauerkraut grams, Seltin and salt, tuna tins, berries counted by piece,
   Chianti glasses and magnesium tablets.
+- `node app/nutrition-coverage-report.mjs` prints a repeatable Markdown
+  inventory of source status and available measures by priority.
 - Quantity lookup is restricted to the same meal line as the matched food, so
   an amount in lunch or dinner cannot leak into another meal.
 

@@ -44,6 +44,10 @@ parsed = parseNutritionText("8 falukorvsskivor med 1 msk majonnäs, 2 plommontom
 near(item(parsed, "falukorv-proxy").grams, 160, "Åtta falukorvsskivor ska vara 160 g, inte åtta normalportioner");
 near(item(parsed, "plommontomat").grams, 40, "Plommontomater ska räknas styckevis");
 
+parsed = parseNutritionText("1 köttfärsbit");
+assert(parsed.unresolved.length === 0, "En uttrycklig köttfärsbit ska inte tappas bort.");
+near(item(parsed, "kottfarsbiff-proxy").grams, 80, "En köttfärsbit ska använda sin deklarerade standardbit");
+
 parsed = parseNutritionText("20 g fetaost, 15 g ost, 1/2 tsk linfrön, 2 glas chianti");
 assert(parsed.unresolved.length === 0, "Vanliga kompletteringar ska vara beräkningsbara.");
 near(item(parsed, "fetaost-proxy").grams, 20, "Fetaost ska inte bli generell ost");

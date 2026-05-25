@@ -550,6 +550,19 @@ export const NUTRITION_CATALOG = Object.freeze([
     tags: ["sodium_source"],
   }),
   defineProxyFood({
+    id: "kottfarsbiff-proxy",
+    names: translations("Köttfärsbiff", "Beef patty"),
+    category: "meat",
+    aliases: {
+      "sv-SE": ["köttfärsbit", "kottfarsbit", "köttfärsbiff", "kottfarsbiff"],
+      "en-GB": ["beef patty", "minced beef patty"],
+    },
+    nutrientsPer100g: { kcal: 245, fat: 18, protein: 19, carbs: 0, sodiumMg: 75, potassiumMg: 320, magnesiumMg: 22 },
+    measures: [measure("piece", 1, 80)],
+    implicitUnit: "piece",
+    tags: ["complete_protein", "potassium_source"],
+  }, "Standardpost för tillagad köttfärsbit, cirka 80 g per bit; recept/fetthalt verifieras senare."),
+  defineProxyFood({
     id: "salami-proxy",
     names: translations("Salami", "Salami"),
     category: "charcuterie",

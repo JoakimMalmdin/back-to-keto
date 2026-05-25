@@ -84,6 +84,9 @@ assert(avocado.nutrientsPer100g.potassiumMg === 600, "Avokado ska bära officiel
 const egg = findFoodById("agg");
 assert(egg.measures.some((entry) => entry.unit === "piece"), "Ägg ska stödja tydliga styckeangivelser.");
 
+const patty = findFoodById("kottfarsbiff-proxy");
+assert(patty.measures.some((entry) => entry.unit === "piece" && entry.grams === 80), "Köttfärsbit ska ha uttryckligt styckmått.");
+
 assert(uiText("sv-SE", "currentMacros") === "Aktuell makrobild", "Svensk UI-text saknas.");
 assert(uiText("en-GB", "currentMacros") === "Current macros", "Engelsk UI-text saknas.");
 
