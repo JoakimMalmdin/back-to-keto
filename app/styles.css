@@ -61,6 +61,57 @@ textarea {
   font-weight: 750;
 }
 
+.version-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.version-info {
+  position: relative;
+}
+
+.version-info-trigger {
+  appearance: none;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 750;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.version-info-trigger:hover {
+  background: transparent;
+  box-shadow: none;
+}
+
+.version-info-text {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 20;
+  display: none;
+  width: min(330px, calc(100vw - 52px));
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel);
+  box-shadow: 0 8px 24px rgba(31, 37, 35, 0.12);
+  color: var(--ink);
+  font-size: 0.78rem;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+.version-info:hover .version-info-text,
+.version-info:focus-within .version-info-text {
+  display: block;
+}
+
 h1,
 h2,
 p {
@@ -1159,6 +1210,18 @@ textarea {
 }
 
 @media (max-width: 520px) {
+  .version-row {
+    position: relative;
+  }
+
+  .version-info {
+    position: static;
+  }
+
+  .version-info-text {
+    width: calc(100vw - 32px);
+  }
+
   .hero-panel {
     grid-template-columns: 1fr;
   }
