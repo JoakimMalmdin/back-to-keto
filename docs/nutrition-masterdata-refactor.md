@@ -129,6 +129,9 @@ generated from the same record.
   and 15% mince are imported; 12% and 20% remain explicit label/source gaps.
 - `Köttfärsbit` is a separate prepared-item estimate and must not silently
   satisfy a raw `köttfärs` input.
+- Labelled prepared products such as `Matriket svenska köttbullar 73% kött`
+  remain product-specific records. They accept grams until an actual item
+  weight has been checked; `6 köttbullar` must not silently assume a portion.
 
 ## Quantity Interpretation
 

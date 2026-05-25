@@ -72,6 +72,12 @@ near(parsed.totals.fat, 28.8, "120 g bratwurst ska använda etikettens fettvärd
 near(parsed.totals.protein, 15.6, "120 g bratwurst ska använda etikettens proteinvärde");
 near(parsed.totals.carbs, 3.36, "120 g bratwurst ska använda etikettens kolhydratvärde");
 
+parsed = parseNutritionText("120 g Matriket köttbullar");
+assert(parsed.unresolved.length === 0, "Matriket-köttbullar i gram ska kunna beräknas.");
+near(parsed.totals.fat, 20.4, "120 g Matriket-köttbullar ska använda etikettens fettvärde");
+near(parsed.totals.protein, 14.4, "120 g Matriket-köttbullar ska använda etikettens proteinvärde");
+near(parsed.totals.carbs, 10.2, "120 g Matriket-köttbullar ska använda etikettens kolhydratvärde");
+
 parsed = parseNutritionText("150 g köttfärs 10%");
 assert(parsed.unresolved.length === 0, "Köttfärs med verifierad 10%-variant ska kunna beräknas.");
 assert(parsed.items[0].foodId === "notfars-10", "Köttfärs 10% ska matcha officiell nötfärspost.");

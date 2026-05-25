@@ -57,6 +57,11 @@ assert(bratwurst.nutrientsPer100g.fat === 24, "Bratwurst ska använda etikettens
 assert(bratwurst.nutrientsPer100g.sodiumMg === 760, "Bratwurst ska härleda natrium från deklarerat salt.");
 assert(bratwurst.electrolyteSource.confidence === CONFIDENCE_LEVELS.calculated, "Bratwurstnatrium ska markeras som beräknat.");
 
+const meatballs = findFoodById("matriket-svenska-kottbullar-73");
+assert(meatballs.nutrientsPer100g.carbs === 8.5, "Matriket-köttbullar ska använda etikettens kolhydratvärde.");
+assert(meatballs.nutrientsPer100g.sodiumMg === 629, "Matriket-köttbullar ska härleda natrium från deklarerat salt.");
+assert(meatballs.measures.length === 0, "Köttbullar får inte få styckmått innan styckvikten har kontrollerats.");
+
 const yoghurt = findFoodById("grekisk-yoghurt-10");
 assert(yoghurt.measures.some((entry) => entry.unit === "dl"), "Grekisk yoghurt ska stödja dl.");
 assert(foodName(yoghurt, "en-GB") === "Greek yoghurt 10%", "Brittisk stavning ska använda yoghurt.");

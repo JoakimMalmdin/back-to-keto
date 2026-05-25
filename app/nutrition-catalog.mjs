@@ -262,6 +262,19 @@ export const NUTRITION_CATALOG = Object.freeze([
     tags: ["charcuterie", "protein", "sodium_source"],
   }),
   defineFood({
+    id: "matriket-svenska-kottbullar-73",
+    names: translations("Matriket svenska köttbullar 73% kött", "Matriket Swedish meatballs 73% meat"),
+    category: "charcuterie",
+    aliases: {
+      "sv-SE": ["matriket svenska köttbullar", "matriket köttbullar", "matriket köttbullar 73% kött", "svenska köttbullar 73% kött"],
+      "en-GB": ["matriket swedish meatballs", "matriket meatballs 73% meat"],
+    },
+    nutrientsPer100g: { kcal: 225, fat: 17, protein: 12, carbs: 8.5, sodiumMg: 629 },
+    macroSource: source(SOURCE_TYPES.productLabel, "Matriket Svenska Köttbullar 73% kött, fotograferad etikett", "2026-05-25", CONFIDENCE_LEVELS.label),
+    electrolyteSource: source(SOURCE_TYPES.productLabel, "Matriket Svenska Köttbullar 73% kött, salt 1,6 g/100 g", "2026-05-25", CONFIDENCE_LEVELS.calculated, "Natrium beräknat från deklarerat salt; kalium och magnesium saknas på etiketten."),
+    tags: ["charcuterie", "protein", "sodium_source"],
+  }),
+  defineFood({
     id: "ica-makrill-tomatsas",
     names: translations("ICA spansk makrillfilé i tomatsås", "ICA Spanish mackerel fillet in tomato sauce"),
     category: "seafood",

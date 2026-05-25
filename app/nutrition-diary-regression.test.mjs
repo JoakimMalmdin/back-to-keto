@@ -33,6 +33,11 @@ assert(parsed.unresolved.length === 0, "Den fotograferade bratwurstlunchen ska v
 near(item(parsed, "surkal").grams, 25, "Surkål i gram får inte ge dl-varning");
 near(item(parsed, "avokado").grams, 82.5, "Halv avokado ska beräknas från styckmått");
 
+parsed = parseNutritionText("120 g Matriket köttbullar, 1 avokado, 15 g gurka, 1 krm seltin, 1 msk grädde 40%, 1 jordgubbe");
+assert(parsed.unresolved.length === 0, "Köttbullelunchen ska vara beräkningsbar när köttbullarna anges i gram.");
+near(item(parsed, "matriket-svenska-kottbullar-73").grams, 120, "Köttbullarnas etikettpost ska använda angiven gramvikt");
+near(item(parsed, "seltin").grams, 1.2, "Seltin i köttbullelunchen ska behålla krm-mått");
+
 parsed = parseNutritionText("1 msk kvarg, 1 tsk kvarg, 1 valnöt, 1 krm seltin, 2 tabletter magnesium 200 mg");
 assert(parsed.unresolved.length === 0, "Kända felposter ska kunna beräknas tillsammans.");
 near(item(parsed, "milbona-magerkvarg-naturell").grams, 15, "Första kvargmåttet ska förbli matsked");
