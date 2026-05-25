@@ -4,7 +4,7 @@ const syncCodeKey = "btk.keto.syncCode.v1";
 const macroTargetsKey = "btk.keto.macroTargets.v1";
 const weeklyCheckinsKey = "btk.keto.weeklyCheckins.v1";
 const defaultMacroTargets = { proteinMin: 140, proteinMax: 140, fatMin: 140, fatMax: 150, carbsMin: 16, carbsMax: 16 };
-const appVersion = "168";
+const appVersion = "169";
 const appDisplayVersion = `v1.0 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -95,7 +95,8 @@ const foodSignals = [
   { match: /gouda/i, kcal: 110, protein: 7.5, fat: 8.5, carbs: 0.7, servingGrams: 30, sliceGrams: 10, keto: 2 },
   { match: /(^|[^a-zåäö])ost(?:[a-zåäö]*)?|gruyere|parmesan/i, kcal: 120, protein: 7, fat: 10, carbs: 0.5, servingGrams: 30, sliceGrams: 10, keto: 2 },
   { match: /smör|smor/i, kcal: 75, protein: 0.1, fat: 8.2, carbs: 0.1, servingGrams: 10, mskGrams: 14, keto: 2 },
-  { match: /grädde|gradde/i, kcal: 100, protein: 0.6, fat: 10, carbs: 0.9, servingGrams: 30, dlGrams: 100, mskGrams: 15, keto: 2 },
+  { label: "Grädde 36%", match: /grädde\s*36\s*%|gradde\s*36\s*%/i, kcal: 103, protein: 0.6, fat: 10.8, carbs: 0.9, sodiumMg: 9, potassiumMg: 23, magnesiumMg: 2, servingGrams: 30, dlGrams: 100, mskGrams: 15, keto: 2 },
+  { label: "Grädde 40%", match: /grädde|gradde/i, exclude: /grädde\s*36\s*%|gradde\s*36\s*%/i, kcal: 113, protein: 0.6, fat: 12, carbs: 0.9, sodiumMg: 9, potassiumMg: 23, magnesiumMg: 2, servingGrams: 30, dlGrams: 100, mskGrams: 15, keto: 2 },
   { match: /baconlindad(?:e)?\s+(?:köttfärs|kottfars)?(?:bit|bitar|biff|biffar)/i, quantity: /(\d+(?:[,.]\d+)?)\s*(?:st\s*)?baconlindad(?:e)?\s+(?:köttfärs|kottfars)?(?:bit|bitar|biff|biffar)/gi, kcal: 220, protein: 16.5, fat: 17.5, carbs: 0.8, servingGrams: 100, keto: 2 },
   { match: /bacon/i, exclude: /baconlindad/i, quantity: [/(\d+(?:[,.]\d+)?)\s*(?:skivor?|st)\s*bacon/gi, /bacon\s*(?:ca\s*)?(\d+(?:[,.]\d+)?)\s*(?:skivor?|st)/gi], kcal: 55, protein: 3.5, fat: 4.5, carbs: 0.1, sodiumMg: 180, potassiumMg: 55, magnesiumMg: 3, servingGrams: 12, keto: 2 },
   { match: /bearnaise(?:sås|sas)?|bea|bea-?sås|bea-?sas|bearnie(?:sås|sas)?/i, quantity: [/(\d+(?:[,.]\d+)?)\s*msk\s*(?:bearnaise(?:sås|sas)?|bea|bea-?sås|bea-?sas|bearnie(?:sås|sas)?)/gi, /(?:bearnaise(?:sås|sas)?|bea|bea-?sås|bea-?sas|bearnie(?:sås|sas)?)\s*(?:ca|minst)?\s*(\d+(?:[,.]\d+)?)\s*msk/gi], kcal: 85, protein: 0.2, fat: 9, carbs: 0.4, keto: 2 },
@@ -103,6 +104,7 @@ const foodSignals = [
   { match: /hamburgare\s*90\s*g/i, kcal: 230, protein: 17, fat: 18, carbs: 0, keto: 2 },
   { match: /hamburgare\s*150\s*g/i, kcal: 385, protein: 28, fat: 30, carbs: 0, keto: 2 },
   { label: "Bratwurst 87% kött, kummin & vitlök", match: /bratwurst(?:\s*87\s*%?\s*(?:kött|kott))?(?:\s*(?:kummin\s*(?:&|och)\s*vitlök|kummin\s*(?:&|och)\s*vitlok))?/i, kcal: 280, protein: 13, fat: 24, carbs: 2.8, sodiumMg: 760, servingGrams: 100, keto: 1 },
+  { label: "Matriket svenska köttbullar 73% kött", match: /matriket\s+(?:svenska\s+)?köttbullar(?:\s*73\s*%?\s*(?:kött|kott))?|matriket\s+(?:svenska\s+)?kottbullar(?:\s*73\s*%?\s*(?:kött|kott))?/i, kcal: 225, protein: 12, fat: 17, carbs: 8.5, sodiumMg: 629, servingGrams: 100, keto: -1 },
   { match: /grillkorv\s*85\s*%?\s*(?:kött|kott)?/i, kcal: 260, protein: 12, fat: 23, carbs: 2, servingGrams: 100, keto: 1 },
   { match: /korv\s*75\s*%?\s*(?:kött|kott)?/i, exclude: /falukorv/i, kcal: 250, protein: 11, fat: 22, carbs: 4, servingGrams: 100, keto: 0 },
   { match: /gräddfil\s*12\s*%|graddfil\s*12\s*%/i, kcal: 135, protein: 3, fat: 12, carbs: 3.5, servingGrams: 100, dlGrams: 100, mskGrams: 15, keto: 1 },
@@ -160,7 +162,7 @@ const foodSignals = [
   { match: /svamp|champinjon/i, kcal: 22, protein: 3, fat: 0.3, carbs: 3, potassiumMg: 320, magnesiumMg: 9, servingGrams: 100, keto: 1 },
   { match: /spenat/i, kcal: 23, protein: 2.9, fat: 0.4, carbs: 1.4, potassiumMg: 560, magnesiumMg: 79, servingGrams: 100, keto: 1 },
   { match: /bladgrönt|bladgront|sallad|ruccola/i, kcal: 20, protein: 2, fat: 0.3, carbs: 1.5, servingGrams: 100, keto: 1 },
-  { match: /gurka/i, kcal: 15, protein: 0.7, fat: 0.1, carbs: 3, servingGrams: 100, keto: 1 },
+  { match: /gurka/i, kcal: 15, protein: 0.7, fat: 0.1, carbs: 3, servingGrams: 100, sliceGrams: 15, keto: 1 },
   { match: /surkål|surkal|sauerkraut/i, kcal: 20, protein: 1, fat: 0.1, carbs: 2, servingGrams: 100, keto: 1 },
   { label: "Seltin", match: /(?:\d+(?:[,.]\d+)?\s*)?krm\s+seltin|seltin\s*(?:\d+(?:[,.]\d+)?\s*)?krm/i, quantity: [/(\d+(?:[,.]\d+)?)\s*krm\s+seltin/gi, /seltin\s*(\d+(?:[,.]\d+)?)\s*krm/gi], quantityUnit: "krm", kcal: 0, protein: 0, fat: 0, carbs: 0, sodiumMg: 240, potassiumMg: 252, magnesiumMg: 12, keto: 1 },
   { label: "Seltin", match: /(?:\d+(?:[,.]\d+)?\s*)?tsk\s+seltin|seltin\s*(?:\d+(?:[,.]\d+)?\s*)?tsk/i, quantity: [/(\d+(?:[,.]\d+)?)\s*tsk\s+seltin/gi, /seltin\s*(\d+(?:[,.]\d+)?)\s*tsk/gi], quantityUnit: "tsk", kcal: 0, protein: 0, fat: 0, carbs: 0, sodiumMg: 1200, potassiumMg: 1260, magnesiumMg: 61, keto: 1 },
@@ -290,7 +292,7 @@ const additionalFoodSignals = [
   { label: "Sesamfrön", match: /sesamfrön|sesamfron/i, kcal: 86, protein: 2.7, fat: 7.5, carbs: 3.5, sodiumMg: 2, potassiumMg: 70, magnesiumMg: 53, servingGrams: 15, mskGrams: 15, keto: 0 },
   { label: "Solrosfrön", match: /solrosfrön|solrosfron/i, kcal: 88, protein: 3.1, fat: 7.7, carbs: 3, sodiumMg: 1, potassiumMg: 97, magnesiumMg: 49, servingGrams: 15, mskGrams: 15, tskGrams: 5, keto: 0 },
   { label: "Hallon", match: /hallon/i, kcal: 52, protein: 1.2, fat: 0.7, carbs: 12, sodiumMg: 1, potassiumMg: 151, magnesiumMg: 22, servingGrams: 100, keto: -1 },
-  { label: "Jordgubbar", match: /jordgubb/i, kcal: 32, protein: 0.7, fat: 0.3, carbs: 8, sodiumMg: 1, potassiumMg: 153, magnesiumMg: 13, servingGrams: 100, keto: -1 },
+  { label: "Jordgubbar", match: /jordgubb/i, kcal: 32, protein: 0.7, fat: 0.3, carbs: 8, sodiumMg: 1, potassiumMg: 153, magnesiumMg: 13, servingGrams: 100, pieceGrams: 9, keto: -1 },
   { label: "Dijonsenap", match: /dijon|senap/i, kcal: 3, protein: 0.2, fat: 0.2, carbs: 0.3, sodiumMg: 85, potassiumMg: 7, magnesiumMg: 3, servingGrams: 5, tskGrams: 5, keto: 0 },
   { label: "Kapris", match: /kapris/i, kcal: 2, protein: 0.2, fat: 0.1, carbs: 0.5, sodiumMg: 296, potassiumMg: 4, magnesiumMg: 3, servingGrams: 10, mskGrams: 10, keto: 0 },
   { label: "Kimchi", match: /kimchi/i, kcal: 15, protein: 1.1, fat: 0.5, carbs: 2.4, sodiumMg: 670, potassiumMg: 222, magnesiumMg: 14, servingGrams: 100, keto: 1 },
@@ -310,7 +312,11 @@ for (const signal of foodSignals) {
   const update = electrolyteSignalUpdates.find((candidate) =>
     candidate.exactLabel ? signal.label === candidate.exactLabel : candidate.test.test(source)
   );
-  if (update) Object.assign(signal, update);
+  if (update) {
+    const updateValues = { ...update };
+    if (signal.label) delete updateValues.label;
+    Object.assign(signal, updateValues);
+  }
 }
 foodSignals.push(...additionalFoodSignals);
 
@@ -761,27 +767,29 @@ function measuredAmount(text, signal) {
         }
       }
     }
-    if (signal.mskGrams) {
+    const tablespoonGrams = signal.mskGrams || (signal.tskGrams ? signal.tskGrams * 3 : null);
+    if (tablespoonGrams) {
       const beforeMsk = before.match(/(\d+(?:[,.]\d+)?|\d+[ \t]*\/[ \t]*\d+)[ \t]*msk(?:[ \t]|[a-zåäö%])*$/i);
       const afterMsk = after.match(/^(?:[ \t]|[a-zåäö%]){0,18}(\d+(?:[,.]\d+)?|\d+[ \t]*\/[ \t]*\d+)[ \t]*msk/i);
       const mskAmount = beforeMsk?.[1] || afterMsk?.[1];
       if (mskAmount) {
         const msk = numberFromText(mskAmount);
         if (Number.isFinite(msk) && msk > 0) {
-          count += (msk * signal.mskGrams) / signal.servingGrams;
+          count += (msk * tablespoonGrams) / signal.servingGrams;
           amounts.msk += msk;
           continue;
         }
       }
     }
-    if (signal.tskGrams) {
+    const teaspoonGrams = signal.tskGrams || (signal.mskGrams ? signal.mskGrams / 3 : null);
+    if (teaspoonGrams) {
       const beforeTsk = before.match(/(\d+(?:[,.]\d+)?|\d+[ \t]*\/[ \t]*\d+)[ \t]*tsk(?:[ \t]|[a-zåäö%])*$/i);
       const afterTsk = after.match(/^(?:[ \t]|[a-zåäö%]){0,18}(\d+(?:[,.]\d+)?|\d+[ \t]*\/[ \t]*\d+)[ \t]*tsk/i);
       const tskAmount = beforeTsk?.[1] || afterTsk?.[1];
       if (tskAmount) {
         const tsk = numberFromText(tskAmount);
         if (Number.isFinite(tsk) && tsk > 0) {
-          count += (tsk * signal.tskGrams) / signal.servingGrams;
+          count += (tsk * teaspoonGrams) / signal.servingGrams;
           amounts.tsk += tsk;
           continue;
         }
@@ -813,7 +821,12 @@ function measuredAmount(text, signal) {
   }
   if (count <= 0) return null;
   const measuredUnits = Object.entries(amounts).filter(([, value]) => value > 0);
-  const amountLabel = measuredUnits.length === 1 ? `${decimalMeasure(measuredUnits[0][1])} ${measuredUnits[0][0]}` : null;
+  const singleUnit = measuredUnits[0];
+  const unitLabel =
+    singleUnit?.[0] === "skivor" && singleUnit[1] === 1
+      ? "skiva"
+      : singleUnit?.[0];
+  const amountLabel = measuredUnits.length === 1 ? `${decimalMeasure(singleUnit[1])} ${unitLabel}` : null;
   return { count, amountLabel };
 }
 
@@ -854,8 +867,8 @@ function unsupportedMeasuredAmounts(text, signal) {
   const amount = String.raw`(?:\d+(?:[,.]\d+)?|\d+\s*\/\s*\d+|en|ett|två|tva|tre|fyra|fem|sex|sju|åtta|atta|nio|tio)`;
   const units = [
     { unit: "dl", pattern: String.raw`dl`, supported: Boolean(signal.dlGrams) },
-    { unit: "msk", pattern: String.raw`msk`, supported: Boolean(signal.mskGrams) },
-    { unit: "tsk", pattern: String.raw`tsk`, supported: Boolean(signal.tskGrams) },
+    { unit: "msk", pattern: String.raw`msk`, supported: Boolean(signal.mskGrams || signal.tskGrams) },
+    { unit: "tsk", pattern: String.raw`tsk`, supported: Boolean(signal.tskGrams || signal.mskGrams) },
     { unit: "skiva/skivor", pattern: String.raw`skivor?|skiva`, supported: Boolean(signal.sliceGrams) },
   ];
   const unsupported = [];
