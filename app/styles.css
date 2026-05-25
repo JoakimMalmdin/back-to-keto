@@ -504,6 +504,14 @@ textarea {
   font-weight: 850;
 }
 
+.training-day-field {
+  width: min(330px, 100%);
+}
+
+.training-day-field .binary-control {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .segmented-control label:first-of-type {
   border-left: 0;
 }
@@ -1078,6 +1086,10 @@ textarea {
   gap: 13px;
 }
 
+.electrolyte-bars > div {
+  grid-template-columns: 150px 1fr 72px;
+}
+
 .target-bar b {
   position: absolute;
   inset: -4px 0 -4px auto;
@@ -1090,6 +1102,53 @@ textarea {
   margin: 14px 0 0;
   color: var(--muted);
   line-height: 1.45;
+}
+
+.electrolyte-plan {
+  margin-top: 13px;
+  border-top: 1px solid var(--line);
+  padding-top: 11px;
+}
+
+.electrolyte-plan summary {
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.86rem;
+  font-weight: 400;
+}
+
+.electrolyte-plan-table {
+  width: 100%;
+  margin-top: 10px;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.electrolyte-plan-table th,
+.electrolyte-plan-table td {
+  padding: 7px 4px;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-weight: 400;
+  text-align: right;
+}
+
+.electrolyte-plan-table th:first-child {
+  text-align: left;
+}
+
+.electrolyte-plan-table .phase-period {
+  display: block;
+  margin-top: 2px;
+  color: inherit;
+  font-size: 0.76rem;
+}
+
+.electrolyte-plan-table .active-phase th,
+.electrolyte-plan-table .active-phase td {
+  color: var(--ink);
+  font-weight: 700;
+  background: rgba(47, 111, 78, 0.08);
 }
 
 .history-list {
@@ -1200,6 +1259,12 @@ textarea {
   .macro-bars > div,
   .target-bars > div {
     grid-template-columns: 72px 1fr 82px;
+  }
+
+  .electrolyte-bars > div {
+    grid-template-columns: 112px 1fr 44px;
+    gap: 6px;
+    font-size: 0.83rem;
   }
 
   .day-row {
