@@ -1031,8 +1031,8 @@ textarea {
 #macroBreakdown > div,
 #electrolyteBreakdown > div {
   display: grid;
-  grid-template-columns: minmax(120px, 1fr) 48px repeat(3, 64px);
-  gap: 8px;
+  grid-template-columns: minmax(110px, 1fr) minmax(112px, max-content) repeat(3, minmax(54px, 64px));
+  gap: 6px;
   align-items: center;
   color: var(--muted);
   font-size: 0.78rem;
@@ -1385,8 +1385,13 @@ textarea {
   }
 
   #macroBreakdown .macro-count,
+  #electrolyteBreakdown .macro-count {
+    display: block;
+    margin: 0 0 4px;
+    text-align: left;
+  }
+
   #macroBreakdown .macro-value,
-  #electrolyteBreakdown .macro-count,
   #electrolyteBreakdown .macro-value {
     display: inline-block;
     margin-right: 10px;
@@ -1408,8 +1413,13 @@ textarea {
   }
 
   #macroBreakdown .macro-count,
+  #electrolyteBreakdown .macro-count {
+    display: block;
+    margin: 0 0 4px;
+    text-align: left;
+  }
+
   #macroBreakdown .macro-value,
-  #electrolyteBreakdown .macro-count,
   #electrolyteBreakdown .macro-value {
     display: inline-block;
     margin-right: 10px;

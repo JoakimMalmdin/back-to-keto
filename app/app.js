@@ -16,7 +16,7 @@ const defaultMacroTargets = {
   kcalTarget: 1900,
   kcalMax: 2000,
 };
-const appVersion = "177";
+const appVersion = "178";
 const appDisplayVersion = `v1.1 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
