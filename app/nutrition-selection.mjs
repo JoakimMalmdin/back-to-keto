@@ -5,6 +5,7 @@ export const SOURCE_INTENTS = Object.freeze({
   producer: "producer",
   livsmedelsverket: "livsmedelsverket",
   proxy: "proxy",
+  inputRule: "input_rule",
 });
 
 export const SELECTION_STATUSES = Object.freeze({
@@ -71,6 +72,13 @@ function proxy(id, svName, enName, category, priority, existingCatalogId, note =
   });
 }
 
+function inputRule(id, svName, enName, category, priority, existingCatalogId, note = "") {
+  return selectedFood(id, svName, enName, category, priority, SOURCE_INTENTS.inputRule, SELECTION_STATUSES.inCatalogue, {
+    existingCatalogId,
+    note,
+  });
+}
+
 // Priority 1 is the first-week calculation cohort. Priority 2 broadens normal
 // keto use and coaching. Priority 3 makes common deviations loggable.
 export const NUTRITION_SELECTION = Object.freeze([
@@ -101,7 +109,11 @@ export const NUTRITION_SELECTION = Object.freeze([
   slvPromoted("kycklingfile", "Kycklingfilé utan skinn", "Skinless chicken breast", "meat", 1, "Kyckling bröstfilé utan skinn"),
   slvPromoted("oxfile", "Oxfilé", "Beef fillet", "meat", 1, "Nöt oxfilé"),
   slvPromoted("flaskkotlett-benfri", "Benfri fläskkotlett", "Boneless pork chop", "meat", 1, "Gris kotlett benfri"),
-  slv("notfars", "Nötfärs/köttfärs", "Minced beef", "meat", 1, "Nötfärs", "I användarens logg betyder köttfärs nötfärs. Fetthalt måste anges eller en uttrycklig produktvariant väljas; blandfärs, fläskfärs och kycklingfärs är egna råvaror."),
+  inputRule("notfars-fat-required", "Nötfärs/köttfärs utan fetthalt", "Minced beef without fat percentage", "meat", 1, "notfars-fat-required", "Inmatningsspärr: köttfärs betyder nötfärs men får inte beräknas utan verifierad fetthalt."),
+  slvPromoted("notfars-10", "Nötfärs/köttfärs 10%", "Minced beef 10% fat", "meat", 1, "Nöt färs rå fett 10%", "Officiell rå nötfärspost; köttfärs och nötfärs behandlas som synonymer när 10% anges."),
+  labelled("notfars-12", "Nötfärs/köttfärs 12%", "Minced beef 12% fat", "meat", 1, SELECTION_STATUSES.labelNeeded, null, "Ingen direkt rå SLV-post hittad; produktetikett eller annan verifierad källa behövs."),
+  slvPromoted("notfars-15", "Nötfärs/köttfärs 15%", "Minced beef 15% fat", "meat", 1, "Nöt färs rå fett 15%", "Officiell rå nötfärspost; köttfärs och nötfärs behandlas som synonymer när 15% anges."),
+  labelled("notfars-20", "Nötfärs/köttfärs 20%", "Minced beef 20% fat", "meat", 1, SELECTION_STATUSES.labelNeeded, null, "Ingen direkt rå SLV-post hittad; produktetikett eller annan verifierad källa behövs."),
   proxy("kottfarsbiff", "Köttfärsbiff", "Beef patty", "meat", 1, "kottfarsbiff-proxy", "Standardpost för en tillagad köttfärsbit om cirka 80 g; fetthalt/recept kan förfinas."),
   proxy("fetaost", "Fetaost", "Feta cheese", "dairy", 1, "fetaost-proxy", "Provisorisk post tills etikett eller entydig officiell matchning finns."),
   proxy("hardost", "Ost", "Cheese", "dairy", 1, "hardost-proxy", "Generisk hårdostpost tills ostsort anges eller etikett finns."),

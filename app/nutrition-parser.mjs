@@ -193,6 +193,16 @@ export function parseNutritionText(text, { locale = DEFAULT_LOCALE, catalogue = 
   const sourceText = String(text || "");
 
   for (const match of buildAliasMatches(sourceText, catalogue)) {
+    if (match.food.requiresVariant) {
+      unresolved.push({
+        foodId: match.food.id,
+        label: foodName(match.food, locale),
+        reason: "variant_required",
+        variant: match.food.requiresVariant,
+        input: match.alias,
+      });
+      continue;
+    }
     const quantity = amountNearMatch(sourceText, match);
     if (!quantity || !Number.isFinite(quantity.amount) || quantity.amount <= 0) {
       unresolved.push({

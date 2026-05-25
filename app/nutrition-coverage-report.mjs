@@ -14,6 +14,7 @@ import { pathToFileURL } from "node:url";
 
 const STATUS_LABELS = Object.freeze({
   covered: "Klar",
+  inputRule: "Spärr aktiv",
   needsOfficialMatch: "SLV-matchning krävs",
   needsLabel: "Etikett krävs",
   missing: "Saknas",
@@ -24,6 +25,7 @@ function catalogueMap() {
 }
 
 function rowStatus(selection, food) {
+  if (selection.sourceIntent === SOURCE_INTENTS.inputRule && food) return "inputRule";
   if (food) return "covered";
   if (selection.sourceIntent === SOURCE_INTENTS.livsmedelsverket) return "needsOfficialMatch";
   if (
@@ -37,6 +39,7 @@ function rowStatus(selection, food) {
 
 function measuresForFood(food, locale) {
   if (!food) return "-";
+  if (food.requiresVariant) return "-";
   const declared = food.measures.map((entry) => UNIT_DEFINITIONS[entry.unit].labels[locale]);
   return ["g", ...declared].filter((entry, index, entries) => entries.indexOf(entry) === index).join(", ");
 }
@@ -64,13 +67,14 @@ export function nutritionCoverageSummary(locale = DEFAULT_LOCALE) {
   const rows = nutritionCoverageRows(locale);
   return [1, 2, 3].map((priority) => {
     const cohort = rows.filter((row) => row.priority === priority);
-    const covered = cohort.filter((row) => row.status === "covered");
+    const isReady = (row) => row.status === "covered" || row.status === "inputRule";
+    const covered = cohort.filter(isReady);
     return Object.freeze({
       priority,
       total: cohort.length,
       covered: covered.length,
       remaining: cohort.length - covered.length,
-      missingIds: cohort.filter((row) => row.status !== "covered").map((row) => row.id),
+      missingIds: cohort.filter((row) => !isReady(row)).map((row) => row.id),
     });
   });
 }

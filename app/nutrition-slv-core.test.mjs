@@ -26,7 +26,10 @@ for (const food of SLV_CORE_RESOLVED) {
 const avocado = SLV_CORE_RESOLVED.find((food) => food.selectionId === "avokado");
 assert(avocado.slvFoodNumber === 320, "Avokado ska matcha officiell post 320.");
 assert(avocado.nutrientsPer100g.potassiumMg === 600, "Avokado ska använda SLV:s kaliumvärde.");
+const mincedBeef10 = SLV_CORE_RESOLVED.find((food) => food.selectionId === "notfars-10");
+const mincedBeef15 = SLV_CORE_RESOLVED.find((food) => food.selectionId === "notfars-15");
+assert(mincedBeef10.slvFoodNumber === 951 && mincedBeef10.nutrientsPer100g.fat === 11.3, "Nötfärs 10% ska använda officiell post 951.");
+assert(mincedBeef15.slvFoodNumber === 963 && mincedBeef15.nutrientsPer100g.fat === 15, "Nötfärs 15% ska använda officiell post 963.");
 assert(SLV_CORE_REVIEW.some((food) => food.selectionId === "fetaost"), "Fetaost får inte automatiskt ersättas av salladsost.");
 
 console.log(`SLV core mapping verified: ${SLV_CORE_RESOLVED.length} resolved and ${SLV_CORE_REVIEW.length} held for review.`);
-

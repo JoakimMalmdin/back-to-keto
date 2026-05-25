@@ -44,6 +44,12 @@ export const SLV_CORE_RESOLVED = Object.freeze([
   officialFood("flaskkotlett-benfri", 6004, "Gris fläskkotlett tillagad", "Pork chop cooked", {
     kcal: 133, fat: 6, protein: 19.6, carbs: 0, sodiumMg: 61, potassiumMg: 373, magnesiumMg: 32,
   }, "Tillagad post. Benfri mängd mäts som ätlig del."),
+  officialFood("notfars-10", 951, "Nöt färs rå fett 10%", "Minced beef raw 10% fat", {
+    kcal: 182, fat: 11.3, protein: 20.1, carbs: 0, sodiumMg: 86, potassiumMg: 278, magnesiumMg: 20,
+  }, "Köttfärs och nötfärs tolkas som samma nötråvara när 10% fetthalt uttryckligen anges."),
+  officialFood("notfars-15", 963, "Nöt färs rå fett 15%", "Minced beef raw 15% fat", {
+    kcal: 211, fat: 15, protein: 19.4, carbs: 0, sodiumMg: 83, potassiumMg: 280, magnesiumMg: 20,
+  }, "Köttfärs och nötfärs tolkas som samma nötråvara när 15% fetthalt uttryckligen anges."),
   officialFood("parmesan", 103, "Ost hårdost parmesan fett 30% typ Parmiggiano Reggiano", "Cheese hard parmesan 30% fat e.g. Parmiggiano Reggiano", {
     kcal: 428, fat: 32.2, protein: 31.1, carbs: 4.2, sodiumMg: 510, potassiumMg: 87, magnesiumMg: 35,
   }),
@@ -72,14 +78,6 @@ export const SLV_CORE_RESOLVED = Object.freeze([
 
 export const SLV_CORE_REVIEW = Object.freeze([
   Object.freeze({
-    selectionId: "notfars",
-    candidates: Object.freeze([
-      Object.freeze({ slvFoodNumber: 951, name: "Nöt färs rå fett 10%" }),
-      Object.freeze({ slvFoodNumber: 963, name: "Nöt färs rå fett 15%" }),
-    ]),
-    reason: "Fetthalt måste väljas eller anges i texten; en generisk post skulle annars bli missvisande.",
-  }),
-  Object.freeze({
     selectionId: "kottfarsbiff",
     candidates: Object.freeze([]),
     reason: "Bör definieras som egen standardrätt eller beräknas från vald färs och stekfett.",
@@ -92,4 +90,3 @@ export const SLV_CORE_REVIEW = Object.freeze([
     reason: "Livsmedelsverket har salladsost, inte entydigt fetaost; etikett eller uttryckligt proxyval behövs.",
   }),
 ]);
-

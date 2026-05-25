@@ -87,6 +87,14 @@ assert(egg.measures.some((entry) => entry.unit === "piece"), "Ägg ska stödja t
 const patty = findFoodById("kottfarsbiff-proxy");
 assert(patty.measures.some((entry) => entry.unit === "piece" && entry.grams === 80), "Köttfärsbit ska ha uttryckligt styckmått.");
 
+const mincedBeefRule = findFoodById("notfars-fat-required");
+const mincedBeef10 = findFoodById("notfars-10");
+const mincedBeef15 = findFoodById("notfars-15");
+assert(mincedBeefRule.requiresVariant === "fat_percentage", "Köttfärs utan fetthalt ska blockeras i stället för att beräknas.");
+assert(mincedBeef10.macroSource.type === SOURCE_TYPES.livsmedelsverket, "Nötfärs 10% ska använda officiell källa.");
+assert(mincedBeef10.nutrientsPer100g.fat === 11.3, "Nötfärs 10% ska behålla SLV-postens analyserade fettvärde.");
+assert(mincedBeef15.nutrientsPer100g.fat === 15, "Nötfärs 15% ska använda officiellt fettvärde.");
+
 assert(uiText("sv-SE", "currentMacros") === "Aktuell makrobild", "Svensk UI-text saknas.");
 assert(uiText("en-GB", "currentMacros") === "Current macros", "Engelsk UI-text saknas.");
 

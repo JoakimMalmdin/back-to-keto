@@ -72,6 +72,23 @@ near(parsed.totals.fat, 28.8, "120 g bratwurst ska använda etikettens fettvärd
 near(parsed.totals.protein, 15.6, "120 g bratwurst ska använda etikettens proteinvärde");
 near(parsed.totals.carbs, 3.36, "120 g bratwurst ska använda etikettens kolhydratvärde");
 
+parsed = parseNutritionText("150 g köttfärs 10%");
+assert(parsed.unresolved.length === 0, "Köttfärs med verifierad 10%-variant ska kunna beräknas.");
+assert(parsed.items[0].foodId === "notfars-10", "Köttfärs 10% ska matcha officiell nötfärspost.");
+near(parsed.totals.fat, 16.95, "150 g köttfärs 10% ska använda SLV-värdet");
+
+parsed = parseNutritionText("150 g nötfärs 15%");
+assert(parsed.items[0].foodId === "notfars-15", "Nötfärs 15% ska matcha officiell nötfärspost.");
+near(parsed.totals.protein, 29.1, "150 g nötfärs 15% ska använda SLV-värdet");
+
+parsed = parseNutritionText("150 g köttfärs");
+assert(parsed.items.length === 0, "Köttfärs utan fetthalt får inte beräknas.");
+assert(parsed.unresolved[0].reason === "variant_required", "Köttfärs utan fetthalt ska kräva variant.");
+
+parsed = parseNutritionText("150 g köttfärs 12%");
+assert(parsed.items.length === 0, "Köttfärs 12% ska vänta på verifierad källa.");
+assert(parsed.unresolved[0].reason === "variant_required", "Saknad färsvariant ska flaggas i stället för att gissas.");
+
 parsed = parseNutritionText("1 tbsp mayonnaise", { locale: "en-GB" });
 assert(parsed.items[0].label === "Hellmann's mayonnaise", "Engelsk text ska lösas mot samma produkt.");
 near(parsed.items[0].grams, 15, "En engelsk matsked majonnäs ska bli 15 g");

@@ -50,6 +50,7 @@ export const SOURCE_TYPES = Object.freeze({
   officialFallback: "official_fallback",
   proxy: "proxy",
   estimatedRecipe: "estimated_recipe",
+  inputRule: "input_rule",
   unknown: "unknown",
 });
 
@@ -427,6 +428,37 @@ export const NUTRITION_CATALOG = Object.freeze([
     names: translations("Benfri fläskkotlett", "Boneless pork chop"),
     category: "meat",
     aliases: { "sv-SE": ["benfri fläskkotlett", "benfria fläskkotletter", "benfri flaskkotlett", "benfria flaskkotletter"], "en-GB": ["boneless pork chop", "boneless pork chops"] },
+    tags: ["complete_protein", "potassium_source"],
+  }),
+  defineFood({
+    id: "notfars-fat-required",
+    names: translations("Nötfärs/köttfärs (ange fetthalt)", "Minced beef (specify fat percentage)"),
+    category: "meat",
+    aliases: {
+      "sv-SE": ["nötfärs", "notfars", "köttfärs", "kottfars"],
+      "en-GB": ["minced beef", "beef mince"],
+    },
+    nutrientsPer100g: { kcal: 0, fat: 0, protein: 0, carbs: 0 },
+    requiresVariant: "fat_percentage",
+    macroSource: source(SOURCE_TYPES.inputRule, "Inmatningsregel", "2026-05-25", CONFIDENCE_LEVELS.estimated, "Nötfärs/köttfärs måste ange en verifierad fetthalt."),
+    electrolyteSource: source(SOURCE_TYPES.inputRule, "Inmatningsregel", "2026-05-25", CONFIDENCE_LEVELS.estimated, "Ingen mineralberäkning görs utan verifierad fetthalt."),
+  }),
+  defineSlvFood("notfars-10", {
+    names: translations("Nötfärs/köttfärs 10%", "Minced beef 10% fat"),
+    category: "meat",
+    aliases: {
+      "sv-SE": ["nötfärs 10%", "nötfärs 10 %", "notfars 10%", "notfars 10 %", "köttfärs 10%", "köttfärs 10 %", "kottfars 10%", "kottfars 10 %"],
+      "en-GB": ["minced beef 10%", "minced beef 10% fat", "beef mince 10%", "beef mince 10% fat"],
+    },
+    tags: ["complete_protein", "potassium_source"],
+  }),
+  defineSlvFood("notfars-15", {
+    names: translations("Nötfärs/köttfärs 15%", "Minced beef 15% fat"),
+    category: "meat",
+    aliases: {
+      "sv-SE": ["nötfärs 15%", "nötfärs 15 %", "notfars 15%", "notfars 15 %", "köttfärs 15%", "köttfärs 15 %", "kottfars 15%", "kottfars 15 %"],
+      "en-GB": ["minced beef 15%", "minced beef 15% fat", "beef mince 15%", "beef mince 15% fat"],
+    },
     tags: ["complete_protein", "potassium_source"],
   }),
   defineSlvFood("parmesan", {

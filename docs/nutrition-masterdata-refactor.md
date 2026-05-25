@@ -124,6 +124,11 @@ generated from the same record.
 - A future personal-products option should allow a user to register the
   labelled values of their usual cream rather than deriving all nutrients from
   fat percentage alone.
+- `Köttfärs` and `nötfärs` are accepted as synonymous beef-mince inputs only
+  when a verified fat variant is present. Livsmedelsverket posts for raw 10%
+  and 15% mince are imported; 12% and 20% remain explicit label/source gaps.
+- `Köttfärsbit` is a separate prepared-item estimate and must not silently
+  satisfy a raw `köttfärs` input.
 
 ## Quantity Interpretation
 
@@ -169,6 +174,8 @@ generated from the same record.
   explicit `derived_measure` status.
 - Recognised foods with missing or unsupported quantities are returned as
   unresolved and excluded from totals.
+- Variant-sensitive ingredients, currently `köttfärs`/`nötfärs`, are also
+  returned as unresolved when the requested fat variant is not verified.
 - `app/nutrition-parser.test.mjs` protects the known quantity failures around
   kvarg, yoghurt, cream, Seltin, tuna and mayonnaise.
 - `app/nutrition-diary-regression.test.mjs` protects meal-level failures
