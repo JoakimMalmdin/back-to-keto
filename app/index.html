@@ -7,10 +7,10 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="BTK" />
     <title>Back to Keto</title>
-    <link rel="manifest" href="manifest.webmanifest?v=165" />
+    <link rel="manifest" href="manifest.webmanifest?v=166" />
     <link rel="icon" href="icon.svg?v=146" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="apple-touch-icon.png?v=146" />
-    <link rel="stylesheet" href="styles.css?v=165" />
+    <link rel="stylesheet" href="styles.css?v=166" />
   </head>
   <body>
     <div class="app-shell">
@@ -18,7 +18,7 @@
         <div>
           <p class="eyebrow">Back to Keto</p>
           <h1>Daglig keto-logg</h1>
-          <p class="version-pill">v1.0 beta · build 165</p>
+          <p class="version-pill">v1.0 beta · build 166</p>
         </div>
         <button class="icon-button" id="exportButton" type="button" aria-label="Exportera data">
           <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" /></svg>
@@ -231,6 +231,15 @@
                 </div>
               </fieldset>
             </div>
+            <fieldset class="segmented-field training-day-field">
+              <legend>Träningsdag från vecka 2 (+500 mg natrium)</legend>
+              <div class="segmented-control binary-control" role="radiogroup" aria-label="Träningsdag">
+                <input id="trainingNoInput" name="trainingDay" type="radio" value="" />
+                <label for="trainingNoInput">Nej</label>
+                <input id="trainingYesInput" name="trainingDay" type="radio" value="Ja" />
+                <label for="trainingYesInput">Ja</label>
+              </div>
+            </fieldset>
 
             <details class="manual-macros">
               <summary>Dagens makron totalt</summary>
@@ -327,22 +336,37 @@
               <h3 class="subhead">Dagsmål i mg</h3>
               <div class="target-bars electrolyte-bars">
                 <div>
-                  <span>Natrium mot 4000 mg</span>
+                  <span id="sodiumTargetLabel">Natrium mot 4000 mg</span>
                   <div class="target-bar sodium-target"><i id="sodiumBar"></i><b></b></div>
                   <strong id="sodiumText">0 mg</strong>
                 </div>
                 <div>
-                  <span>Kalium mot 3500 mg</span>
+                  <span id="potassiumTargetLabel">Kalium mot 3500 mg</span>
                   <div class="target-bar potassium-target"><i id="potassiumBar"></i><b></b></div>
                   <strong id="potassiumText">0 mg</strong>
                 </div>
                 <div>
-                  <span>Magnesium mot 400 mg</span>
+                  <span id="magnesiumTargetLabel">Magnesium mot 400 mg</span>
                   <div class="target-bar magnesium-target"><i id="magnesiumBar"></i><b></b></div>
                   <strong id="magnesiumText">0 mg</strong>
                 </div>
               </div>
               <p id="electrolyteNote" class="note"></p>
+              <details class="electrolyte-plan">
+                <summary>Målnivåer per vecka</summary>
+                <table class="electrolyte-plan-table">
+                  <thead>
+                    <tr><th>Period</th><th>Na</th><th>Ka</th><th>Mg</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr data-electrolyte-phase="Vecka 1"><th>Vecka 1<span class="phase-period"></span></th><td>4500-5000</td><td>3000-3500</td><td>350-400</td></tr>
+                    <tr data-electrolyte-phase="Vecka 2"><th>Vecka 2<span class="phase-period"></span></th><td>4000-4500</td><td>2800-3200</td><td>350</td></tr>
+                    <tr data-electrolyte-phase="Vecka 3"><th>Vecka 3<span class="phase-period"></span></th><td>3500-4000</td><td>2800-3000</td><td>350</td></tr>
+                    <tr data-electrolyte-phase="Vecka 4+"><th>Vecka 4+<span class="phase-period"></span></th><td>3000</td><td>2800</td><td>350</td></tr>
+                  </tbody>
+                </table>
+                <p class="mini-note">mg per dag. Träningsdag från vecka 2: lägg till 500 mg natrium.</p>
+              </details>
               <details class="macro-breakdown">
                 <summary>Beräknat från</summary>
                 <div id="electrolyteBreakdown"></div>
@@ -656,6 +680,6 @@
       </main>
     </div>
 
-    <script src="app.js?v=165-measured-quantity" type="module"></script>
+    <script src="app.js?v=166-electrolyte-phases" type="module"></script>
   </body>
 </html>
