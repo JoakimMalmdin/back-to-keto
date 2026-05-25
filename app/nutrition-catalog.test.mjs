@@ -78,6 +78,9 @@ assert(cream40.nutrientsPer100g.fat === 40, "Vispgrädde 40% ska ha produktens a
 assert(!foodAliases(cream36).includes("grädde"), "Grädde utan fetthalt får inte implicit betyda 36%.");
 assert(!foodAliases(cream40).includes("grädde"), "Grädde utan fetthalt får inte implicit betyda 40%.");
 
+const cucumber = findFoodById("gurka");
+assert(cucumber.measures.some((entry) => entry.unit === "slice" && entry.grams === 15), "Gurka ska stödja en skiva om ca 15 g.");
+
 const walnut = findFoodById("valnotter-proxy");
 assert(walnut.measures.some((entry) => entry.unit === "piece" && entry.grams === 4), "Valnöt ska ha kontrollerat styckmått.");
 assert(walnut.implicitUnit === "piece", "Valnöt utan enhetsord ska bara få använda stycklogik när antal anges.");

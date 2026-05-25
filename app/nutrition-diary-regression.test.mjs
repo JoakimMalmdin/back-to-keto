@@ -38,6 +38,16 @@ assert(parsed.unresolved.length === 0, "Köttbullelunchen ska vara beräkningsba
 near(item(parsed, "matriket-svenska-kottbullar-73").grams, 120, "Köttbullarnas etikettpost ska använda angiven gramvikt");
 near(item(parsed, "seltin").grams, 1.2, "Seltin i köttbullelunchen ska behålla krm-mått");
 
+parsed = parseNutritionText(
+  "1 avokado,90 g matriket svenska köttbullar 73% kött,1 krm seltin,1 tsk grädde, 1 skiva gurka, 1 jordgubbe",
+  { defaultFoodAliases: { "grädde": "vispgradde-40" } },
+);
+assert(parsed.unresolved.length === 0, "Den faktiska köttbullelunchen ska vara fullt beräkningsbar med personlig gräddstandard.");
+near(item(parsed, "matriket-svenska-kottbullar-73").grams, 90, "Matriket ska använda den angivna gramvikten.");
+near(item(parsed, "vispgradde-40").grams, 5, "En tsk grädde ska använda personlig 40%-standard.");
+near(item(parsed, "gurka").grams, 15, "En skiva gurka ska använda sitt styckmått.");
+near(item(parsed, "jordgubbar").grams, 9, "En jordgubbe ska använda styckmått.");
+
 parsed = parseNutritionText("1 msk kvarg, 1 tsk kvarg, 1 valnöt, 1 krm seltin, 2 tabletter magnesium 200 mg");
 assert(parsed.unresolved.length === 0, "Kända felposter ska kunna beräknas tillsammans.");
 near(item(parsed, "milbona-magerkvarg-naturell").grams, 15, "Första kvargmåttet ska förbli matsked");
@@ -48,6 +58,16 @@ near(item(parsed, "magnesiumtablett-200").nutrients.magnesiumMg, 400, "Två magn
 parsed = parseNutritionText("8 falukorvsskivor med 1 msk majonnäs, 2 plommontomater");
 near(item(parsed, "falukorv-proxy").grams, 160, "Åtta falukorvsskivor ska vara 160 g, inte åtta normalportioner");
 near(item(parsed, "plommontomat").grams, 40, "Plommontomater ska räknas styckevis");
+
+parsed = parseNutritionText("5 falukorvsskivor med majonnäs och osötad ketchup");
+assert(parsed.unresolved.length === 0, "Äldre lunchtext utan mängd på såser ska behållas med tydlig standardportion.");
+near(item(parsed, "hellmanns-majonnas").grams, 15, "Oangiven majonnäs ska bli en redovisad standardmatsked.");
+near(item(parsed, "felix-ketchup-osotad").grams, 15, "Oangiven osötad ketchup ska bli en redovisad standardmatsked.");
+
+parsed = parseNutritionText("pulled pork, majonnäs, gräddfil");
+assert(parsed.unresolved.length === 0, "Äldre middagsnotering med deklarerade standardposter ska inte tappas vid motorbytet.");
+near(item(parsed, "pulled-pork").grams, 150, "Pulled pork utan mängd ska få synlig standardportion.");
+near(item(parsed, "graddfil").grams, 50, "Gräddfil utan mängd ska få synlig standardportion.");
 
 parsed = parseNutritionText("1 köttfärsbit");
 assert(parsed.unresolved.length === 0, "En uttrycklig köttfärsbit ska inte tappas bort.");

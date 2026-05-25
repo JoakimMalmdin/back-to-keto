@@ -81,7 +81,7 @@ const IMPLICIT_AMOUNT_BEFORE = new RegExp(
   "iu",
 );
 
-function buildAliasMatches(text, catalogue) {
+function buildAliasMatches(text, catalogue, defaultFoodAliases = {}) {
   const candidates = [];
   for (const food of catalogue) {
     const aliases = SUPPORTED_LOCALES.flatMap((locale) => food.aliases[locale] || [])
@@ -96,6 +96,18 @@ function buildAliasMatches(text, catalogue) {
         const start = (match.index || 0) + match[1].length;
         candidates.push({ food, alias: match[2], start, end: start + match[2].length });
       }
+    }
+  }
+  for (const [alias, foodId] of Object.entries(defaultFoodAliases)) {
+    const food = catalogue.find((entry) => entry.id === foodId);
+    if (!food) continue;
+    const matcher = new RegExp(
+      String.raw`(^|[^\p{L}\p{N}])(${escapeRegExp(alias)})(?=$|[^\p{L}\p{N}])`,
+      "giu",
+    );
+    for (const match of text.matchAll(matcher)) {
+      const start = (match.index || 0) + match[1].length;
+      candidates.push({ food, alias: match[2], start, end: start + match[2].length });
     }
   }
   candidates.sort((a, b) => a.start - b.start || b.end - b.start - (a.end - a.start));
@@ -187,12 +199,15 @@ function sumTotals(items) {
   }, {});
 }
 
-export function parseNutritionText(text, { locale = DEFAULT_LOCALE, catalogue = NUTRITION_CATALOG } = {}) {
+export function parseNutritionText(
+  text,
+  { locale = DEFAULT_LOCALE, catalogue = NUTRITION_CATALOG, defaultFoodAliases = {} } = {},
+) {
   const items = [];
   const unresolved = [];
   const sourceText = String(text || "");
 
-  for (const match of buildAliasMatches(sourceText, catalogue)) {
+  for (const match of buildAliasMatches(sourceText, catalogue, defaultFoodAliases)) {
     if (match.food.requiresVariant) {
       unresolved.push({
         foodId: match.food.id,
@@ -203,7 +218,9 @@ export function parseNutritionText(text, { locale = DEFAULT_LOCALE, catalogue = 
       });
       continue;
     }
-    const quantity = amountNearMatch(sourceText, match);
+    const explicitQuantity = amountNearMatch(sourceText, match);
+    const quantity = explicitQuantity || match.food.defaultMeasure;
+    const usedDefaultMeasure = !explicitQuantity && Boolean(match.food.defaultMeasure);
     if (!quantity || !Number.isFinite(quantity.amount) || quantity.amount <= 0) {
       unresolved.push({
         foodId: match.food.id,
@@ -232,7 +249,9 @@ export function parseNutritionText(text, { locale = DEFAULT_LOCALE, catalogue = 
       unit: quantity.unit,
       grams: conversion.grams,
       conversionMethod: conversion.method,
-      assumption: conversion.assumption,
+      assumption: usedDefaultMeasure
+        ? [conversion.assumption, "standardportion: mängd saknas"].filter(Boolean).join("; ")
+        : conversion.assumption,
       nutrients: scaleNutrients(match.food, conversion.grams),
     });
   }

@@ -57,10 +57,29 @@ parsed = parseNutritionText("1 tsk grädde 40%");
 assert(parsed.items[0].conversionMethod === "derived_measure", "Tesked grädde ska märkas som härledd från msk.");
 near(parsed.items[0].grams, 5, "Härledd tesked grädde ska vara 5 g");
 
+parsed = parseNutritionText("1 tsk grädde", { defaultFoodAliases: { "grädde": "vispgradde-40" } });
+assert(parsed.unresolved.length === 0, "Personlig standard för ospecificerad grädde ska kunna beräknas.");
+assert(parsed.items[0].foodId === "vispgradde-40", "Personlig standard ska välja grädde 40% utan att ändra katalogalias.");
+near(parsed.items[0].grams, 5, "Personlig gräddstandard ska fortfarande stödja tesked.");
+
+parsed = parseNutritionText("1 skiva gurka");
+assert(parsed.unresolved.length === 0, "Gurka ska kunna anges med skiva.");
+near(parsed.items[0].grams, 15, "En skiva gurka ska vara cirka 15 g");
+
 parsed = parseNutritionText("2 tsk yoghurt 3%");
 assert(parsed.items[0].conversionMethod === "derived_measure", "Tesked yoghurt ska kunna härledas från dl.");
 near(parsed.items[0].grams, 10, "Två teskedar yoghurt ska vara 10 g när 1 dl är 100 g");
 near(parsed.totals.carbs, 0.37, "Två teskedar yoghurt ska ge rätt kolhydratvärde");
+
+parsed = parseNutritionText("majonnäs med osötad ketchup");
+assert(parsed.unresolved.length === 0, "Såser med uttrycklig standardportion ska kunna räknas när mängd saknas.");
+near(parsed.items.find((item) => item.foodId === "hellmanns-majonnas").grams, 15, "Majonnäs utan mängd ska använda synlig standardmatsked.");
+near(parsed.items.find((item) => item.foodId === "felix-ketchup-osotad").grams, 15, "Osötad ketchup utan mängd ska använda synlig standardmatsked.");
+assert(parsed.items.every((item) => item.assumption.includes("standardportion")), "Antagna portioner ska vara märkta som standardportion.");
+
+parsed = parseNutritionText("2 msk majonnäs");
+near(parsed.items[0].grams, 30, "En uttrycklig mängd ska alltid vinna över standardportion.");
+assert(!parsed.items[0].assumption, "Uttrycklig mängd ska inte märkas som antagen standardportion.");
 
 parsed = parseNutritionText("20 g halloumi");
 assert(parsed.unresolved.length === 0, "Gram ska alltid kunna användas för livsmedel.");
