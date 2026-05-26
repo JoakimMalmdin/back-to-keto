@@ -1,5 +1,5 @@
-import { parseNutritionText } from "./nutrition-parser.mjs?v=187";
-import { NUTRITION_CATALOG, NUTRITION_CATEGORIES, categoryName, foodName } from "./nutrition-catalog.mjs?v=187";
+import { parseNutritionText } from "./nutrition-parser.mjs?v=188";
+import { NUTRITION_CATALOG, NUTRITION_CATEGORIES, categoryName, foodName } from "./nutrition-catalog.mjs?v=188";
 
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
@@ -26,7 +26,7 @@ const legacyDefaultMacroTargets = {
   kcalTarget: 1900,
   kcalMax: 2000,
 };
-const appVersion = "187";
+const appVersion = "188";
 const appDisplayVersion = `v1.1 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;

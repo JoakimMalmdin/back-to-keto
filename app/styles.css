@@ -510,6 +510,10 @@ main {
   gap: 8px;
 }
 
+.activity-grid .segmented-field {
+  align-self: start;
+}
+
 .motion-note {
   font-weight: 400;
 }

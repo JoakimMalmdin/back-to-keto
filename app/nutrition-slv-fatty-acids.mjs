@@ -1,4 +1,4 @@
-import { SLV_SOURCE } from "./nutrition-slv-core.mjs?v=187";
+import { SLV_SOURCE } from "./nutrition-slv-core.mjs?v=188";
 
 function fattyAcidProfile(catalogId, slvFoodNumber, officialName, omega3, omega6, note = "") {
   return Object.freeze({
