@@ -23,6 +23,12 @@ assert(parsed.unresolved.length === 0, "Tonfisk och majonnäs ska kunna beräkna
 near(parsed.items.find((item) => item.foodId === "ica-tonfisk-i-vatten").grams, 240, "Två burkar tonfisk ska ge två standardburkar");
 near(parsed.items.find((item) => item.foodId === "hellmanns-majonnas").grams, 22.5, "1,5 msk majonnäs ska bli gram");
 
+parsed = parseNutritionText("1 burk Sæby makrillfilé i tomatsås");
+assert(parsed.unresolved.length === 0, "Sæby-makrill ska kunna anges som en hel burk.");
+assert(parsed.items[0].foodId === "saeby-makrill-tomatsas", "Sæby-makrill får inte tolkas som ICA-makrill.");
+near(parsed.items[0].grams, 125, "Sæby-burken ska vara 125 g");
+near(parsed.totals.fat, 12.5, "Sæby-burken ska använda etikettens fettvärde");
+
 parsed = parseNutritionText("1 valnöt");
 assert(parsed.unresolved.length === 0, "En valnöt ska räknas som ett deklarerat styckmått.");
 near(parsed.items[0].grams, 4, "En valnöt ska vara cirka 4 g");

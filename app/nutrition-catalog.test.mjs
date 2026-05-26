@@ -59,12 +59,22 @@ assert(mayonnaise.macroSource.type === SOURCE_TYPES.productLabel, "Hellmann's sk
 assert(mayonnaise.fattyAcidSource.type === SOURCE_TYPES.livsmedelsverket, "Hellmann's ska bära en beräknad LD-baserad fettsyreprofil.");
 assert(mayonnaise.nutrientsPer100g.omega3 === 6.7 && mayonnaise.nutrientsPer100g.omega6 === 14.9, "Hellmann's ska beräknas från 79 g fett och rapsoljans profil.");
 
+const olives = findFoodById("kalamataoliver-etikett");
+assert(olives.macroSource.type === SOURCE_TYPES.productLabel, "Kalamata ska behålla etikettens makron.");
+assert(olives.fattyAcidSource.type === SOURCE_TYPES.livsmedelsverket, "Kalamata ska få beräknad LD-baserad fettsyreprofil.");
+assert(olives.nutrientsPer100g.omega3 === 0.2 && olives.nutrientsPer100g.omega6 === 1.8, "Kalamata ska viktas mot LD:s avrunna olivprofil.");
+
 const tuna = findFoodById("ica-tonfisk-i-vatten");
 assert(tuna.measures.some((entry) => entry.unit === "tin"), "Tonfisk i vatten ska stödja burk/tin.");
 assert(foodAliases(tuna).includes("tuna in water"), "Tonfisk i vatten ska kunna kännas igen på engelska.");
 assert(tuna.macroSource.type === SOURCE_TYPES.productLabel, "Tonfisk ska behålla produktetiketten som makrokälla.");
 assert(tuna.fattyAcidSource.type === SOURCE_TYPES.livsmedelsverket, "Tonfisk ska kunna kompletteras med LD-fettsyreprofil.");
 assert(tuna.nutrientsPer100g.omega3 === 0.2 && tuna.nutrientsPer100g.omega6 === 0, "Tonfisk ska få O-3/O-6 från motsvarande LD-post.");
+
+const saebyMackerel = findFoodById("saeby-makrill-tomatsas");
+assert(saebyMackerel.macroSource.type === SOURCE_TYPES.productLabel, "Sæby-makrill ska vara en egen etikettpost.");
+assert(saebyMackerel.nutrientsPer100g.fat === 10 && saebyMackerel.nutrientsPer100g.protein === 14, "Sæby-makrill får inte återanvända ICA:s makron.");
+assert(saebyMackerel.nutrientsPer100g.omega3 === 2.2 && saebyMackerel.nutrientsPer100g.omega6 === null, "Sæby-makrill ska använda deklarerat O-3 utan att gissa O-6.");
 
 const bratwurst = findFoodById("bratwurst-87-kott-kummin-vitlok");
 assert(bratwurst.nutrientsPer100g.fat === 24, "Bratwurst ska använda etikettens fettvärde.");
@@ -111,6 +121,17 @@ assert(avocado.fattyAcidSource.type === SOURCE_TYPES.livsmedelsverket, "Helt LD-
 
 const salmon = findFoodById("laxfile");
 assert(salmon.nutrientsPer100g.omega3 === 1.8 && salmon.nutrientsPer100g.omega6 === 1.9, "Lax ska få LD:s fettsyrevärden.");
+
+const cheddar = findFoodById("cheddar");
+const gouda = findFoodById("gouda");
+const brie = findFoodById("brie");
+const mozzarella = findFoodById("mozzarella");
+assert(cheddar.fattyAcidSource.type === SOURCE_TYPES.usdaFoodDataCentral, "Cheddar ska få sin exakta USDA-fettsyreprofil.");
+assert(cheddar.nutrientsPer100g.omega3 === 0.1 && cheddar.nutrientsPer100g.omega6 === 1.2, "Cheddars USDA-värden ska anges per 100 g.");
+assert(gouda.fattyAcidSource.type === SOURCE_TYPES.usdaFoodDataCentral, "Gouda ska få sin exakta USDA-fettsyreprofil.");
+assert(gouda.nutrientsPer100g.omega3 === 0.4 && gouda.nutrientsPer100g.omega6 === 0.3, "Goudas USDA-värden ska anges per 100 g.");
+assert(brie.fattyAcidSource.type === SOURCE_TYPES.livsmedelsverket && brie.nutrientsPer100g.omega6 === 0.8, "Brie ska prioritera motsvarande LD-post framför USDA.");
+assert(mozzarella.fattyAcidSource.type === SOURCE_TYPES.livsmedelsverket && mozzarella.nutrientsPer100g.omega6 === 0.5, "Mozzarella ska prioritera motsvarande LD-post framför USDA.");
 
 const egg = findFoodById("agg");
 assert(egg.measures.some((entry) => entry.unit === "piece"), "Ägg ska stödja tydliga styckeangivelser.");

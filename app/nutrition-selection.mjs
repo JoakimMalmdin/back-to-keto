@@ -102,6 +102,7 @@ export const NUTRITION_SELECTION = Object.freeze([
   labelled("bratwurst-87-kott-kummin-vitlok", "Bratwurst 87% kött, kummin & vitlök", "Bratwurst 87% meat, cumin & garlic", "charcuterie", 1, SELECTION_STATUSES.inCatalogue, "bratwurst-87-kott-kummin-vitlok"),
   labelled("matriket-svenska-kottbullar-73", "Matriket svenska köttbullar 73% kött", "Matriket Swedish meatballs 73% meat", "charcuterie", 1, SELECTION_STATUSES.inCatalogue, "matriket-svenska-kottbullar-73", "Fotograferad etikett; anges i gram tills en styckvikt har vägts."),
   labelled("ica-makrill-tomatsas", "ICA spansk makrillfilé i tomatsås", "ICA Spanish mackerel fillet in tomato sauce", "seafood", 1, SELECTION_STATUSES.inCatalogue, "ica-makrill-tomatsas"),
+  labelled("saeby-makrill-tomatsas", "Sæby dansk makrillfilé i tomatsås", "Sæby Danish mackerel fillet in tomato sauce", "seafood", 1, SELECTION_STATUSES.inCatalogue, "saeby-makrill-tomatsas"),
   labelled("ica-tonfisk-i-vatten", "ICA tonfisk i vatten", "ICA tuna in spring water", "seafood", 1, SELECTION_STATUSES.inCatalogue, "ica-tonfisk-i-vatten"),
   labelled("kalamataoliver-etikett", "Kalamataoliver", "Kalamata olives", "vegetables", 2, SELECTION_STATUSES.inCatalogue, "kalamataoliver-etikett"),
   labelled("seltin", "Seltin", "Seltin reduced-sodium salt", "seasonings", 1, SELECTION_STATUSES.inCatalogue, "seltin"),

@@ -80,6 +80,15 @@ Categories are for finding foods in the UI. Coaching uses tags such as
 - För en produkt vars huvudsakliga fettkälla är uttryckligen angiven kan O-3/O-6
   beräknas från etikettens fettmängd och en officiell fettsyreprofil för
   fettkällan. Hellmann's majonnäs beräknas så från 79 g fett och LD:s rapsolja.
+- Kalamataoliver behåller etikettens makron men får en beräknad fettsyreprofil
+  viktad från LD:s profil för avrunna svarta oliver med olja.
+- Sæby dansk makrillfilé i tomatsås är en egen etikettpost eftersom dess
+  makron avviker tydligt från ICA-posten. Etikettens deklarerade O-3 används;
+  O-6 lämnas tomt tills en verifierad källa finns.
+- USDA FoodData Central används för fettsyror endast när ett namngivet
+  generiskt livsmedel saknar en försvarbar direkt svensk match. I denna
+  komplettering gäller det cheddar och gouda; brie och mozzarella hämtas från
+  direkta LD-poster.
 
 ## First SLV Mapping Cohort
 

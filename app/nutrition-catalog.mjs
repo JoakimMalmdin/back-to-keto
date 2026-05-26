@@ -1,5 +1,6 @@
-import { SLV_CORE_RESOLVED, SLV_SOURCE } from "./nutrition-slv-core.mjs?v=184";
-import { fattyAcidProfileFor } from "./nutrition-slv-fatty-acids.mjs?v=184";
+import { SLV_CORE_RESOLVED, SLV_SOURCE } from "./nutrition-slv-core.mjs?v=185";
+import { fattyAcidProfileFor } from "./nutrition-slv-fatty-acids.mjs?v=185";
+import { USDA_SOURCE, usdaFattyAcidProfileFor } from "./nutrition-usda-fatty-acids.mjs?v=185";
 
 export const SUPPORTED_LOCALES = Object.freeze(["sv-SE", "en-GB"]);
 export const DEFAULT_LOCALE = "sv-SE";
@@ -48,6 +49,7 @@ export const UNIT_DEFINITIONS = Object.freeze({
 export const SOURCE_TYPES = Object.freeze({
   productLabel: "product_label",
   livsmedelsverket: "livsmedelsverket",
+  usdaFoodDataCentral: "usda_fooddata_central",
   producer: "producer",
   officialFallback: "official_fallback",
   proxy: "proxy",
@@ -74,6 +76,8 @@ function source(type, name, verifiedDate, confidence, note = "") {
 
 function defineFood(food) {
   const fattyAcids = fattyAcidProfileFor(food.id);
+  const usdaFattyAcids = fattyAcids ? null : usdaFattyAcidProfileFor(food.id);
+  const supplementalFattyAcids = fattyAcids || usdaFattyAcids;
   return Object.freeze({
     names: null,
     aliases: { "sv-SE": [], "en-GB": [] },
@@ -89,7 +93,7 @@ function defineFood(food) {
       omega3: null,
       omega6: null,
       ...(food.nutrientsPer100g || {}),
-      ...(fattyAcids ? { omega3: fattyAcids.omega3, omega6: fattyAcids.omega6 } : {}),
+      ...(supplementalFattyAcids ? { omega3: supplementalFattyAcids.omega3, omega6: supplementalFattyAcids.omega6 } : {}),
     }),
     fattyAcidSource: fattyAcids
       ? source(
@@ -99,6 +103,14 @@ function defineFood(food) {
         CONFIDENCE_LEVELS.analysed,
         fattyAcids.note,
       )
+      : usdaFattyAcids
+        ? source(
+          SOURCE_TYPES.usdaFoodDataCentral,
+          `${USDA_SOURCE.authority}, FDC ${usdaFattyAcids.fdcId}`,
+          USDA_SOURCE.retrievedDate,
+          CONFIDENCE_LEVELS.analysed,
+          usdaFattyAcids.note,
+        )
       : (food.fattyAcidSource || null),
   });
 }
@@ -315,6 +327,28 @@ export const NUTRITION_CATALOG = Object.freeze([
     defaultMeasure: { unit: "tin", amount: 1 },
     macroSource: source(SOURCE_TYPES.productLabel, "ICA Spansk Makrillfilé i tomatsås", "2026-05-19", CONFIDENCE_LEVELS.label),
     electrolyteSource: source(SOURCE_TYPES.unknown, "Salt deklarerat; mineralprofil ej verifierad", "2026-05-23", CONFIDENCE_LEVELS.proxy),
+    tags: ["fish", "protein"],
+  }),
+  defineFood({
+    id: "saeby-makrill-tomatsas",
+    names: translations("Sæby dansk makrillfilé i tomatsås", "Sæby Danish mackerel fillet in tomato sauce"),
+    category: "seafood",
+    aliases: {
+      "sv-SE": [
+        "sæby makrillfilé i tomatsås",
+        "saeby makrillfile i tomatsas",
+        "dansk makrillfilé i tomatsås",
+        "dansk makrillfile i tomatsas",
+        "saeby makrill i tomatsas",
+      ],
+      "en-GB": ["saeby mackerel in tomato sauce", "danish mackerel in tomato sauce"],
+    },
+    nutrientsPer100g: { kcal: 157, fat: 10, protein: 14, carbs: 2.8, omega3: 2.2, sodiumMg: 323 },
+    measures: [measure("tin", 1, 125, translations("1 burk", "1 tin"))],
+    defaultMeasure: { unit: "tin", amount: 1 },
+    macroSource: source(SOURCE_TYPES.productLabel, "Sæby dansk makrillfilé i tomatsås, fotograferad etikett", "2026-05-26", CONFIDENCE_LEVELS.label),
+    electrolyteSource: source(SOURCE_TYPES.productLabel, "Sæby dansk makrillfilé i tomatsås, salt 0,82 g/100 g", "2026-05-26", CONFIDENCE_LEVELS.calculated, "Natrium beräknat från deklarerat salt; kalium och magnesium saknas på etiketten."),
+    fattyAcidSource: source(SOURCE_TYPES.productLabel, "Sæby dansk makrillfilé i tomatsås, fotograferad etikett", "2026-05-26", CONFIDENCE_LEVELS.label, "Etiketten deklarerar O-3 2,2 g/100 g; O-6 deklareras inte."),
     tags: ["fish", "protein"],
   }),
   defineFood({

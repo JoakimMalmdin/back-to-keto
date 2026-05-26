@@ -1,4 +1,4 @@
-import { SLV_SOURCE } from "./nutrition-slv-core.mjs?v=184";
+import { SLV_SOURCE } from "./nutrition-slv-core.mjs?v=185";
 
 function fattyAcidProfile(catalogId, slvFoodNumber, officialName, omega3, omega6, note = "") {
   return Object.freeze({
@@ -16,6 +16,7 @@ function fattyAcidProfile(catalogId, slvFoodNumber, officialName, omega3, omega6
 // without replacing product-label macros or existing electrolyte assumptions.
 export const SLV_FATTY_ACID_PROFILES = Object.freeze([
   fattyAcidProfile("hellmanns-majonnas", 2189, "Rapsolja", 6.7, 14.9, "Beräknad profil: produktens 79 g fett/100 g multiplicerat med LD:s rapsoljeprofil (O-3 8,5 g och O-6 18,8 g/100 g olja). Äggulans mindre fettandel kan ge en liten avvikelse."),
+  fattyAcidProfile("kalamataoliver-etikett", 402, "Oliver svarta m. olja avrunna", 0.2, 1.8, "Beräknad profil: produktens 28,7 g fett/100 g viktat med LD:s profil för avrunna svarta oliver med olja (O-3 0,1 g och O-6 0,9 g vid 14,1 g fett). Etikettens makron och salt behålls."),
   fattyAcidProfile("halloumi-zeta", 100, "Ost halloumi rå fett 22%", 0.1, 0.6, "Fettsyreprofil från motsvarande generiska halloumipost; produktens deklarerade makron behålls."),
   fattyAcidProfile("ica-makrill-tomatsas", 1296, "Makrill filé i tomatsås konserv.", 2.6, 0.7, "Fettsyreprofil från motsvarande konserverad LD-post; produktens deklarerade makron behålls."),
   fattyAcidProfile("ica-tonfisk-i-vatten", 1278, "Tonfisk i vatten konserv. avrunnen", 0.2, 0, "Fettsyreprofil från motsvarande konserverad LD-post; produktens deklarerade makron behålls."),
@@ -30,6 +31,8 @@ export const SLV_FATTY_ACID_PROFILES = Object.freeze([
   fattyAcidProfile("creme-fraiche", 1719, "Creme fraiche fett 34%", 0.2, 0.5),
   fattyAcidProfile("graddfil", 1713, "Gräddfil fett 12%", 0.1, 0.3),
   fattyAcidProfile("keso", 70, "Färskost cottage cheese naturell fett 4%", 0, 0.1),
+  fattyAcidProfile("brie", 98, "Vitmögelost brie fett 30%", 0.2, 0.8),
+  fattyAcidProfile("mozzarella", 2255, "Ost mozzarella fett 18%", 0.1, 0.5),
   fattyAcidProfile("entrecote", 960, "Nöt entrecote rå", 0, 0.2),
   fattyAcidProfile("flaskfile", 970, "Gris fläskfilé rå", 0, 0.2),
   fattyAcidProfile("laxfile", 1255, "Lax odlad Norge fjordlax rå", 1.8, 1.9),
