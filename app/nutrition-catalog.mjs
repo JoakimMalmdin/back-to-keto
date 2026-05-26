@@ -1,4 +1,5 @@
-import { SLV_CORE_RESOLVED, SLV_SOURCE } from "./nutrition-slv-core.mjs?v=182";
+import { SLV_CORE_RESOLVED, SLV_SOURCE } from "./nutrition-slv-core.mjs?v=183";
+import { fattyAcidProfileFor } from "./nutrition-slv-fatty-acids.mjs?v=183";
 
 export const SUPPORTED_LOCALES = Object.freeze(["sv-SE", "en-GB"]);
 export const DEFAULT_LOCALE = "sv-SE";
@@ -72,6 +73,7 @@ function source(type, name, verifiedDate, confidence, note = "") {
 }
 
 function defineFood(food) {
+  const fattyAcids = fattyAcidProfileFor(food.id);
   return Object.freeze({
     names: null,
     aliases: { "sv-SE": [], "en-GB": [] },
@@ -80,8 +82,24 @@ function defineFood(food) {
     defaultMeasure: null,
     nutrientsPer100g: {},
     electrolyteSource: null,
+    fattyAcidSource: null,
     ...food,
-    nutrientsPer100g: Object.freeze({ fiber: null, omega3: null, omega6: null, ...(food.nutrientsPer100g || {}) }),
+    nutrientsPer100g: Object.freeze({
+      fiber: null,
+      omega3: null,
+      omega6: null,
+      ...(food.nutrientsPer100g || {}),
+      ...(fattyAcids ? { omega3: fattyAcids.omega3, omega6: fattyAcids.omega6 } : {}),
+    }),
+    fattyAcidSource: fattyAcids
+      ? source(
+        SOURCE_TYPES.livsmedelsverket,
+        `${SLV_SOURCE.authority}, livsmedelsnummer ${fattyAcids.slvFoodNumber}`,
+        SLV_SOURCE.retrievedDate,
+        CONFIDENCE_LEVELS.analysed,
+        fattyAcids.note,
+      )
+      : (food.fattyAcidSource || null),
   });
 }
 
@@ -93,24 +111,20 @@ function slvNutrients(selectionId) {
 
 function defineSlvFood(selectionId, food) {
   const resolved = slvNutrients(selectionId);
+  const officialSource = source(
+    SOURCE_TYPES.livsmedelsverket,
+    `${SLV_SOURCE.authority}, livsmedelsnummer ${resolved.slvFoodNumber}`,
+    SLV_SOURCE.retrievedDate,
+    CONFIDENCE_LEVELS.analysed,
+    resolved.note,
+  );
   return defineFood({
     ...food,
     id: selectionId,
     nutrientsPer100g: resolved.nutrientsPer100g,
-    macroSource: source(
-      SOURCE_TYPES.livsmedelsverket,
-      `${SLV_SOURCE.authority}, livsmedelsnummer ${resolved.slvFoodNumber}`,
-      SLV_SOURCE.retrievedDate,
-      CONFIDENCE_LEVELS.analysed,
-      resolved.note,
-    ),
-    electrolyteSource: source(
-      SOURCE_TYPES.livsmedelsverket,
-      `${SLV_SOURCE.authority}, livsmedelsnummer ${resolved.slvFoodNumber}`,
-      SLV_SOURCE.retrievedDate,
-      CONFIDENCE_LEVELS.analysed,
-      resolved.note,
-    ),
+    macroSource: officialSource,
+    electrolyteSource: officialSource,
+    fattyAcidSource: officialSource,
   });
 }
 

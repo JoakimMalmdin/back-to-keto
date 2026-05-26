@@ -4,7 +4,7 @@ import {
   SUPPORTED_LOCALES,
   UNIT_DEFINITIONS,
   foodName,
-} from "./nutrition-catalog.mjs?v=182";
+} from "./nutrition-catalog.mjs?v=183";
 
 const NUMBER_WORDS = Object.freeze({
   en: 1,

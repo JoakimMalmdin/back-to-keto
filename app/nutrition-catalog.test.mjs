@@ -57,6 +57,9 @@ assert(foodAliases(seltin).includes("reduced-sodium salt"), "Seltin ska kunna k�
 const tuna = findFoodById("ica-tonfisk-i-vatten");
 assert(tuna.measures.some((entry) => entry.unit === "tin"), "Tonfisk i vatten ska stödja burk/tin.");
 assert(foodAliases(tuna).includes("tuna in water"), "Tonfisk i vatten ska kunna kännas igen på engelska.");
+assert(tuna.macroSource.type === SOURCE_TYPES.productLabel, "Tonfisk ska behålla produktetiketten som makrokälla.");
+assert(tuna.fattyAcidSource.type === SOURCE_TYPES.livsmedelsverket, "Tonfisk ska kunna kompletteras med LD-fettsyreprofil.");
+assert(tuna.nutrientsPer100g.omega3 === 0.2 && tuna.nutrientsPer100g.omega6 === 0, "Tonfisk ska få O-3/O-6 från motsvarande LD-post.");
 
 const bratwurst = findFoodById("bratwurst-87-kott-kummin-vitlok");
 assert(bratwurst.nutrientsPer100g.fat === 24, "Bratwurst ska använda etikettens fettvärde.");
@@ -91,12 +94,18 @@ assert(cucumber.measures.some((entry) => entry.unit === "slice" && entry.grams =
 const walnut = findFoodById("valnotter-proxy");
 assert(walnut.measures.some((entry) => entry.unit === "piece" && entry.grams === 4), "Valnöt ska ha kontrollerat styckmått.");
 assert(walnut.implicitUnit === "piece", "Valnöt utan enhetsord ska bara få använda stycklogik när antal anges.");
+assert(walnut.nutrientsPer100g.omega3 === 8.5 && walnut.nutrientsPer100g.omega6 === 37.7, "Valnötter ska bära LD:s fettsyrevärden.");
+assert(walnut.fattyAcidSource.type === SOURCE_TYPES.livsmedelsverket, "Valnötters fettsyreprofil ska vara spårad till LD.");
 
 const avocado = findFoodById("avokado");
 assert(avocado.macroSource.type === SOURCE_TYPES.livsmedelsverket, "Avokado ska vara importerad från SLV-kärnan.");
 assert(avocado.nutrientsPer100g.potassiumMg === 600, "Avokado ska bära officiellt kaliumvärde i masterkatalogen.");
 assert(avocado.nutrientsPer100g.fiber === 4.8, "Avokado ska bära officiellt fibervärde i masterkatalogen.");
 assert(avocado.nutrientsPer100g.omega3 === 0.2 && avocado.nutrientsPer100g.omega6 === 2.4, "Avokado ska bära SLV-baserade O-3/O-6-värden.");
+assert(avocado.fattyAcidSource.type === SOURCE_TYPES.livsmedelsverket, "Helt LD-baserade poster ska ange fettsyrekälla.");
+
+const salmon = findFoodById("laxfile");
+assert(salmon.nutrientsPer100g.omega3 === 1.8 && salmon.nutrientsPer100g.omega6 === 1.9, "Lax ska få LD:s fettsyrevärden.");
 
 const egg = findFoodById("agg");
 assert(egg.measures.some((entry) => entry.unit === "piece"), "Ägg ska stödja tydliga styckeangivelser.");

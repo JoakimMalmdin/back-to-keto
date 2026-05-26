@@ -70,6 +70,13 @@ Categories are for finding foods in the UI. Coaching uses tags such as
   är `O-3` en praktisk approximation inom databasens struktur.
 - Produktposter utan verifierade fettsyrevärden visas med `O-3 --, O-6 --`
   tills etikett eller beslutad officiell matchning ger ett kontrollerat värde.
+- Fettsyror har en egen källhänvisning i den kanoniska posten. En etikettstyrd
+  produkt kan därför kompletteras med O-3/O-6 från en motsvarande LD-post utan
+  att produktens deklarerade makron eller elektrolyter skrivs över.
+- Den första breda fettsyrekompletteringen omfattar direkta LD-matchningar för
+  fisk/skaldjur, nötter/frön, bär, flera grönsaker samt ett begränsat antal
+  tydligt motsvarande produkt- eller schablonposter. Otydliga recept- och
+  varumärkesvariationer lämnas utan fettsyrevärde tills de verifierats.
 
 ## First SLV Mapping Cohort
 
