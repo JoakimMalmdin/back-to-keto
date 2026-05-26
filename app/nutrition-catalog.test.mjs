@@ -53,6 +53,11 @@ assert(seltin.electrolyteSource.type === SOURCE_TYPES.productLabel, "Seltin ska 
 assert(seltin.electrolyteSource.confidence === CONFIDENCE_LEVELS.label, "Seltin ska vara etikettverifierad.");
 assert(seltin.measures.some((entry) => entry.unit === "pinch"), "Seltin ska stödja krm/pinch.");
 assert(foodAliases(seltin).includes("reduced-sodium salt"), "Seltin ska kunna kännas igen på engelska.");
+assert(seltin.nutrientsPer100g.fiber === 0 && seltin.nutrientsPer100g.omega3 === 0 && seltin.nutrientsPer100g.omega6 === 0, "Seltin ska inte visa okända fiber- eller fettsyrevärden.");
+
+const salt = findFoodById("salt");
+assert(salt.nutrientsPer100g.fiber === 0 && salt.nutrientsPer100g.omega3 === 0 && salt.nutrientsPer100g.omega6 === 0, "Salt ska ha nollvärden för fiber och fettsyror.");
+assert(salt.nutrientsPer100g.sodiumMg === 39300 && salt.nutrientsPer100g.potassiumMg === 0, "Salt ska redovisa milligram natrium utan att tillskriva kalium.");
 
 const mayonnaise = findFoodById("hellmanns-majonnas");
 assert(mayonnaise.macroSource.type === SOURCE_TYPES.productLabel, "Hellmann's ska behålla etiketten som makrokälla.");
@@ -90,6 +95,8 @@ assert(meatballs.measures.length === 0, "Köttbullar får inte få styckmått in
 const yoghurt = findFoodById("grekisk-yoghurt-10");
 assert(yoghurt.measures.some((entry) => entry.unit === "dl"), "Grekisk yoghurt ska stödja dl.");
 assert(foodName(yoghurt, "en-GB") === "Greek yoghurt 10%", "Brittisk stavning ska använda yoghurt.");
+assert(yoghurt.nutrientsPer100g.fiber === 0, "Grekisk yoghurt ska ange noll fiber.");
+assert(yoghurt.nutrientsPer100g.omega3 === 0.1 && yoghurt.nutrientsPer100g.omega6 === 0.3, "Grekisk yoghurt ska kompletteras med LD:s 10%-yoghurtprofil.");
 
 const quark = findFoodById("milbona-magerkvarg-naturell");
 assert(quark.nutrientsPer100g.carbs === 4, "Milbona-kvarg ska ha etikettens kolhydrater per 100 g.");
@@ -100,8 +107,15 @@ const cream36 = findFoodById("vispgradde-36");
 const cream40 = findFoodById("vispgradde-40");
 assert(cream36.nutrientsPer100g.fat === 36, "Vispgrädde 36% ska ha produktens angivna fetthalt.");
 assert(cream40.nutrientsPer100g.fat === 40, "Vispgrädde 40% ska ha produktens angivna fetthalt.");
+assert(cream36.nutrientsPer100g.omega3 === 0.3 && cream36.nutrientsPer100g.omega6 === 0.5, "Vispgrädde 36% ska ha fettviktad LD-profil.");
+assert(cream40.nutrientsPer100g.omega3 === 0.3 && cream40.nutrientsPer100g.omega6 === 0.6, "Vispgrädde 40% ska ha motsvarande LD-profil.");
 assert(!foodAliases(cream36).includes("grädde"), "Grädde utan fetthalt får inte implicit betyda 36%.");
 assert(!foodAliases(cream40).includes("grädde"), "Grädde utan fetthalt får inte implicit betyda 40%.");
+
+const creamCheese = findFoodById("farskost-etikett");
+const feta = findFoodById("fetaost-proxy");
+assert(creamCheese.nutrientsPer100g.fiber === 0 && creamCheese.nutrientsPer100g.omega6 === 0.6, "Färskost ska kompletteras med verifierbar fiber-/fettsyreprofil.");
+assert(feta.nutrientsPer100g.fiber === 0 && feta.nutrientsPer100g.omega6 === 0.8, "Fetaostschablonen ska kompletteras från närliggande salladsostpost.");
 
 const coffee = findFoodById("kaffe");
 assert(coffee.electrolyteSource.type === SOURCE_TYPES.livsmedelsverket, "Kaffe ska använda Livsmedelsverkets analyserade elektrolytvärden.");
@@ -154,7 +168,13 @@ assert(mincedBeefRule.requiresVariant === "fat_percentage", "Köttfärs utan fet
 assert(mincedBeef10.macroSource.type === SOURCE_TYPES.livsmedelsverket, "Nötfärs 10% ska använda officiell källa.");
 assert(mincedBeef10.nutrientsPer100g.fat === 11.3, "Nötfärs 10% ska behålla SLV-postens analyserade fettvärde.");
 assert(mincedBeef12.macroSource.type === SOURCE_TYPES.proxy, "Nötfärs 12% ska vara synligt schablonmärkt tills etikett finns.");
+assert(mincedBeef12.nutrientsPer100g.fiber === 0 && mincedBeef12.nutrientsPer100g.omega3 === 0.1 && mincedBeef12.nutrientsPer100g.omega6 === 0.4, "Nötfärs 12% ska använda samma verifierade fiber-/fettsyreprofil som närliggande fetthalter.");
 assert(mincedBeef15.nutrientsPer100g.fat === 15, "Nötfärs 15% ska använda officiellt fettvärde.");
+
+const cashews = findFoodById("cashewnotter");
+const peanuts = findFoodById("jordnotter");
+assert(cashews.nutrientsPer100g.fiber === 8.3 && cashews.nutrientsPer100g.omega6 === 8.9, "Cashewnötter ska ha LD:s fiber- och fettsyrekomplettering.");
+assert(peanuts.nutrientsPer100g.fiber === 8.1 && peanuts.nutrientsPer100g.omega6 === 15.5, "Jordnötter ska ha LD:s fiber- och fettsyrekomplettering.");
 
 assert(uiText("sv-SE", "currentMacros") === "Aktuell makrobild", "Svensk UI-text saknas.");
 assert(uiText("en-GB", "currentMacros") === "Current macros", "Engelsk UI-text saknas.");

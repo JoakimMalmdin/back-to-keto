@@ -1,5 +1,5 @@
-import { parseNutritionText } from "./nutrition-parser.mjs?v=188";
-import { NUTRITION_CATALOG, NUTRITION_CATEGORIES, categoryName, foodName } from "./nutrition-catalog.mjs?v=188";
+import { parseNutritionText } from "./nutrition-parser.mjs?v=189";
+import { NUTRITION_CATALOG, NUTRITION_CATEGORIES, categoryName, foodName } from "./nutrition-catalog.mjs?v=189";
 
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
@@ -26,7 +26,7 @@ const legacyDefaultMacroTargets = {
   kcalTarget: 1900,
   kcalMax: 2000,
 };
-const appVersion = "188";
+const appVersion = "189";
 const appDisplayVersion = `v1.1 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -231,8 +231,9 @@ function renderFoodList() {
                 grams: (standardMeasure.grams / standardMeasure.amount) * food.defaultMeasure.amount,
               })}.`
             : "";
+          const milligrams = (value) => (Number.isFinite(value) ? `${Math.round(value)} mg` : "--");
           const electrolytes = [nutrient.sodiumMg, nutrient.potassiumMg, nutrient.magnesiumMg].some(Number.isFinite)
-            ? ` Na ${Math.round(nutrient.sodiumMg || 0)}, Ka ${Math.round(nutrient.potassiumMg || 0)}, Mg ${Math.round(nutrient.magnesiumMg || 0)} mg.`
+            ? ` Na ${milligrams(nutrient.sodiumMg)}, Ka ${milligrams(nutrient.potassiumMg)}, Mg ${milligrams(nutrient.magnesiumMg)}.`
             : "";
           const fiber = Number.isFinite(nutrient.fiber) ? `${decimal(nutrient.fiber)} g` : "--";
           const omega3 = Number.isFinite(nutrient.omega3) ? `${decimal(nutrient.omega3)} g` : "--";
@@ -800,13 +801,11 @@ function proposalMacros(items, date) {
   return estimateMasterMacros(proposal);
 }
 
-function proposalFitsEnergyLimit(macros, gaps) {
-  return macros.kcal <= gaps.kcalMax + 0.5;
-}
-
 function addProposalItemIfWithinEnergy(items, item, entry, gaps) {
+  const current = proposalMacros(items, entry.date);
+  const energyLimit = Math.max(gaps.kcalTarget, current.kcal);
   const candidate = proposalMacros([...items, item], entry.date);
-  if (!proposalFitsEnergyLimit(candidate, gaps)) return null;
+  if (candidate.kcal > energyLimit + 0.5) return null;
   items.push(item);
   return candidate;
 }
@@ -889,7 +888,7 @@ function dinnerCompassMarkup(compass) {
 }
 
 function dinnerCompass(entry) {
-  if (!entry.lunch?.trim()) {
+  if (!entry.lunch?.trim() || entry.dinner?.trim()) {
     return null;
   }
 

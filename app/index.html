@@ -9,13 +9,13 @@
     <title>Back to Keto</title>
     <script>
       if (window.location.protocol === "file:") {
-        window.location.replace("https://joakimmalmdin.github.io/back-to-keto/app/?cache=188");
+        window.location.replace("https://joakimmalmdin.github.io/back-to-keto/app/?cache=189");
       }
     </script>
-    <link rel="manifest" href="manifest.webmanifest?v=188" />
+    <link rel="manifest" href="manifest.webmanifest?v=189" />
     <link rel="icon" href="icon.svg?v=146" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="apple-touch-icon.png?v=146" />
-    <link rel="stylesheet" href="styles.css?v=188" />
+    <link rel="stylesheet" href="styles.css?v=189" />
   </head>
   <body>
     <div class="app-shell">
@@ -24,7 +24,7 @@
           <p class="eyebrow">Back to Keto</p>
           <h1>Daglig keto-logg</h1>
           <div class="version-row">
-            <p class="version-pill">v1.1 beta · build 188</p>
+            <p class="version-pill">v1.1 beta · build 189</p>
             <span class="version-info">
               <button class="version-info-trigger" type="button" aria-label="Vad är nytt i v1.1 beta?" aria-describedby="versionInfoText">Info</button>
               <span class="version-info-text" id="versionInfoText" role="tooltip">
@@ -85,8 +85,8 @@
             <summary id="entryTitle">Lägg in dag</summary>
             <div class="report-actions">
               <button class="text-button report-inline-button" id="reportButton" type="button">Dagsrapport</button>
-              <button class="text-button report-inline-button" id="weekReportButton" type="button">Veckorapport</button>
-              <button class="text-button report-inline-button" id="weeklyCheckinButton" type="button">Veckoincheckning</button>
+              <button class="text-button report-inline-button" id="weekReportButton" type="button">Vecko<wbr>rapport</button>
+              <button class="text-button report-inline-button" id="weeklyCheckinButton" type="button">Vecko<wbr>incheckning</button>
             </div>
             <div class="weekly-checkin-panel" id="weeklyCheckinPanel" hidden>
               <div class="three-col">
@@ -251,7 +251,7 @@
                 <input id="coffeeInput" name="coffee" placeholder="t.ex. 3 koppar" />
               </label>
               <fieldset class="segmented-field walk-field">
-                <legend>Promenad</legend>
+                <legend>Promenad (över 11 min/km)</legend>
                 <div class="segmented-control" role="radiogroup" aria-label="Promenad">
                   <input id="walkNoneInput" name="walk" type="radio" value="" />
                   <label for="walkNoneInput">Ingen</label>
@@ -264,7 +264,7 @@
                 </div>
               </fieldset>
               <fieldset class="segmented-field motion-field">
-              <legend>Motion</legend>
+              <legend>Motion (under 11 min/km)</legend>
               <div class="segmented-control" role="radiogroup" aria-label="Motion">
                 <input id="motionNoneInput" name="motion" type="radio" value="" />
                 <label for="motionNoneInput">Ingen</label>
@@ -275,7 +275,6 @@
                 <input id="motionPlus60Input" name="motion" type="radio" value="+60 min" />
                 <label for="motionPlus60Input">+60 min</label>
               </div>
-                <p class="mini-note motion-note">Snabb promenad (under 11 min/km), jogging, löpning eller styrketräning. Från ketovecka 2 höjs natriummålet med 500 mg vid +30 eller +60 min.</p>
               </fieldset>
             </div>
             <input id="legacyTrainingDayInput" name="trainingDay" type="hidden" value="" />
@@ -569,6 +568,6 @@
       </main>
     </div>
 
-    <script src="app.js?v=188" type="module"></script>
+    <script src="app.js?v=189" type="module"></script>
   </body>
 </html>

@@ -514,10 +514,6 @@ main {
   align-self: start;
 }
 
-.motion-note {
-  font-weight: 400;
-}
-
 .activity-grid .walk-field {
   grid-column: 1;
   grid-row: 2;
@@ -1377,10 +1373,10 @@ textarea {
 
   .report-inline-button {
     min-height: 40px;
-    padding: 8px 4px;
+    padding: 8px 2px;
     border-radius: 8px;
     color: var(--muted);
-    font-size: 0.8rem;
+    font-size: 0.74rem;
     font-weight: 800;
     letter-spacing: 0;
     line-height: 1.1;
@@ -1404,6 +1400,19 @@ textarea {
 
   .activity-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .activity-grid .walk-field,
+  .activity-grid .motion-field {
+    grid-column: 1 / -1;
+  }
+
+  .activity-grid .walk-field {
+    grid-row: 2;
+  }
+
+  .activity-grid .motion-field {
+    grid-row: 3;
   }
 
   .health-row {

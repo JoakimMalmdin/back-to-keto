@@ -1,6 +1,6 @@
-import { SLV_CORE_RESOLVED, SLV_SOURCE } from "./nutrition-slv-core.mjs?v=188";
-import { fattyAcidProfileFor } from "./nutrition-slv-fatty-acids.mjs?v=188";
-import { USDA_SOURCE, usdaFattyAcidProfileFor } from "./nutrition-usda-fatty-acids.mjs?v=188";
+import { SLV_CORE_RESOLVED, SLV_SOURCE } from "./nutrition-slv-core.mjs?v=189";
+import { fattyAcidProfileFor } from "./nutrition-slv-fatty-acids.mjs?v=189";
+import { USDA_SOURCE, usdaFattyAcidProfileFor } from "./nutrition-usda-fatty-acids.mjs?v=189";
 
 export const SUPPORTED_LOCALES = Object.freeze(["sv-SE", "en-GB"]);
 export const DEFAULT_LOCALE = "sv-SE";
@@ -189,7 +189,7 @@ export const NUTRITION_CATALOG = Object.freeze([
       "sv-SE": ["grekisk yoghurt", "grekisk yoghurt 10%", "grekisk youghurt"],
       "en-GB": ["greek yoghurt", "greek yoghurt 10%", "full-fat greek yoghurt"],
     },
-    nutrientsPer100g: { kcal: 121, fat: 10, protein: 4.6, carbs: 3.2 },
+    nutrientsPer100g: { kcal: 121, fat: 10, protein: 4.6, carbs: 3.2, fiber: 0 },
     measures: [measure("dl", 1, 100), measure("portion", 1, 150, translations("1 portion", "1 portion"))],
     macroSource: source(SOURCE_TYPES.productLabel, "Grekisk yoghurt 10%", "2026-05-20", CONFIDENCE_LEVELS.label),
     electrolyteSource: source(SOURCE_TYPES.unknown, "Ej deklarerat på etikett", "2026-05-23", CONFIDENCE_LEVELS.proxy),
@@ -203,7 +203,7 @@ export const NUTRITION_CATALOG = Object.freeze([
       "sv-SE": ["yoghurt", "yoghurt 3%", "youghurt 3%"],
       "en-GB": ["natural yoghurt", "yoghurt 3%", "plain yoghurt"],
     },
-    nutrientsPer100g: { kcal: 56, fat: 3, protein: 3.5, carbs: 3.7 },
+    nutrientsPer100g: { kcal: 56, fat: 3, protein: 3.5, carbs: 3.7, fiber: 0 },
     measures: [measure("dl", 1, 100)],
     macroSource: source(SOURCE_TYPES.productLabel, "Mild yoghurt naturell 3%", "2026-05-20", CONFIDENCE_LEVELS.label),
     electrolyteSource: source(SOURCE_TYPES.unknown, "Ej deklarerat på etikett", "2026-05-23", CONFIDENCE_LEVELS.proxy),
@@ -217,7 +217,7 @@ export const NUTRITION_CATALOG = Object.freeze([
       "sv-SE": ["kvarg", "magerkvarg", "magerkvarg naturell", "milbona kvarg", "milbona magerkvarg"],
       "en-GB": ["quark", "low-fat quark", "natural quark", "milbona quark"],
     },
-    nutrientsPer100g: { kcal: 61, fat: 0.3, protein: 10, carbs: 4 },
+    nutrientsPer100g: { kcal: 61, fat: 0.3, protein: 10, carbs: 4, fiber: 0 },
     measures: [measure("dl", 1, 100), measure("tablespoon", 1, 15), measure("teaspoon", 1, 5)],
     macroSource: source(SOURCE_TYPES.productLabel, "Milbona Magerkvarg Naturell", "2026-05-24", CONFIDENCE_LEVELS.label),
     electrolyteSource: source(SOURCE_TYPES.productLabel, "Milbona Magerkvarg Naturell", "2026-05-24", CONFIDENCE_LEVELS.calculated, "Natrium kan beräknas från deklarerat salt 0,14 g/100 g; kalium och magnesium saknas på etiketten."),
@@ -231,7 +231,7 @@ export const NUTRITION_CATALOG = Object.freeze([
       "sv-SE": ["grädde 36%", "vispgrädde 36%", "vispgradde 36%"],
       "en-GB": ["cream 36%", "whipping cream 36%"],
     },
-    nutrientsPer100g: { kcal: 340, fat: 36, protein: 2.3, carbs: 2.9 },
+    nutrientsPer100g: { kcal: 340, fat: 36, protein: 2.3, carbs: 2.9, fiber: 0 },
     measures: [measure("dl", 1, 100), measure("tablespoon", 1, 15)],
     macroSource: source(SOURCE_TYPES.producer, "Arla Köket Vispgrädde 36%", "2026-05-24", CONFIDENCE_LEVELS.label),
     electrolyteSource: source(SOURCE_TYPES.unknown, "Salt deklarerat; mineralprofil ej verifierad", "2026-05-24", CONFIDENCE_LEVELS.proxy),
@@ -245,7 +245,7 @@ export const NUTRITION_CATALOG = Object.freeze([
       "sv-SE": ["grädde 40%", "vispgrädde 40%", "vispgradde 40%"],
       "en-GB": ["cream 40%", "whipping cream 40%"],
     },
-    nutrientsPer100g: { kcal: 375, fat: 40, protein: 2.2, carbs: 2.9 },
+    nutrientsPer100g: { kcal: 375, fat: 40, protein: 2.2, carbs: 2.9, fiber: 0 },
     measures: [measure("dl", 1, 100), measure("tablespoon", 1, 15)],
     macroSource: source(SOURCE_TYPES.producer, "Arla Ko Färsk vispgrädde 40%", "2026-05-24", CONFIDENCE_LEVELS.label),
     electrolyteSource: source(SOURCE_TYPES.unknown, "Salt deklarerat; mineralprofil ej verifierad", "2026-05-24", CONFIDENCE_LEVELS.proxy),
@@ -259,7 +259,7 @@ export const NUTRITION_CATALOG = Object.freeze([
       "sv-SE": ["färskost", "farskost"],
       "en-GB": ["cream cheese"],
     },
-    nutrientsPer100g: { kcal: 252, fat: 25, protein: 4.5, carbs: 3 },
+    nutrientsPer100g: { kcal: 252, fat: 25, protein: 4.5, carbs: 3, fiber: 0 },
     measures: [measure("tablespoon", 1, 15)],
     macroSource: source(SOURCE_TYPES.productLabel, "Färskost fotograferad etikett", "2026-05-20", CONFIDENCE_LEVELS.label),
     electrolyteSource: source(SOURCE_TYPES.unknown, "Ej deklarerat på etikett", "2026-05-23", CONFIDENCE_LEVELS.proxy),
@@ -392,7 +392,7 @@ export const NUTRITION_CATALOG = Object.freeze([
       "sv-SE": ["seltin"],
       "en-GB": ["seltin", "reduced-sodium salt"],
     },
-    nutrientsPer100g: { kcal: 0, fat: 0, protein: 0, carbs: 0, fiber: 0, sodiumMg: 20000, potassiumMg: 21000, magnesiumMg: 1020 },
+    nutrientsPer100g: { kcal: 0, fat: 0, protein: 0, carbs: 0, fiber: 0, omega3: 0, omega6: 0, sodiumMg: 20000, potassiumMg: 21000, magnesiumMg: 1020 },
     measures: [measure("pinch", 1, 1.2), measure("teaspoon", 1, 6)],
     macroSource: source(SOURCE_TYPES.productLabel, "Seltin", "2026-05-22", CONFIDENCE_LEVELS.label),
     electrolyteSource: source(SOURCE_TYPES.productLabel, "Seltin", "2026-05-22", CONFIDENCE_LEVELS.label),
@@ -457,7 +457,7 @@ export const NUTRITION_CATALOG = Object.freeze([
     names: translations("Salt", "Salt"),
     category: "seasonings",
     aliases: { "sv-SE": ["salt"], "en-GB": ["salt"] },
-    nutrientsPer100g: { kcal: 0, fat: 0, protein: 0, carbs: 0, sodiumMg: 39300 },
+    nutrientsPer100g: { kcal: 0, fat: 0, protein: 0, carbs: 0, fiber: 0, omega3: 0, omega6: 0, sodiumMg: 39300, potassiumMg: 0, magnesiumMg: 0 },
     measures: [measure("pinch", 1, 1.2), measure("teaspoon", 1, 6)],
     macroSource: source(SOURCE_TYPES.officialFallback, "Natriumklorid", "2026-05-25", CONFIDENCE_LEVELS.calculated),
     electrolyteSource: source(SOURCE_TYPES.officialFallback, "Natriumklorid", "2026-05-25", CONFIDENCE_LEVELS.calculated),
@@ -551,7 +551,7 @@ export const NUTRITION_CATALOG = Object.freeze([
       "sv-SE": ["nötfärs 12%", "nötfärs 12 %", "notfars 12%", "notfars 12 %", "köttfärs 12%", "köttfärs 12 %", "kottfars 12%", "kottfars 12 %"],
       "en-GB": ["minced beef 12%", "minced beef 12% fat", "beef mince 12%", "beef mince 12% fat"],
     },
-    nutrientsPer100g: { kcal: 194, fat: 12.8, protein: 19.8, carbs: 0, sodiumMg: 85, potassiumMg: 279, magnesiumMg: 20 },
+    nutrientsPer100g: { kcal: 194, fat: 12.8, protein: 19.8, carbs: 0, fiber: 0, omega3: 0.1, omega6: 0.4, sodiumMg: 85, potassiumMg: 279, magnesiumMg: 20 },
     tags: ["complete_protein", "potassium_source"],
   }, "Interpolerad schablon mellan Livsmedelsverkets poster för nötfärs 10% och 15%; ersätts av produktetikett när sådan finns."),
   defineSlvFood("notfars-15", {
@@ -668,7 +668,7 @@ export const NUTRITION_CATALOG = Object.freeze([
     names: translations("Fetaost", "Feta cheese"),
     category: "dairy",
     aliases: { "sv-SE": ["fetaost", "feta"], "en-GB": ["feta", "feta cheese"] },
-    nutrientsPer100g: { kcal: 267, fat: 21.3, protein: 14.3, carbs: 4, sodiumMg: 1200, potassiumMg: 95, magnesiumMg: 19 },
+    nutrientsPer100g: { kcal: 267, fat: 21.3, protein: 14.3, carbs: 4, fiber: 0, sodiumMg: 1200, potassiumMg: 95, magnesiumMg: 19 },
     measures: [measure("tablespoon", 1, 15)],
     tags: ["sodium_source"],
   }),
@@ -1073,7 +1073,7 @@ export const NUTRITION_CATALOG = Object.freeze([
     names: translations("Jordnötter", "Peanuts"),
     category: "nutsSeeds",
     aliases: { "sv-SE": ["jordnötter", "jordnotter"], "en-GB": ["peanuts"] },
-    nutrientsPer100g: { kcal: 600, fat: 50, protein: 26.7, carbs: 15, sodiumMg: 18, potassiumMg: 700, magnesiumMg: 170 },
+    nutrientsPer100g: { kcal: 600, fat: 50, protein: 26.7, carbs: 15, fiber: 8.1, sodiumMg: 18, potassiumMg: 700, magnesiumMg: 170 },
     measures: [measure("portion", 1, 30)],
     tags: ["magnesium_source"],
   }),
@@ -1082,7 +1082,7 @@ export const NUTRITION_CATALOG = Object.freeze([
     names: translations("Cashewnötter", "Cashew nuts"),
     category: "nutsSeeds",
     aliases: { "sv-SE": ["cashewnötter", "cashewnotter"], "en-GB": ["cashew nuts", "cashews"] },
-    nutrientsPer100g: { kcal: 583, fat: 43.3, protein: 18.3, carbs: 30, sodiumMg: 12, potassiumMg: 660, magnesiumMg: 290 },
+    nutrientsPer100g: { kcal: 583, fat: 43.3, protein: 18.3, carbs: 30, fiber: 8.3, sodiumMg: 12, potassiumMg: 660, magnesiumMg: 290 },
     measures: [measure("portion", 1, 30)],
     tags: ["magnesium_source", "carb_watch"],
   }),
