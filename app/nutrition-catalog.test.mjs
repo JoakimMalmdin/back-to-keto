@@ -103,6 +103,11 @@ assert(cream40.nutrientsPer100g.fat === 40, "Vispgrädde 40% ska ha produktens a
 assert(!foodAliases(cream36).includes("grädde"), "Grädde utan fetthalt får inte implicit betyda 36%.");
 assert(!foodAliases(cream40).includes("grädde"), "Grädde utan fetthalt får inte implicit betyda 40%.");
 
+const coffee = findFoodById("kaffe");
+assert(coffee.nutrientsPer100g.sodiumMg === 2, "Kaffe ska ha natriumvarde for elektrolytbilden.");
+assert(coffee.nutrientsPer100g.potassiumMg === 58, "Kaffe ska ha kaliumvarde for elektrolytbilden.");
+assert(coffee.nutrientsPer100g.magnesiumMg === 7, "Kaffe ska ha magnesiumvarde for elektrolytbilden.");
+
 const cucumber = findFoodById("gurka");
 assert(cucumber.measures.some((entry) => entry.unit === "slice" && entry.grams === 15), "Gurka ska stödja en skiva om ca 15 g.");
 

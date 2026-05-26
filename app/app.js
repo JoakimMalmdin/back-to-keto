@@ -1,5 +1,5 @@
-import { parseNutritionText } from "./nutrition-parser.mjs?v=185";
-import { NUTRITION_CATALOG, NUTRITION_CATEGORIES, categoryName, foodName } from "./nutrition-catalog.mjs?v=185";
+import { parseNutritionText } from "./nutrition-parser.mjs?v=186";
+import { NUTRITION_CATALOG, NUTRITION_CATEGORIES, categoryName, foodName } from "./nutrition-catalog.mjs?v=186";
 
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
@@ -7,6 +7,16 @@ const syncCodeKey = "btk.keto.syncCode.v1";
 const macroTargetsKey = "btk.keto.macroTargets.v1";
 const weeklyCheckinsKey = "btk.keto.weeklyCheckins.v1";
 const defaultMacroTargets = {
+  proteinMin: 145,
+  proteinMax: 145,
+  fatMin: 130,
+  fatMax: 130,
+  carbsMin: 15,
+  carbsMax: 15,
+  kcalTarget: 1810,
+  kcalMax: 1900,
+};
+const legacyDefaultMacroTargets = {
   proteinMin: 140,
   proteinMax: 140,
   fatMin: 140,
@@ -16,7 +26,7 @@ const defaultMacroTargets = {
   kcalTarget: 1900,
   kcalMax: 2000,
 };
-const appVersion = "185";
+const appVersion = "186";
 const appDisplayVersion = `v1.1 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -228,7 +238,7 @@ function renderFoodList() {
           const omega3 = Number.isFinite(nutrient.omega3) ? `${decimal(nutrient.omega3)} g` : "--";
           const omega6 = Number.isFinite(nutrient.omega6) ? `${decimal(nutrient.omega6)} g` : "--";
           const sourceMark = food.macroSource?.type === "proxy" ? " (schablon)" : "";
-          return `<li><strong>${foodName(food)}${sourceMark}</strong>: ${decimal(nutrient.kcal || 0)} kcal, P ${decimal(nutrient.protein || 0)} g, F ${decimal(nutrient.fat || 0)} g, K ${decimal(nutrient.carbs || 0)} g, Fiber ${fiber}, O-3 ${omega3}, O-6 ${omega6}.${electrolytes}${measures ? ` Mått: ${measures}.` : ""}${standard}</li>`;
+          return `<li><strong>${foodName(food)}${sourceMark}</strong>: ${decimal(nutrient.kcal || 0)} kcal, P ${decimal(nutrient.protein || 0)} g, F ${decimal(nutrient.fat || 0)} g, K ${decimal(nutrient.carbs || 0)} g, Fiber ${fiber}, O3 ${omega3}, O6 ${omega6}.${electrolytes}${measures ? ` Mått: ${measures}.` : ""}${standard}</li>`;
         })
         .join("");
       return `<div><h3>${categoryName(categoryId)}</h3><ul>${rows}</ul></div>`;
@@ -458,6 +468,10 @@ function saveGoalWeight(value) {
 }
 
 function normalizeMacroTargets(targets = {}) {
+  const legacyMacroKeys = ["proteinMin", "proteinMax", "fatMin", "fatMax", "carbsMin", "carbsMax"];
+  const isLegacyDefault = legacyMacroKeys
+    .every((key) => Number(targets[key]) === legacyDefaultMacroTargets[key]);
+  if (isLegacyDefault) return { ...defaultMacroTargets };
   const migrated = {
     ...targets,
     proteinMin: targets.proteinMin ?? targets.protein,
@@ -548,7 +562,7 @@ function electrolyteTargetsForDate(date, entries, trainingDay = false) {
 }
 
 function isTrainingEntry(entry) {
-  return Boolean(entry?.motion) || entry?.trainingDay === "Ja";
+  return ["+30 min", "+60 min"].includes(entry?.motion) || entry?.trainingDay === "Ja";
 }
 
 function electrolyteRangeLabel(range) {
@@ -662,6 +676,7 @@ function estimateMasterMacros(entry) {
   };
   const macroTotal = macroCalories.protein + macroCalories.fat + macroCalories.carbs || 1;
   const items = parsed.items.map((item) => ({
+    foodId: item.foodId,
     label: item.label,
     count: item.grams / 100,
     amountLabel: masterAmountLabel(item),
@@ -675,6 +690,29 @@ function estimateMasterMacros(entry) {
     magnesiumMg: item.nutrients.magnesiumMg || 0,
     assumption: item.assumption,
   }));
+  const coffeeCups = numberFromFreeText(entry.coffee);
+  const coffeeParsed = coffeeCups > 0 ? parseNutritionText(`${decimal(coffeeCups)} kopp kaffe`) : null;
+  const coffeeElectrolyteItem = coffeeParsed?.items?.[0]
+    ? {
+        foodId: coffeeParsed.items[0].foodId,
+        label: coffeeParsed.items[0].label,
+        count: coffeeParsed.items[0].grams / 100,
+        amountLabel: `${decimal(coffeeCups)} kopp${coffeeCups === 1 ? "" : "ar"}`,
+        kcal: 0,
+        protein: 0,
+        fat: 0,
+        carbs: 0,
+        fiber: 0,
+        sodiumMg: coffeeParsed.items[0].nutrients.sodiumMg || 0,
+        potassiumMg: coffeeParsed.items[0].nutrients.potassiumMg || 0,
+        magnesiumMg: coffeeParsed.items[0].nutrients.magnesiumMg || 0,
+      }
+    : null;
+  if (coffeeElectrolyteItem) {
+    totals.sodiumMg += coffeeElectrolyteItem.sodiumMg;
+    totals.potassiumMg += coffeeElectrolyteItem.potassiumMg;
+    totals.magnesiumMg += coffeeElectrolyteItem.magnesiumMg;
+  }
   const unresolvedMeasures = parsed.unresolved.map((item) => {
     if (item.reason === "unsupported_measure") return `${item.label} (${item.unit})`;
     if (item.reason === "variant_required") return item.label.includes("(ange fetthalt)") ? item.label : `${item.label} (ange fetthalt)`;
@@ -683,6 +721,7 @@ function estimateMasterMacros(entry) {
   return {
     ...totals,
     items,
+    electrolyteItems: coffeeElectrolyteItem ? [...items, coffeeElectrolyteItem] : items,
     unresolvedMeasures: [...new Set(unresolvedMeasures)],
     unresolved: parsed.unresolved,
     source: "master",
@@ -907,6 +946,34 @@ function foodItemSort(a, b) {
   return b.fat - a.fat || b.protein - a.protein || a.label.localeCompare(b.label, "sv");
 }
 
+function aggregateBreakdownItems(items = []) {
+  const aggregated = new Map();
+  for (const item of items) {
+    const key = item.foodId || item.label;
+    const current = aggregated.get(key);
+    if (!current) {
+      aggregated.set(key, { ...item, amountLabels: [item.amountLabel].filter(Boolean) });
+      continue;
+    }
+    for (const nutrient of ["count", "kcal", "protein", "fat", "carbs", "sodiumMg", "potassiumMg", "magnesiumMg"]) {
+      current[nutrient] = (current[nutrient] || 0) + (item[nutrient] || 0);
+    }
+    current.amountLabels.push(item.amountLabel);
+  }
+  return [...aggregated.values()].map((item) => {
+    const amountLabels = item.amountLabels.filter(Boolean);
+    const unit = amountLabels[0]?.replace(/^[\d,.]+\s*/, "");
+    const sameUnit = unit && amountLabels.every((label) => label.replace(/^[\d,.]+\s*/, "") === unit);
+    if (sameUnit) {
+      const amount = amountLabels.reduce((sum, label) => sum + (Number(label.match(/^[\d,.]+/)?.[0].replace(",", ".")) || 0), 0);
+      item.amountLabel = `${decimal(amount)} ${unit}`;
+    } else if (amountLabels.length > 1) {
+      item.amountLabel = `${decimal(item.count * 100)} g totalt`;
+    }
+    return item;
+  });
+}
+
 function renderMacroBreakdown(macros, hasContent) {
   const breakdown = document.querySelector("#macroBreakdown");
   if (!breakdown) return;
@@ -925,7 +992,7 @@ function renderMacroBreakdown(macros, hasContent) {
     breakdown.textContent = unresolvedText || "Inga kända livsmedel hittades i dagens text.";
     return;
   }
-  const rows = [...macros.items]
+  const rows = aggregateBreakdownItems(macros.items)
     .sort(foodItemSort)
     .map((item) => {
       const count = Number.isInteger(item.count) ? item.count : decimal(item.count);
@@ -946,12 +1013,12 @@ function renderElectrolyteBreakdown(macros, hasContent) {
     breakdown.textContent = "Elektrolyter beräknas inte från manuella makron.";
     return;
   }
-  const electrolyteItems = macros.items || [];
+  const electrolyteItems = macros.electrolyteItems || macros.items || [];
   if (!electrolyteItems.length) {
     breakdown.textContent = "Inga matposter beräknade ännu.";
     return;
   }
-  const rows = electrolyteItems
+  const rows = aggregateBreakdownItems(electrolyteItems)
     .sort(foodItemSort)
     .map((item) => {
       const count = Number.isInteger(item.count) ? item.count : decimal(item.count);
