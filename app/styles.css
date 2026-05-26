@@ -843,16 +843,55 @@ textarea {
 }
 
 .chart-actions {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: stretch;
   gap: 8px;
   margin: 0 0 10px;
 }
 
-.chart-actions .secondary-button {
+.chart-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.chart-buttons .secondary-button {
   min-height: 38px;
   padding: 8px 12px;
   font-size: 0.82rem;
+}
+
+.trend-average-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.trend-average {
+  min-width: 0;
+  padding: 6px 7px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fffaf2;
+  color: var(--muted);
+}
+
+.trend-average span {
+  display: block;
+  font-size: 0.66rem;
+  font-weight: 400;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.trend-average strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--ink);
+  font-size: 0.86rem;
+  font-weight: 400;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .legend-weight {
@@ -979,8 +1018,12 @@ textarea {
 
   body.print-trend .topbar,
   body.print-trend main > section:not(.trend-panel),
-  body.print-trend .chart-actions {
+  body.print-trend .chart-buttons {
     display: none !important;
+  }
+
+  body.print-trend .chart-actions {
+    grid-template-columns: 1fr;
   }
 
   body.print-trend .app-shell {
@@ -1333,6 +1376,31 @@ textarea {
 
   .health-row {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .chart-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .chart-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .trend-average-grid {
+    gap: 5px;
+  }
+
+  .trend-average {
+    padding: 6px 4px;
+  }
+
+  .trend-average span {
+    font-size: 0.61rem;
+  }
+
+  .trend-average strong {
+    font-size: 0.78rem;
   }
 
   .hydration-row .segmented-field {

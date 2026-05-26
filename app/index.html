@@ -9,13 +9,13 @@
     <title>Back to Keto</title>
     <script>
       if (window.location.protocol === "file:") {
-        window.location.replace("https://joakimmalmdin.github.io/back-to-keto/app/?cache=180");
+        window.location.replace("https://joakimmalmdin.github.io/back-to-keto/app/?cache=181");
       }
     </script>
-    <link rel="manifest" href="manifest.webmanifest?v=180" />
+    <link rel="manifest" href="manifest.webmanifest?v=181" />
     <link rel="icon" href="icon.svg?v=146" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="apple-touch-icon.png?v=146" />
-    <link rel="stylesheet" href="styles.css?v=180" />
+    <link rel="stylesheet" href="styles.css?v=181" />
   </head>
   <body>
     <div class="app-shell">
@@ -24,7 +24,7 @@
           <p class="eyebrow">Back to Keto</p>
           <h1>Daglig keto-logg</h1>
           <div class="version-row">
-            <p class="version-pill">v1.1 beta · build 180</p>
+            <p class="version-pill">v1.1 beta · build 181</p>
             <span class="version-info">
               <button class="version-info-trigger" type="button" aria-label="Vad är nytt i v1.1 beta?" aria-describedby="versionInfoText">Info</button>
               <span class="version-info-text" id="versionInfoText" role="tooltip">
@@ -454,8 +454,28 @@
                 <span><i class="legend-carbs"></i>Kolhydrater, g</span>
               </div>
               <div class="chart-actions">
-                <button class="secondary-button" id="printTrendButton" type="button">Skriv ut/PDF</button>
-                <button class="secondary-button" id="saveTrendPngButton" type="button">Spara PNG</button>
+                <div class="chart-buttons">
+                  <button class="secondary-button" id="printTrendButton" type="button">Skriv ut/PDF</button>
+                  <button class="secondary-button" id="saveTrendPngButton" type="button">Spara PNG</button>
+                </div>
+                <div class="trend-average-grid" title="Medelvärden räknas endast från avslutade loggdagar i valt tidsserieintervall. Dagens datum räknas inte.">
+                  <div class="trend-average">
+                    <span>Medel kolhydratintag/dag</span>
+                    <strong id="trendAvgCarbs">--</strong>
+                  </div>
+                  <div class="trend-average">
+                    <span>Medel proteinintag/dag</span>
+                    <strong id="trendAvgProtein">--</strong>
+                  </div>
+                  <div class="trend-average">
+                    <span>Medel fettintag/dag</span>
+                    <strong id="trendAvgFat">--</strong>
+                  </div>
+                  <div class="trend-average">
+                    <span>Medel kcal/dag</span>
+                    <strong id="trendAvgKcal">--</strong>
+                  </div>
+                </div>
               </div>
               <div id="trendChart" class="trend-chart" role="img" aria-label="Tidsseriediagram med vikt, fett, protein och kolhydrater"></div>
               <p id="trendNote" class="note"></p>
@@ -549,6 +569,6 @@
       </main>
     </div>
 
-    <script src="app.js?v=180" type="module"></script>
+    <script src="app.js?v=181" type="module"></script>
   </body>
 </html>

@@ -1,5 +1,5 @@
-import { parseNutritionText } from "./nutrition-parser.mjs?v=180";
-import { NUTRITION_CATALOG, NUTRITION_CATEGORIES, categoryName, foodName } from "./nutrition-catalog.mjs?v=180";
+import { parseNutritionText } from "./nutrition-parser.mjs?v=181";
+import { NUTRITION_CATALOG, NUTRITION_CATEGORIES, categoryName, foodName } from "./nutrition-catalog.mjs?v=181";
 
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
@@ -16,7 +16,7 @@ const defaultMacroTargets = {
   kcalTarget: 1900,
   kcalMax: 2000,
 };
-const appVersion = "180";
+const appVersion = "181";
 const appDisplayVersion = `v1.1 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -1004,6 +1004,25 @@ function renderTrendChart(entries) {
   const selection = trendSelection(entries);
   document.querySelector("#trendRange").textContent = selection.badge;
 
+  const completedMacros = selection.entries
+    .filter((entry) => entry.date < todayIso())
+    .map((entry) => estimateMacros(entry))
+    .filter((macros) => macros.source === "manual" || macros.items.length > 0);
+  const updateTrendAverage = (selector, values, unit, round = false) => {
+    const element = document.querySelector(selector);
+    const value = average(values);
+    if (!element) return;
+    element.textContent = value === null ? "--" : `${round ? Math.round(value) : decimal(value)} ${unit}`;
+  };
+  updateTrendAverage("#trendAvgCarbs", completedMacros.map((macros) => macros.carbs), "g");
+  updateTrendAverage("#trendAvgProtein", completedMacros.map((macros) => macros.protein), "g");
+  updateTrendAverage("#trendAvgFat", completedMacros.map((macros) => macros.fat), "g");
+  updateTrendAverage("#trendAvgKcal", completedMacros.map((macros) => macros.kcal), "kcal", true);
+  const averageNote =
+    completedMacros.length > 0
+      ? ` Medelvärden baseras på ${completedMacros.length} avslutade loggdagar; idag ingår inte.`
+      : " Medelvärden visas när en avslutad dag med matdata finns; idag ingår inte.";
+
   const rows = selection.entries
     .map((entry) => {
       const macros = estimateMacros(entry);
@@ -1019,7 +1038,7 @@ function renderTrendChart(entries) {
 
   if (rows.length < 2) {
     chart.innerHTML = '<p class="empty-chart">Diagrammet visas när minst två dagar har data.</p>';
-    note.textContent = selection.notePrefix || "Spara minst två dagar med vikt eller matposter för att se utvecklingen.";
+    note.textContent = `${selection.notePrefix || "Spara minst två dagar med vikt eller matposter för att se utvecklingen."}${averageNote}`;
     return;
   }
 
@@ -1103,7 +1122,7 @@ function renderTrendChart(entries) {
       <text class="axis-label" x="${width - pad.right + 8}" y="22">gram</text>
     </svg>
   `;
-  note.textContent = `${selection.notePrefix}Senast i urvalet: ${latest.weight ? `${decimal(latest.weight)} kg, ` : ""}${decimal(latest.fat || 0)} g fett, ${decimal(latest.protein || 0)} g protein, ${decimal(latest.carbs || 0)} g kolhydrater.`;
+  note.textContent = `${selection.notePrefix}Senast i urvalet: ${latest.weight ? `${decimal(latest.weight)} kg, ` : ""}${decimal(latest.fat || 0)} g fett, ${decimal(latest.protein || 0)} g protein, ${decimal(latest.carbs || 0)} g kolhydrater.${averageNote}`;
 }
 
 function render(selectedDate = activeDate) {
