@@ -1,5 +1,5 @@
-import { parseNutritionText } from "./nutrition-parser.mjs?v=186";
-import { NUTRITION_CATALOG, NUTRITION_CATEGORIES, categoryName, foodName } from "./nutrition-catalog.mjs?v=186";
+import { parseNutritionText } from "./nutrition-parser.mjs?v=187";
+import { NUTRITION_CATALOG, NUTRITION_CATEGORIES, categoryName, foodName } from "./nutrition-catalog.mjs?v=187";
 
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
@@ -26,7 +26,7 @@ const legacyDefaultMacroTargets = {
   kcalTarget: 1900,
   kcalMax: 2000,
 };
-const appVersion = "186";
+const appVersion = "187";
 const appDisplayVersion = `v1.1 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -1065,6 +1065,12 @@ function trendSelection(entries) {
   };
 }
 
+function isIncludedInTrendAverages(entry) {
+  if (entry.date < todayIso()) return true;
+  if (entry.date !== todayIso()) return false;
+  return [entry.breakfast, entry.lunch, entry.dinner].every((meal) => String(meal || "").trim().length > 0);
+}
+
 function renderTrendChart(entries) {
   const chart = document.querySelector("#trendChart");
   const note = document.querySelector("#trendNote");
@@ -1074,9 +1080,10 @@ function renderTrendChart(entries) {
   document.querySelector("#trendRange").textContent = selection.badge;
 
   const completedMacros = selection.entries
-    .filter((entry) => entry.date < todayIso())
+    .filter(isIncludedInTrendAverages)
     .map((entry) => estimateMacros(entry))
     .filter((macros) => macros.source === "manual" || macros.items.length > 0);
+  const todayIncluded = selection.entries.some((entry) => entry.date === todayIso() && isIncludedInTrendAverages(entry));
   const updateTrendAverage = (selector, values, unit, round = false) => {
     const element = document.querySelector(selector);
     const value = average(values);
@@ -1089,8 +1096,8 @@ function renderTrendChart(entries) {
   updateTrendAverage("#trendAvgKcal", completedMacros.map((macros) => macros.kcal), "kcal", true);
   const averageNote =
     completedMacros.length > 0
-      ? ` Medelvärden baseras på ${completedMacros.length} avslutade loggdagar; idag ingår inte.`
-      : " Medelvärden visas när en avslutad dag med matdata finns; idag ingår inte.";
+      ? ` Medelvärden baseras på ${completedMacros.length} loggdagar${todayIncluded ? "; idag ingår eftersom tre måltider är loggade" : ""}.`
+      : " Medelvärden visas när en tidigare dag har matdata eller när dagens tre måltider är loggade.";
 
   const rows = selection.entries
     .map((entry) => {

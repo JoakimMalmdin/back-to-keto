@@ -1,6 +1,6 @@
-import { SLV_CORE_RESOLVED, SLV_SOURCE } from "./nutrition-slv-core.mjs?v=186";
-import { fattyAcidProfileFor } from "./nutrition-slv-fatty-acids.mjs?v=186";
-import { USDA_SOURCE, usdaFattyAcidProfileFor } from "./nutrition-usda-fatty-acids.mjs?v=186";
+import { SLV_CORE_RESOLVED, SLV_SOURCE } from "./nutrition-slv-core.mjs?v=187";
+import { fattyAcidProfileFor } from "./nutrition-slv-fatty-acids.mjs?v=187";
+import { USDA_SOURCE, usdaFattyAcidProfileFor } from "./nutrition-usda-fatty-acids.mjs?v=187";
 
 export const SUPPORTED_LOCALES = Object.freeze(["sv-SE", "en-GB"]);
 export const DEFAULT_LOCALE = "sv-SE";
@@ -331,12 +331,16 @@ export const NUTRITION_CATALOG = Object.freeze([
   }),
   defineFood({
     id: "saeby-makrill-tomatsas",
-    names: translations("Sæby dansk makrillfilé i tomatsås", "Sæby Danish mackerel fillet in tomato sauce"),
+    names: translations("Dansk makrillfilé i tomatsås (Sæby)", "Danish mackerel fillet in tomato sauce (Sæby)"),
     category: "seafood",
     aliases: {
       "sv-SE": [
         "sæby makrillfilé i tomatsås",
+        "sæby makrillfilé",
+        "sæby makrill",
         "saeby makrillfile i tomatsas",
+        "saeby makrillfile",
+        "saeby makrill",
         "dansk makrillfilé i tomatsås",
         "dansk makrillfile i tomatsas",
         "saeby makrill i tomatsas",
@@ -1056,12 +1060,11 @@ export const NUTRITION_CATALOG = Object.freeze([
     implicitUnit: "piece",
     tags: ["berry"],
   }),
-  defineProxyFood({
+  defineSlvFood("kaffe", {
     id: "kaffe",
-    names: translations("Kaffe svart", "Black coffee"),
+    names: translations("Kaffe bryggt", "Brewed coffee"),
     category: "drinks",
-    aliases: { "sv-SE": ["kaffe", "kaffe svart"], "en-GB": ["coffee", "black coffee"] },
-    nutrientsPer100g: { kcal: 1, fat: 0, protein: 0.15, carbs: 0, sodiumMg: 2, potassiumMg: 58, magnesiumMg: 7 },
+    aliases: { "sv-SE": ["kaffe", "kaffe svart", "bryggkaffe", "kaffe bryggt"], "en-GB": ["coffee", "black coffee", "brewed coffee"] },
     measures: [measure("cup", 1, 200)],
     tags: ["drink"],
   }),

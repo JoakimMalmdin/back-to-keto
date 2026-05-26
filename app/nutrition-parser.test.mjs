@@ -29,6 +29,11 @@ assert(parsed.items[0].foodId === "saeby-makrill-tomatsas", "Sæby-makrill får 
 near(parsed.items[0].grams, 125, "Sæby-burken ska vara 125 g");
 near(parsed.totals.fat, 12.5, "Sæby-burken ska använda etikettens fettvärde");
 
+parsed = parseNutritionText("1 burk Saeby makrill");
+assert(parsed.unresolved.length === 0, "Saeby-makrill utan danskt specialtecken ska kunna anges kortfattat.");
+assert(parsed.items[0].foodId === "saeby-makrill-tomatsas", "Saeby makrill ska välja Sæby-posten.");
+near(parsed.items[0].grams, 125, "Saeby-burken ska vara 125 g");
+
 parsed = parseNutritionText("1 valnöt");
 assert(parsed.unresolved.length === 0, "En valnöt ska räknas som ett deklarerat styckmått.");
 near(parsed.items[0].grams, 4, "En valnöt ska vara cirka 4 g");

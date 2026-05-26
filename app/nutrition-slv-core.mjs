@@ -35,6 +35,9 @@ export const SLV_CORE_RESOLVED = Object.freeze([
   officialFood("surkal", 406, "Surkål konserv. m. lag", "Sauerkraut fermented cabbage canned w/ brine", {
     kcal: 17, fat: 0.2, protein: 0.9, carbs: 2, fiber: 1.7, omega3: 0.1, omega6: 0, sodiumMg: 320, potassiumMg: 260, magnesiumMg: 13,
   }),
+  officialFood("kaffe", 1957, "Kaffe bryggt", "Brewed coffee", {
+    kcal: 2, fat: 0, protein: 0, carbs: 0.5, fiber: 0, omega3: 0, omega6: 0, sodiumMg: 4, potassiumMg: 102, magnesiumMg: 8,
+  }, "Analyserad post för bryggt kaffe; i appen räknas en kopp som 200 ml."),
   officialFood("kycklingfile", 1170, "Kyckling bröstfilé färsk stekt u. skinn", "Chicken breast fillet fresh meat fried w/o skin", {
     kcal: 116, fat: 2.5, protein: 23, carbs: 0, fiber: 0, omega3: 0.1, omega6: 0.5, sodiumMg: 72, potassiumMg: 374, magnesiumMg: 40,
   }, "Tillagad, skinnfri filé motsvarar loggad måltid bättre än rå vikt."),

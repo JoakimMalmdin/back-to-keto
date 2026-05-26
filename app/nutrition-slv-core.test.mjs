@@ -29,6 +29,9 @@ assert(avocado.nutrientsPer100g.potassiumMg === 600, "Avokado ska använda SLV:s
 assert(avocado.nutrientsPer100g.fiber === 4.8, "Avokado ska använda SLV:s fibervärde.");
 assert(avocado.nutrientsPer100g.omega3 === 0.2, "Avokado ska använda beräknat O-3-värde från SLV:s fettsyror.");
 assert(avocado.nutrientsPer100g.omega6 === 2.4, "Avokado ska använda beräknat O-6-värde från SLV:s fettsyror.");
+const coffee = SLV_CORE_RESOLVED.find((food) => food.selectionId === "kaffe");
+assert(coffee.slvFoodNumber === 1957, "Kaffe ska matcha analyserat bryggkaffe i officiell post 1957.");
+assert(coffee.nutrientsPer100g.potassiumMg === 102, "Kaffe ska använda LD:s kaliumvärde.");
 const mincedBeef10 = SLV_CORE_RESOLVED.find((food) => food.selectionId === "notfars-10");
 const mincedBeef15 = SLV_CORE_RESOLVED.find((food) => food.selectionId === "notfars-15");
 assert(mincedBeef10.slvFoodNumber === 951 && mincedBeef10.nutrientsPer100g.fat === 11.3, "Nötfärs 10% ska använda officiell post 951.");
