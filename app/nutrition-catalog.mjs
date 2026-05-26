@@ -1,6 +1,7 @@
-import { SLV_CORE_RESOLVED, SLV_SOURCE } from "./nutrition-slv-core.mjs?v=189";
-import { fattyAcidProfileFor } from "./nutrition-slv-fatty-acids.mjs?v=189";
-import { USDA_SOURCE, usdaFattyAcidProfileFor } from "./nutrition-usda-fatty-acids.mjs?v=189";
+import { SLV_CORE_RESOLVED, SLV_SOURCE } from "./nutrition-slv-core.mjs?v=190";
+import { fattyAcidProfileFor } from "./nutrition-slv-fatty-acids.mjs?v=190";
+import { slvSupplementFor } from "./nutrition-slv-supplements.mjs?v=190";
+import { USDA_SOURCE, usdaFattyAcidProfileFor } from "./nutrition-usda-fatty-acids.mjs?v=190";
 
 export const SUPPORTED_LOCALES = Object.freeze(["sv-SE", "en-GB"]);
 export const DEFAULT_LOCALE = "sv-SE";
@@ -75,9 +76,19 @@ function source(type, name, verifiedDate, confidence, note = "") {
 }
 
 function defineFood(food) {
+  const slvSupplement = slvSupplementFor(food.id);
   const fattyAcids = fattyAcidProfileFor(food.id);
   const usdaFattyAcids = fattyAcids ? null : usdaFattyAcidProfileFor(food.id);
-  const supplementalFattyAcids = fattyAcids || usdaFattyAcids;
+  const supplementHasFattyAcids = Number.isFinite(slvSupplement?.nutrients?.omega3) || Number.isFinite(slvSupplement?.nutrients?.omega6);
+  const officialSupplementSource = slvSupplement
+    ? source(
+      SOURCE_TYPES.livsmedelsverket,
+      `${SLV_SOURCE.authority}, livsmedelsnummer ${slvSupplement.slvFoodNumber}`,
+      SLV_SOURCE.retrievedDate,
+      CONFIDENCE_LEVELS.analysed,
+      slvSupplement.note,
+    )
+    : null;
   return Object.freeze({
     names: null,
     aliases: { "sv-SE": [], "en-GB": [] },
@@ -86,6 +97,7 @@ function defineFood(food) {
     defaultMeasure: null,
     nutrientsPer100g: {},
     electrolyteSource: null,
+    fiberSource: null,
     fattyAcidSource: null,
     ...food,
     nutrientsPer100g: Object.freeze({
@@ -93,8 +105,13 @@ function defineFood(food) {
       omega3: null,
       omega6: null,
       ...(food.nutrientsPer100g || {}),
-      ...(supplementalFattyAcids ? { omega3: supplementalFattyAcids.omega3, omega6: supplementalFattyAcids.omega6 } : {}),
+      ...(slvSupplement?.nutrients || {}),
+      ...(fattyAcids ? { omega3: fattyAcids.omega3, omega6: fattyAcids.omega6 } : {}),
+      ...(!fattyAcids && usdaFattyAcids ? { omega3: usdaFattyAcids.omega3, omega6: usdaFattyAcids.omega6 } : {}),
     }),
+    fiberSource: Number.isFinite(slvSupplement?.nutrients?.fiber)
+      ? officialSupplementSource
+      : (food.fiberSource || null),
     fattyAcidSource: fattyAcids
       ? source(
         SOURCE_TYPES.livsmedelsverket,
@@ -111,6 +128,8 @@ function defineFood(food) {
           CONFIDENCE_LEVELS.analysed,
           usdaFattyAcids.note,
         )
+      : supplementHasFattyAcids
+        ? officialSupplementSource
       : (food.fattyAcidSource || null),
   });
 }
@@ -406,7 +425,7 @@ export const NUTRITION_CATALOG = Object.freeze([
       "sv-SE": ["collagen", "kollagen"],
       "en-GB": ["collagen"],
     },
-    nutrientsPer100g: { kcal: 364, fat: 0, protein: 91, carbs: 0 },
+    nutrientsPer100g: { kcal: 364, fat: 0, protein: 91, carbs: 0, fiber: 0, omega3: 0, omega6: 0 },
     measures: [measure("tablespoon", 1, 15)],
     macroSource: source(SOURCE_TYPES.productLabel, "Nyttoteket Clean Collagen", "2026-05-21", CONFIDENCE_LEVELS.label),
     electrolyteSource: source(SOURCE_TYPES.unknown, "Mineraler ej relevanta/deklarerade", "2026-05-23", CONFIDENCE_LEVELS.proxy),
@@ -445,7 +464,7 @@ export const NUTRITION_CATALOG = Object.freeze([
       ],
       "en-GB": ["magnesium tablets 200 mg", "magnesium tablet 200 mg", "magnesium tablets", "magnesium tablet", "magnesium"],
     },
-    nutrientsPer100g: { kcal: 0, fat: 0, protein: 0, carbs: 0, magnesiumMg: 20000 },
+    nutrientsPer100g: { kcal: 0, fat: 0, protein: 0, carbs: 0, fiber: 0, omega3: 0, omega6: 0, magnesiumMg: 20000 },
     measures: [measure("tablet", 1, 1)],
     implicitUnit: "tablet",
     macroSource: source(SOURCE_TYPES.unknown, "Tillskott utan energi", "2026-05-24", CONFIDENCE_LEVELS.estimated),
@@ -945,7 +964,7 @@ export const NUTRITION_CATALOG = Object.freeze([
     names: translations("Baconlindad köttfärsbit", "Bacon-wrapped beef patty"),
     category: "meat",
     aliases: { "sv-SE": ["baconlindad köttfärsbit", "baconlindade köttfärsbitar", "baconlindad kottfarsbit", "baconlindade kottfarsbitar"], "en-GB": ["bacon-wrapped beef patty", "bacon-wrapped beef patties"] },
-    nutrientsPer100g: { kcal: 220, fat: 17.5, protein: 16.5, carbs: 0.8, sodiumMg: 600, potassiumMg: 280, magnesiumMg: 18 },
+    nutrientsPer100g: { kcal: 220, fat: 17.5, protein: 16.5, carbs: 0.8, fiber: 0, omega3: 0.1, omega6: 0.8, sodiumMg: 600, potassiumMg: 280, magnesiumMg: 18 },
     measures: [measure("piece", 1, 100)],
     implicitUnit: "piece",
     tags: ["protein", "sodium_source"],

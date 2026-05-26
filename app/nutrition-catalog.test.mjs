@@ -48,6 +48,17 @@ for (const food of NUTRITION_CATALOG) {
   }
 }
 
+const nonCalculableRuleIds = new Set(["notfars-fat-required"]);
+const supplementalGaps = NUTRITION_CATALOG
+  .filter((food) => !nonCalculableRuleIds.has(food.id))
+  .flatMap((food) => ["fiber", "omega3", "omega6"]
+    .filter((nutrient) => !Number.isFinite(food.nutrientsPer100g[nutrient]))
+    .map((nutrient) => `${food.id}:${nutrient}`));
+assert(
+  supplementalGaps.length === 0,
+  `Berakningsbara livsmedel saknar fiber/O3/O6: ${supplementalGaps.join(", ")}`,
+);
+
 const seltin = findFoodById("seltin");
 assert(seltin.electrolyteSource.type === SOURCE_TYPES.productLabel, "Seltin ska läsa elektrolyter från etiketten.");
 assert(seltin.electrolyteSource.confidence === CONFIDENCE_LEVELS.label, "Seltin ska vara etikettverifierad.");
@@ -63,6 +74,7 @@ const mayonnaise = findFoodById("hellmanns-majonnas");
 assert(mayonnaise.macroSource.type === SOURCE_TYPES.productLabel, "Hellmann's ska behålla etiketten som makrokälla.");
 assert(mayonnaise.fattyAcidSource.type === SOURCE_TYPES.livsmedelsverket, "Hellmann's ska bära en beräknad LD-baserad fettsyreprofil.");
 assert(mayonnaise.nutrientsPer100g.omega3 === 6.7 && mayonnaise.nutrientsPer100g.omega6 === 14.9, "Hellmann's ska beräknas från 79 g fett och rapsoljans profil.");
+assert(mayonnaise.nutrientsPer100g.fiber === 0, "Hellmann's ska kompletteras med verifierat nollvärde för fiber.");
 
 const olives = findFoodById("kalamataoliver-etikett");
 assert(olives.macroSource.type === SOURCE_TYPES.productLabel, "Kalamata ska behålla etikettens makron.");
@@ -79,18 +91,20 @@ assert(tuna.nutrientsPer100g.omega3 === 0.2 && tuna.nutrientsPer100g.omega6 === 
 const saebyMackerel = findFoodById("saeby-makrill-tomatsas");
 assert(saebyMackerel.macroSource.type === SOURCE_TYPES.productLabel, "Sæby-makrill ska vara en egen etikettpost.");
 assert(saebyMackerel.nutrientsPer100g.fat === 10 && saebyMackerel.nutrientsPer100g.protein === 14, "Sæby-makrill får inte återanvända ICA:s makron.");
-assert(saebyMackerel.nutrientsPer100g.omega3 === 2.2 && saebyMackerel.nutrientsPer100g.omega6 === null, "Sæby-makrill ska använda deklarerat O-3 utan att gissa O-6.");
+assert(saebyMackerel.nutrientsPer100g.omega3 === 2.2 && saebyMackerel.nutrientsPer100g.omega6 === 0.7, "Sæby-makrill ska behålla deklarerat O3 och komplettera O6 från jämförbar LD-post.");
 
 const bratwurst = findFoodById("bratwurst-87-kott-kummin-vitlok");
 assert(bratwurst.nutrientsPer100g.fat === 24, "Bratwurst ska använda etikettens fettvärde.");
 assert(bratwurst.nutrientsPer100g.sodiumMg === 760, "Bratwurst ska härleda natrium från deklarerat salt.");
 assert(bratwurst.electrolyteSource.confidence === CONFIDENCE_LEVELS.calculated, "Bratwurstnatrium ska markeras som beräknat.");
+assert(bratwurst.nutrientsPer100g.fiber === 0 && bratwurst.nutrientsPer100g.omega6 === 1.1, "Bratwurst ska kompletteras med jämförbar LD-korvpost.");
 
 const meatballs = findFoodById("matriket-svenska-kottbullar-73");
 assert(meatballs.nutrientsPer100g.carbs === 8.5, "Matriket-köttbullar ska använda etikettens kolhydratvärde.");
 assert(meatballs.nutrientsPer100g.fiber === 4, "Matriket-köttbullar ska använda etikettens fibervärde.");
 assert(meatballs.nutrientsPer100g.sodiumMg === 629, "Matriket-köttbullar ska härleda natrium från deklarerat salt.");
 assert(meatballs.measures.length === 0, "Köttbullar får inte få styckmått innan styckvikten har kontrollerats.");
+assert(meatballs.nutrientsPer100g.omega3 === 0.1 && meatballs.nutrientsPer100g.omega6 === 1.1, "Köttbullars fettsyror ska kompletteras från jämförbar LD-post.");
 
 const yoghurt = findFoodById("grekisk-yoghurt-10");
 assert(yoghurt.measures.some((entry) => entry.unit === "dl"), "Grekisk yoghurt ska stödja dl.");
@@ -175,6 +189,13 @@ const cashews = findFoodById("cashewnotter");
 const peanuts = findFoodById("jordnotter");
 assert(cashews.nutrientsPer100g.fiber === 8.3 && cashews.nutrientsPer100g.omega6 === 8.9, "Cashewnötter ska ha LD:s fiber- och fettsyrekomplettering.");
 assert(peanuts.nutrientsPer100g.fiber === 8.1 && peanuts.nutrientsPer100g.omega6 === 15.5, "Jordnötter ska ha LD:s fiber- och fettsyrekomplettering.");
+
+const bearnaise = findFoodById("bearnaise");
+const cabbage = findFoodById("spetskal");
+const pulledPork = findFoodById("pulled-pork");
+assert(bearnaise.nutrientsPer100g.fiber === 0.1 && bearnaise.nutrientsPer100g.omega3 === 3.7, "Bearnaise ska ha sin officiella tillaggsprofil.");
+assert(cabbage.nutrientsPer100g.fiber === 2.6 && cabbage.nutrientsPer100g.omega6 === 0, "Spetskal ska kompletteras fran jamforbar kalpost.");
+assert(pulledPork.nutrientsPer100g.fiber === 0.8 && pulledPork.nutrientsPer100g.omega6 === 0.9, "Pulled pork ska ha verifierad tillaggsprofil.");
 
 assert(uiText("sv-SE", "currentMacros") === "Aktuell makrobild", "Svensk UI-text saknas.");
 assert(uiText("en-GB", "currentMacros") === "Current macros", "Engelsk UI-text saknas.");

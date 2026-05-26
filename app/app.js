@@ -1,5 +1,5 @@
-import { parseNutritionText } from "./nutrition-parser.mjs?v=189";
-import { NUTRITION_CATALOG, NUTRITION_CATEGORIES, categoryName, foodName } from "./nutrition-catalog.mjs?v=189";
+import { parseNutritionText } from "./nutrition-parser.mjs?v=190";
+import { NUTRITION_CATALOG, NUTRITION_CATEGORIES, categoryName, foodName } from "./nutrition-catalog.mjs?v=190";
 
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
@@ -26,7 +26,7 @@ const legacyDefaultMacroTargets = {
   kcalTarget: 1900,
   kcalMax: 2000,
 };
-const appVersion = "189";
+const appVersion = "190";
 const appDisplayVersion = `v1.1 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -216,6 +216,9 @@ function renderFoodList() {
       if (!foods.length) return "";
       const rows = foods
         .map((food) => {
+          if (food.requiresVariant) {
+            return `<li><strong>${foodName(food)}</strong>: Beräknas först när fetthalt anges.</li>`;
+          }
           const nutrient = food.nutrientsPer100g;
           const measures = food.measures
             .filter((measure) => !["g", "kg"].includes(measure.unit))

@@ -62,21 +62,27 @@ Categories are for finding foods in the UI. Coaching uses tags such as
 - Fiber importeras som Livsmedelsverkets `FIBT`-värde och visas per 100 g.
   `Kolhydrater` är fortsatt databasens tillgängliga kolhydrater; fiber får
   därför inte dras av från kolhydraterna en gång till.
-- Produktposter utan verifierad fiberdeklaration visas med `Fiber --` tills
-  etikett eller beslutad officiell matchning ger ett kontrollerat värde.
+- Produktposter utan fiberdeklaration kompletteras med en beslutad och
+  källmärkt officiell matchning där sådan finns. Etikettens deklarerade
+  makron skrivs inte över av kompletteringen.
 - `O-3` visas per 100 g och beräknas från Livsmedelsverkets fettsyrevärden
   `F18:3 + F20:5 + F22:5 + F22:6`; `O-6` beräknas som `F18:2 + F20:4`.
   Eftersom `F18:3` inte särredovisar alla möjliga omega-3/omega-6-isomerer
   är `O-3` en praktisk approximation inom databasens struktur.
-- Produktposter utan verifierade fettsyrevärden visas med `O-3 --, O-6 --`
-  tills etikett eller beslutad officiell matchning ger ett kontrollerat värde.
+- Produktposter utan fettsyredeklaration kompletteras med en beslutad och
+  källmärkt officiell matchning där sådan finns. `--` ska bara återstå när
+  värdet saknar försvarbar källa eller posten är en inmatningsregel.
 - Fettsyror har en egen källhänvisning i den kanoniska posten. En etikettstyrd
   produkt kan därför kompletteras med O-3/O-6 från en motsvarande LD-post utan
   att produktens deklarerade makron eller elektrolyter skrivs över.
-- Den första breda fettsyrekompletteringen omfattar direkta LD-matchningar för
-  fisk/skaldjur, nötter/frön, bär, flera grönsaker samt ett begränsat antal
-  tydligt motsvarande produkt- eller schablonposter. Otydliga recept- och
-  varumärkesvariationer lämnas utan fettsyrevärde tills de verifierats.
+- `app/nutrition-slv-supplements.mjs` är det gemensamma
+  kompletteringslagret för fiber och kvarvarande fettsyror. Det omfattar
+  samtliga beräkningsbara katalogposter som tidigare saknade något av
+  `fiber`, `O3` eller `O6`, med anteckning när en jämförbar LD-post används
+  för en märkesprodukt eller receptschablon.
+- Katalogtestet kräver att alla beräkningsbara livsmedel har numeriska
+  värden för `fiber`, `O3` och `O6`. Undantaget är den icke beräkningsbara
+  inmatningsregeln för nötfärs/köttfärs utan angiven fetthalt.
 - För en produkt vars huvudsakliga fettkälla är uttryckligen angiven kan O-3/O-6
   beräknas från etikettens fettmängd och en officiell fettsyreprofil för
   fettkällan. Hellmann's majonnäs beräknas så från 79 g fett och LD:s rapsolja.
@@ -84,7 +90,7 @@ Categories are for finding foods in the UI. Coaching uses tags such as
   viktad från LD:s profil för avrunna svarta oliver med olja.
 - Sæby dansk makrillfilé i tomatsås är en egen etikettpost eftersom dess
   makron avviker tydligt från ICA-posten. Etikettens deklarerade O-3 används;
-  O-6 lämnas tomt tills en verifierad källa finns.
+  O-6 och fiber kompletteras från LD:s jämförbara makrill i tomatsås-post.
 - USDA FoodData Central används för fettsyror endast när ett namngivet
   generiskt livsmedel saknar en försvarbar direkt svensk match. I denna
   komplettering gäller det cheddar och gouda; brie och mozzarella hämtas från
