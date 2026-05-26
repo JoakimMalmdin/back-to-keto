@@ -6,8 +6,8 @@ function assert(condition, message) {
 
 const summary = nutritionCoverageSummary();
 const core = summary.find((entry) => entry.priority === 1);
-assert(core.total === 41, "Kärnurvalet ska särredovisa verifierade produktposter och färsvarianter.");
-assert(core.covered === 40, "Kärnurvalet ska ha aktiv inmatningsspärr samt beräkningsbar, markerad 12%-schablon.");
+assert(core.total === 42, "Kärnurvalet ska särredovisa verifierade produktposter och färsvarianter.");
+assert(core.covered === 41, "Kärnurvalet ska ha aktiv inmatningsspärr samt beräkningsbar, markerad 12%-schablon.");
 assert(core.missingIds.join(",") === "notfars-20", "Endast färsvariant som ännu saknar beräkningspost ska förbli synlig lucka.");
 
 const mincedBeef = nutritionCoverageRows().find((entry) => entry.id === "notfars-fat-required");

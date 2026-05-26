@@ -1,7 +1,7 @@
-import { SLV_CORE_RESOLVED, SLV_SOURCE } from "./nutrition-slv-core.mjs?v=191";
-import { fattyAcidProfileFor } from "./nutrition-slv-fatty-acids.mjs?v=191";
-import { slvSupplementFor } from "./nutrition-slv-supplements.mjs?v=191";
-import { USDA_SOURCE, usdaFattyAcidProfileFor } from "./nutrition-usda-fatty-acids.mjs?v=191";
+import { SLV_CORE_RESOLVED, SLV_SOURCE } from "./nutrition-slv-core.mjs?v=192";
+import { fattyAcidProfileFor } from "./nutrition-slv-fatty-acids.mjs?v=192";
+import { slvSupplementFor } from "./nutrition-slv-supplements.mjs?v=192";
+import { USDA_SOURCE, usdaFattyAcidProfileFor } from "./nutrition-usda-fatty-acids.mjs?v=192";
 
 export const SUPPORTED_LOCALES = Object.freeze(["sv-SE", "en-GB"]);
 export const DEFAULT_LOCALE = "sv-SE";
@@ -430,6 +430,22 @@ export const NUTRITION_CATALOG = Object.freeze([
     macroSource: source(SOURCE_TYPES.productLabel, "Nyttoteket Clean Collagen", "2026-05-21", CONFIDENCE_LEVELS.label),
     electrolyteSource: source(SOURCE_TYPES.unknown, "Mineraler ej relevanta/deklarerade", "2026-05-23", CONFIDENCE_LEVELS.proxy),
     tags: ["supplement", "incomplete_protein"],
+  }),
+  defineFood({
+    id: "mollers-tran",
+    names: translations("Möller's Tran", "Möller's Cod Liver Oil"),
+    category: "supplements",
+    aliases: {
+      "sv-SE": ["möller's tran", "moller's tran", "möllers tran", "mollers tran", "tran"],
+      "en-GB": ["möller's cod liver oil", "moller's cod liver oil", "cod liver oil"],
+    },
+    nutrientsPer100g: { kcal: 828, fat: 92, protein: 0, carbs: 0, fiber: 0, omega3: 22.2, omega6: 0 },
+    measures: [measure("teaspoon", 1, 5)],
+    defaultMeasure: { unit: "teaspoon", amount: 1 },
+    macroSource: source(SOURCE_TYPES.productLabel, "Möller's Tran, fotograferad etikett", "2026-05-26", CONFIDENCE_LEVELS.calculated, "Energi uppskattas från etikettens 4,6 g fiskleverolja per tesked."),
+    electrolyteSource: source(SOURCE_TYPES.unknown, "Mineraler ej deklarerade på etikett", "2026-05-26", CONFIDENCE_LEVELS.proxy),
+    fattyAcidSource: source(SOURCE_TYPES.productLabel, "Möller's Tran, fotograferad etikett", "2026-05-26", CONFIDENCE_LEVELS.label, "Etiketten deklarerar totalt O3 1,11 g per 1 tsk; O6 deklareras inte."),
+    tags: ["supplement", "omega3_source"],
   }),
   defineFood({
     id: "knorr-kottbuljong",

@@ -1,5 +1,5 @@
-import { parseNutritionText } from "./nutrition-parser.mjs?v=191";
-import { NUTRITION_CATALOG, NUTRITION_CATEGORIES, categoryName, foodName } from "./nutrition-catalog.mjs?v=191";
+import { parseNutritionText } from "./nutrition-parser.mjs?v=192";
+import { NUTRITION_CATALOG, NUTRITION_CATEGORIES, SOURCE_TYPES, categoryName, foodName } from "./nutrition-catalog.mjs?v=192";
 
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
@@ -26,7 +26,7 @@ const legacyDefaultMacroTargets = {
   kcalTarget: 1900,
   kcalMax: 2000,
 };
-const appVersion = "191";
+const appVersion = "192";
 const appDisplayVersion = `v1.1 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -104,6 +104,34 @@ const electrolyteSuggestions = {
   magnesium: "magnesium: pumpakärnor, mandel, spenat, avokado, lax eller tillskott",
 };
 
+const maxDailyOmegaRatio = 4.5;
+const preferredPeriodOmegaRatio = "2-3:1";
+
+const compassMealTargets = Object.freeze({
+  breakfast: { label: "Frukost", protein: 45, fat: 35, carbs: 5, kcal: 530 },
+  lunch: { label: "Lunch", protein: 50, fat: 45, carbs: 6, kcal: 625 },
+  dinner: { label: "Middag", protein: 50, fat: 50, carbs: 5, kcal: 655 },
+});
+
+const compassBreakfastCandidates = Object.freeze([
+  "1 tsk Möllers Tran, 2 ägg, 125 g laxfilé, 0,5 avokado, 1 glas buljong",
+  "1 tsk Möllers Tran, 3 ägg, 60 g bacon, 50 g spenat, 1 glas buljong",
+  "1 tsk Möllers Tran, 2 ägg, 100 g halloumi, 0,5 avokado, 1 glas buljong",
+]);
+
+const compassLunchCandidates = Object.freeze([
+  "200 g laxfilé, 0,5 avokado, 50 g spenat, 1 msk majonnäs, 1 krm seltin",
+  "200 g oxfilé, 0,5 avokado, 50 g spenat, 1 msk majonnäs, 1 krm seltin",
+  "1 burk tonfisk i vatten, 80 g halloumi, 0,5 avokado, 1 msk majonnäs, 1 krm seltin",
+]);
+
+const compassDinnerProteins = Object.freeze([
+  { title: "Laxmiddag", food: "laxfilé" },
+  { title: "Kycklingmiddag", food: "kycklingfilé utan skinn" },
+  { title: "Oxfilémiddag", food: "oxfilé" },
+  { title: "Fläskkotlettmiddag", food: "benfri fläskkotlett" },
+]);
+
 const form = document.querySelector("#entryForm");
 const saveButton = document.querySelector("#saveButton");
 const fields = {
@@ -130,6 +158,7 @@ const fields = {
 };
 const goalInput = document.querySelector("#goalInput");
 const omegaRatioOutput = document.querySelector("#omegaRatioOutput");
+const omegaTotalsOutput = document.querySelector("#omegaTotalsOutput");
 const macroTargetInputs = {
   proteinMin: document.querySelector("#targetProteinMinInput"),
   proteinMax: document.querySelector("#targetProteinMaxInput"),
@@ -170,6 +199,7 @@ const trendStartWeekInput = document.querySelector("#trendStartWeekInput");
 const trendEndWeekInput = document.querySelector("#trendEndWeekInput");
 const electrolyteInfoButton = document.querySelector("#electrolyteInfoButton");
 let autosaveTimer = null;
+let activeCompassPlans = new Map();
 
 function stableAppUrl() {
   return `${window.location.origin}${window.location.pathname}`;
@@ -184,6 +214,34 @@ function omegaRatioLabel(macros) {
   const omega6 = Number(macros.omega6) || 0;
   if (omega3 <= 0) return "--";
   return `${decimal(omega6 / omega3)}:1`;
+}
+
+function omegaRatioValue(macros) {
+  const omega3 = Number(macros.omega3) || 0;
+  if (omega3 <= 0) return Infinity;
+  return (Number(macros.omega6) || 0) / omega3;
+}
+
+function sourceLabel(source) {
+  switch (source?.type) {
+    case SOURCE_TYPES.productLabel:
+    case SOURCE_TYPES.producer:
+      return "Produktetikett";
+    case SOURCE_TYPES.livsmedelsverket:
+      return "Livsmedelsverket";
+    case SOURCE_TYPES.usdaFoodDataCentral:
+      return "USDA";
+    case SOURCE_TYPES.proxy:
+    case SOURCE_TYPES.officialFallback:
+      return "Proxy";
+    default:
+      return "Källa saknas";
+  }
+}
+
+function foodOmegaSource(foodId) {
+  const food = NUTRITION_CATALOG.find((candidate) => candidate.id === foodId);
+  return sourceLabel(food?.fattyAcidSource);
 }
 
 function catalogUnitLabel(unit, amount = 1) {
@@ -703,6 +761,7 @@ function estimateMasterMacros(entry) {
     fiber: item.nutrients.fiber,
     omega3: item.nutrients.omega3 || 0,
     omega6: item.nutrients.omega6 || 0,
+    omegaSource: foodOmegaSource(item.foodId),
     sodiumMg: item.nutrients.sodiumMg || 0,
     potassiumMg: item.nutrients.potassiumMg || 0,
     magnesiumMg: item.nutrients.magnesiumMg || 0,
@@ -818,6 +877,77 @@ function proposalMacros(items, date) {
   return estimateMasterMacros(proposal);
 }
 
+function mealProposalMacros(meal, date) {
+  return proposalMacros([meal], date);
+}
+
+function projectedDayMacros(entry, mealPlans = {}) {
+  const projected = partialEntry(entry, ["breakfast", "lunch", "dinner", "extras"]);
+  for (const [field, text] of Object.entries(mealPlans)) {
+    projected[field] = text;
+  }
+  return estimateMacros(projected);
+}
+
+function previousDayMeal(entryDate, field) {
+  const previous = findEntry(shiftIsoDate(entryDate, -1));
+  return String(previous?.[field] || "").trim();
+}
+
+function mealFoodSignature(meal, date) {
+  if (!String(meal || "").trim()) return "";
+  return mealProposalMacros(meal, date).items
+    .map((item) => item.foodId)
+    .filter(Boolean)
+    .sort()
+    .join("|");
+}
+
+function repeatsPreviousMeal(entryDate, field, meal) {
+  const previous = previousDayMeal(entryDate, field);
+  if (!previous) return false;
+  const previousSignature = mealFoodSignature(previous, shiftIsoDate(entryDate, -1));
+  const candidateSignature = mealFoodSignature(meal, entryDate);
+  return previousSignature && candidateSignature && previousSignature === candidateSignature;
+}
+
+function allocationScore(macros, field) {
+  const target = compassMealTargets[field];
+  if (!target) return 0;
+  return (
+    Math.abs(fullProtein(macros) - target.protein) * 2 +
+    Math.abs(macros.fat - target.fat) * 1.3 +
+    Math.max(0, macros.carbs - target.carbs) * 80 +
+    Math.abs(macros.kcal - target.kcal) * 0.04
+  );
+}
+
+function dayPlanScore(macros, entry, mealPlans, targets = getMacroTargets()) {
+  const electrolyteTargets = electrolyteTargetsForDate(entry.date, getEntries(), isTrainingEntry(entry));
+  const ratio = omegaRatioValue(macros);
+  let score =
+    Math.abs(fullProtein(macros) - targets.proteinMin) * 2 +
+    Math.abs(macros.fat - targets.fatMin) * 1.2 +
+    Math.abs(macros.kcal - targets.kcalTarget) * 0.04 +
+    Math.max(0, targets.carbsMax - macros.carbs) * 1.5 +
+    Math.max(0, electrolyteTargets.sodiumMg[0] - macros.sodiumMg) * 0.003 +
+    Math.max(0, electrolyteTargets.potassiumMg[0] - macros.potassiumMg) * 0.004 +
+    Math.max(0, electrolyteTargets.magnesiumMg[0] - macros.magnesiumMg) * 0.02;
+  score += Math.max(0, macros.carbs - targets.carbsMax) * 700;
+  score += Math.max(0, macros.kcal - targets.kcalMax) * 15;
+  score += Number.isFinite(ratio) ? Math.max(0, ratio - maxDailyOmegaRatio) * 1200 + ratio * 2 : 5000;
+  for (const [field, text] of Object.entries(mealPlans)) {
+    if (repeatsPreviousMeal(entry.date, field, text)) score += 3000;
+  }
+  return score;
+}
+
+function registerCompassPlan(field, date, meal) {
+  const id = `compass-${activeCompassPlans.size + 1}`;
+  activeCompassPlans.set(id, { field, date, meal });
+  return id;
+}
+
 function addProposalItemIfWithinEnergy(items, item, entry, gaps) {
   const current = proposalMacros(items, entry.date);
   const energyLimit = Math.max(gaps.kcalTarget, current.kcal);
@@ -875,59 +1005,149 @@ function buildDinnerProposal(entry, gaps, title, food, favorAvocado = false) {
     macros = proposalMacros(items, entry.date);
   }
 
-  if (Math.max(0, gaps.magnesium - macros.magnesiumMg) >= 100) {
-    items.push("1 magnesiumtablett 200 mg");
-    macros = proposalMacros(items, entry.date);
-  }
-
   return {
     title,
     meal: items.join(", "),
     macros,
-    dayKcal: gaps.kcalCurrent + macros.kcal,
-    kcalTarget: gaps.kcalTargetTotal,
-    kcalMax: gaps.kcalMaxTotal,
   };
 }
 
 function dinnerCompassMarkup(compass) {
   const proposals = compass.proposals
-    .map(({ title, meal, macros, dayKcal, kcalTarget, kcalMax }) => `
+    .map(({ title, meal, macros, planId }) => `
       <div class="dinner-proposal">
         <strong>${title}</strong>
         <p>${meal}</p>
         <p class="proposal-macros">Ger ca ${decimal(macros.protein)} g protein · ${decimal(macros.fat)} g fett · ${decimal(macros.carbs)} g kolhydrater · ${Math.round(macros.kcal)} kcal</p>
         <p class="proposal-electrolytes">Na ${Math.round(macros.sodiumMg)} mg · Ka ${Math.round(macros.potassiumMg)} mg · Mg ${Math.round(macros.magnesiumMg)} mg</p>
-        <p class="proposal-day-total${dayKcal > kcalMax ? " over-limit" : ""}">Dagen totalt: ca ${Math.round(dayKcal)} kcal (${dayKcal <= kcalTarget ? "inom mål" : dayKcal <= kcalMax ? "inom maxgräns" : "över maxgräns"})</p>
+        <p class="proposal-omega">O6/O3: ${omegaRatioLabel(macros)}</p>
+        <button class="compass-use-button" type="button" data-compass-plan="${planId}">Använd som plan</button>
       </div>`)
     .join("");
-  return `<p class="dinner-balance">${compass.balance}</p>${proposals}${compass.note ? `<p class="dinner-note">${compass.note}</p>` : ""}`;
+  const day = compass.projectedDay;
+  const ratio = day ? omegaRatioValue(day) : null;
+  const projected = day
+    ? `<p class="proposal-day-total${day.kcal > compass.targets.kcalMax || day.carbs > compass.targets.carbsMax || ratio > maxDailyOmegaRatio ? " over-limit" : ""}">Planerad dag: ${decimal(fullProtein(day))} g protein · ${decimal(day.fat)} g fett · ${decimal(day.carbs)} g kolhydrater · ${Math.round(day.kcal)} kcal · O6/O3 ${omegaRatioLabel(day)}</p>`
+    : "";
+  return `<p class="dinner-balance">${compass.balance}</p>${proposals}${projected}${compass.note ? `<p class="dinner-note">${compass.note}</p>` : ""}`;
 }
 
 function dinnerCompass(entry) {
-  if (!entry.lunch?.trim() || entry.dinner?.trim()) {
-    return null;
+  const targets = getMacroTargets();
+  activeCompassPlans = new Map();
+
+  if (entry.dinner?.trim()) {
+    const date = shiftIsoDate(entry.date, 1);
+    const choices = compassBreakfastCandidates
+      .map((meal) => {
+        const macros = mealProposalMacros(meal, date);
+        const score = allocationScore(macros, "breakfast") +
+          (repeatsPreviousMeal(date, "breakfast", meal) ? 3000 : 0) +
+          Math.max(0, omegaRatioValue(macros) - maxDailyOmegaRatio) * 600;
+        return { meal, macros, score };
+      })
+      .sort((a, b) => a.score - b.score);
+    const best = choices[0];
+    const planId = registerCompassPlan("breakfast", date, best.meal);
+    return {
+      balance: `Förslag för frukost ${date}. Måltidsram: cirka 45 g protein, 35 g fett och högst 5 g kolhydrater.`,
+      proposals: [{ title: "Frukost i morgon", field: "breakfast", date, planId, ...best }],
+      projectedDay: null,
+      targets,
+      note: "Frukostregeln inkluderar 1 tsk Möller's Tran. När frukosten är registrerad räknar Kompassen om lunch och middag utifrån vad du faktiskt åt.",
+    };
   }
 
-  const targets = getMacroTargets();
-  const beforeDinnerEntry = partialEntry(entry, ["breakfast", "lunch", "extras"]);
-  const macros = estimateMacros(beforeDinnerEntry);
-  const collagen = collagenProtein(macros);
-  const gaps = dinnerGaps(macros, entry, targets);
-  const balance =
-    `Kvar mot dagens mål: ca ${Math.round(gaps.protein)} g protein, ${Math.round(gaps.fat)} g fett och högst ${decimal(gaps.carbs)} g kolhydrater. ` +
-    `Energi kvar: ca ${Math.round(gaps.kcalTarget)} kcal till målet ${targets.kcalTarget} kcal, högst ${Math.round(gaps.kcalMax)} kcal till gränsen ${targets.kcalMax} kcal. ` +
-    `Elektrolyter kvar: Na ${Math.round(gaps.sodium)} mg, Ka ${Math.round(gaps.potassium)} mg, Mg ${Math.round(gaps.magnesium)} mg.`;
-  const note = collagen > 0 ? `Kollagen (${decimal(collagen)} g) räknas inte in som fullvärdigt protein.` : "";
+  if (entry.breakfast?.trim() && !entry.lunch?.trim()) {
+    const combinations = [];
+    for (const lunch of compassLunchCandidates) {
+      const lunchMacros = mealProposalMacros(lunch, entry.date);
+      const afterLunch = projectedDayMacros(entry, { lunch });
+      const gaps = dinnerGaps(afterLunch, entry, targets);
+      for (const dinnerProtein of compassDinnerProteins) {
+        const dinner = buildDinnerProposal(entry, gaps, dinnerProtein.title, dinnerProtein.food, true);
+        const plans = { lunch, dinner: dinner.meal };
+        const day = projectedDayMacros(entry, plans);
+        const score = allocationScore(lunchMacros, "lunch") + allocationScore(dinner.macros, "dinner") + dayPlanScore(day, entry, plans, targets);
+        combinations.push({ lunch, lunchMacros, dinner, day, score });
+      }
+    }
+    const best = combinations.sort((a, b) => a.score - b.score)[0];
+    const lunchPlanId = registerCompassPlan("lunch", entry.date, best.lunch);
+    const dinnerPlanId = registerCompassPlan("dinner", entry.date, best.dinner.meal);
+    return {
+      balance: "Förslag för resten av dagen, beräknat från registrerad frukost. Ändras lunchen räknas middagen om.",
+      proposals: [
+        { title: "Lunchförslag", meal: best.lunch, macros: best.lunchMacros, field: "lunch", date: entry.date, planId: lunchPlanId },
+        { ...best.dinner, title: "Preliminärt middagsförslag", field: "dinner", date: entry.date, planId: dinnerPlanId },
+      ],
+      projectedDay: best.day,
+      targets,
+      note: [breakfastRuleNote(entry), compassOmegaNote(best.day), compassMagnesiumNote(best.day)].filter(Boolean).join(" "),
+    };
+  }
 
-  return {
-    balance,
-    proposals: [
-      buildDinnerProposal(entry, gaps, "Laxförslag", "laxfilé", true),
-      buildDinnerProposal(entry, gaps, "Kycklingförslag", "kycklingfilé utan skinn", true),
-    ],
-    note,
-  };
+  if (entry.lunch?.trim() && !entry.dinner?.trim()) {
+    const beforeDinnerEntry = partialEntry(entry, ["breakfast", "lunch", "extras"]);
+    const macros = estimateMacros(beforeDinnerEntry);
+    const collagen = collagenProtein(macros);
+    const gaps = dinnerGaps(macros, entry, targets);
+    const choices = compassDinnerProteins
+      .map(({ title, food }) => {
+        const proposal = buildDinnerProposal(entry, gaps, title, food, true);
+        const plans = { dinner: proposal.meal };
+        const day = projectedDayMacros(entry, plans);
+        return { ...proposal, day, score: dayPlanScore(day, entry, plans, targets) };
+      })
+      .sort((a, b) => a.score - b.score);
+    const best = choices[0];
+    const planId = registerCompassPlan("dinner", entry.date, best.meal);
+    const balance =
+      `Kvar efter frukost och lunch: ca ${Math.round(gaps.protein)} g protein, ${Math.round(gaps.fat)} g fett och högst ${decimal(gaps.carbs)} g kolhydrater. ` +
+      `Elektrolyter kvar: Na ${Math.round(gaps.sodium)} mg, Ka ${Math.round(gaps.potassium)} mg, Mg ${Math.round(gaps.magnesium)} mg.`;
+    const notes = [
+      collagen > 0 ? `Kollagen (${decimal(collagen)} g) räknas inte in som fullvärdigt protein.` : "",
+      breakfastRuleNote(entry),
+      compassOmegaNote(best.day),
+      compassMagnesiumNote(best.day),
+    ].filter(Boolean).join(" ");
+    return {
+      balance,
+      proposals: [{ ...best, field: "dinner", date: entry.date, planId }],
+      projectedDay: best.day,
+      targets,
+      note: notes,
+    };
+  }
+
+  return null;
+}
+
+function compassMagnesiumNote(macros) {
+  const magnesium = Number(macros?.magnesiumMg) || 0;
+  if (magnesium >= 350) return "";
+  if (magnesium <= 200) {
+    return `Magnesium: dagstotalen blir cirka ${Math.round(magnesium)} mg. Överväg 1 magnesiumtablett 200 mg; då hamnar du omkring ${Math.round(magnesium + 200)} mg.`;
+  }
+  return `Magnesium: dagstotalen blir cirka ${Math.round(magnesium)} mg. Komplettera varsamt mot riktmärket 350-400 mg.`;
+}
+
+function breakfastRuleNote(entry) {
+  if (!entry.breakfast?.trim()) return "";
+  const breakfastOnly = partialEntry(entry, ["breakfast"]);
+  const hasTran = estimateMasterMacros(breakfastOnly).items.some((item) => item.foodId === "mollers-tran");
+  return hasTran ? "" : "Frukostregel: lägg till 1 tsk Möller's Tran.";
+}
+
+function compassOmegaNote(macros) {
+  const ratio = omegaRatioValue(macros);
+  if (!Number.isFinite(ratio)) {
+    return "Omega: prognos saknas eftersom O3 inte kan beräknas för planerade livsmedel.";
+  }
+  if (ratio > maxDailyOmegaRatio) {
+    return `Omega: prognosen ${omegaRatioLabel(macros)} ligger över gränsen ${decimal(maxDailyOmegaRatio)}:1. Välj gärna fiskbaserat förslag eller justera planen.`;
+  }
+  return `Omega: prognosen ${omegaRatioLabel(macros)}, inom gränsen ${decimal(maxDailyOmegaRatio)}:1. Periodens riktmärke är omkring ${preferredPeriodOmegaRatio}.`;
 }
 
 function classify(entry, macros) {
@@ -971,7 +1191,7 @@ function aggregateBreakdownItems(items = []) {
       aggregated.set(key, { ...item, amountLabels: [item.amountLabel].filter(Boolean) });
       continue;
     }
-    for (const nutrient of ["count", "kcal", "protein", "fat", "carbs", "sodiumMg", "potassiumMg", "magnesiumMg"]) {
+    for (const nutrient of ["count", "kcal", "protein", "fat", "carbs", "omega3", "omega6", "sodiumMg", "potassiumMg", "magnesiumMg"]) {
       current[nutrient] = (current[nutrient] || 0) + (item[nutrient] || 0);
     }
     current.amountLabels.push(item.amountLabel);
@@ -988,6 +1208,26 @@ function aggregateBreakdownItems(items = []) {
     }
     return item;
   });
+}
+
+function renderOmegaContributionList(selector, items, nutrient) {
+  const container = document.querySelector(selector);
+  if (!container) return;
+  const contributions = aggregateBreakdownItems(items)
+    .filter((item) => Number(item[nutrient]) > 0)
+    .sort((a, b) => b[nutrient] - a[nutrient]);
+  if (!contributions.length) {
+    container.textContent = "Inga beräknade bidrag.";
+    return;
+  }
+  container.innerHTML = contributions
+    .map((item) => `
+      <div>
+        <strong>${item.label}</strong>
+        <span>${decimal(item[nutrient])} g</span>
+        <small class="omega-source">${item.omegaSource || "Källa saknas"}</small>
+      </div>`)
+    .join("");
 }
 
 function renderMacroBreakdown(macros, hasContent) {
@@ -1110,6 +1350,24 @@ function renderTrendChart(entries) {
   updateTrendAverage("#trendAvgProtein", completedMacros.map((macros) => macros.protein), "g");
   updateTrendAverage("#trendAvgFat", completedMacros.map((macros) => macros.fat), "g");
   updateTrendAverage("#trendAvgKcal", completedMacros.map((macros) => macros.kcal), "kcal", true);
+  const periodOmega = completedMacros.reduce(
+    (total, macros) => ({
+      omega3: total.omega3 + (Number(macros.omega3) || 0),
+      omega6: total.omega6 + (Number(macros.omega6) || 0),
+    }),
+    { omega3: 0, omega6: 0 },
+  );
+  const trendOmegaRatio = document.querySelector("#trendOmegaRatio");
+  const trendOmegaTotals = document.querySelector("#trendOmegaTotals");
+  if (trendOmegaRatio) trendOmegaRatio.textContent = completedMacros.length ? omegaRatioLabel(periodOmega) : "--";
+  if (trendOmegaTotals) {
+    trendOmegaTotals.textContent = completedMacros.length
+      ? `Summerat O3 ${decimal(periodOmega.omega3)} g · O6 ${decimal(periodOmega.omega6)} g`
+      : "Summerat O3 -- · O6 --";
+  }
+  const periodItems = completedMacros.flatMap((macros) => macros.items || []);
+  renderOmegaContributionList("#trendOmega3Contributors", periodItems, "omega3");
+  renderOmegaContributionList("#trendOmega6Contributors", periodItems, "omega6");
   const averageNote =
     completedMacros.length > 0
       ? ` Medelvärden baseras på ${completedMacros.length} loggdagar${todayIncluded ? "; idag ingår eftersom tre måltider är loggade" : ""}.`
@@ -1266,6 +1524,11 @@ function render(selectedDate = activeDate) {
   document.querySelector("#energyMetric").textContent = hasContent ? `${marker}${Math.round(macros.kcal)} kcal` : "--";
   if (omegaRatioOutput) {
     omegaRatioOutput.textContent = hasContent ? omegaRatioLabel(macros) : "--";
+  }
+  if (omegaTotalsOutput) {
+    omegaTotalsOutput.textContent = hasContent
+      ? `O3 ${decimal(macros.omega3)} g · O6 ${decimal(macros.omega6)} g`
+      : "O3 -- · O6 --";
   }
   const measureWarning = macros.unresolvedMeasures?.length
     ? `Kontrollera mängd: ${macros.unresolvedMeasures.join("; ")} kunde inte beräknas och ingår inte i summeringen.`
@@ -1589,8 +1852,34 @@ function openWeekReport() {
   setSaveStatus(`Veckorapport skapad för vecka ${parsed.week}, ${parsed.year}`);
 }
 
+function useCompassPlan(planId) {
+  const plan = activeCompassPlans.get(planId);
+  const input = plan ? fields[plan.field] : null;
+  if (!plan || !input || input instanceof NodeList) return;
+
+  const entry = plan.date === fields.date.value ? formEntry() : (findEntry(plan.date) || emptyEntry(plan.date));
+  const currentText = String(entry[plan.field] || "").trim();
+  if (
+    currentText &&
+    currentText !== plan.meal &&
+    !window.confirm(`Ersätta befintlig ${compassMealTargets[plan.field].label.toLowerCase()} för ${plan.date} med förslaget?`)
+  ) {
+    return;
+  }
+
+  entry[plan.field] = plan.meal;
+  fillForm(entry);
+  input.value = plan.meal;
+  document.querySelector(".entry-panel details")?.setAttribute("open", "");
+  setSaveStatus(`Plan införd för ${plan.date}. Justera vid behov och spara först när måltiden är registrerad.`);
+}
+
 reportButton?.addEventListener("click", openDailyReport);
 weekReportButton?.addEventListener("click", openWeekReport);
+document.querySelector("#dinnerCompass")?.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-compass-plan]");
+  if (button) useCompassPlan(button.dataset.compassPlan);
+});
 weeklyCheckinButton?.addEventListener("click", () => {
   if (!weeklyCheckinPanel) return;
   const willOpen = weeklyCheckinPanel.hidden;

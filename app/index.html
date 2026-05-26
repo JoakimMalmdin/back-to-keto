@@ -9,13 +9,13 @@
     <title>Back to Keto</title>
     <script>
       if (window.location.protocol === "file:") {
-        window.location.replace("https://joakimmalmdin.github.io/back-to-keto/app/?cache=191");
+        window.location.replace("https://joakimmalmdin.github.io/back-to-keto/app/?cache=192");
       }
     </script>
-    <link rel="manifest" href="manifest.webmanifest?v=191" />
+    <link rel="manifest" href="manifest.webmanifest?v=192" />
     <link rel="icon" href="icon.svg?v=146" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="apple-touch-icon.png?v=146" />
-    <link rel="stylesheet" href="styles.css?v=191" />
+    <link rel="stylesheet" href="styles.css?v=192" />
   </head>
   <body>
     <div class="app-shell">
@@ -24,7 +24,7 @@
           <p class="eyebrow">Back to Keto</p>
           <h1>Daglig keto-logg</h1>
           <div class="version-row">
-            <p class="version-pill">v1.1 beta · build 191</p>
+            <p class="version-pill">v1.1 beta · build 192</p>
             <span class="version-info">
               <button class="version-info-trigger" type="button" aria-label="Vad är nytt i v1.1 beta?" aria-describedby="versionInfoText">Info</button>
               <span class="version-info-text" id="versionInfoText" role="tooltip">
@@ -45,7 +45,7 @@
             <h2 id="todayTitle">Dagens läge</h2>
             <p id="coachLine" class="coach-line"></p>
             <details id="dinnerCompass" class="dinner-compass" aria-live="polite">
-              <summary>Middagskompass</summary>
+              <summary>Kompassen</summary>
               <div id="dinnerCompassText" class="dinner-compass-content"></div>
             </details>
             <button class="secondary-button hero-sync-button" id="quickSyncButton" type="button">Synka nu</button>
@@ -148,7 +148,7 @@
 
             <details class="manual-macros macro-target-settings">
               <summary>Personliga makromål</summary>
-              <p class="mini-note">Används av makrostaplar, keto-bedömning och Middagskompass. Justera protein när träningen ökar.</p>
+              <p class="mini-note">Används av makrostaplar, keto-bedömning och Kompassen. Justera protein när träningen ökar.</p>
               <div class="macro-target-grid">
                 <div class="macro-target-pair">
                   <label>
@@ -253,6 +253,7 @@
               <label class="omega-ratio-field">
                 Omega 6/Omega 3
                 <output id="omegaRatioOutput" aria-live="polite">--</output>
+                <small id="omegaTotalsOutput">O3 -- · O6 --</small>
               </label>
               <fieldset class="segmented-field walk-field">
                 <legend>Promenad (över 11 min/km)</legend>
@@ -480,6 +481,26 @@
                   </div>
                 </div>
               </div>
+              <div class="trend-omega-summary">
+                <span>Periodkvot Omega 6/Omega 3</span>
+                <strong id="trendOmegaRatio">--</strong>
+                <small id="trendOmegaTotals">Summerat O3 -- · O6 --</small>
+                <p>Riktmärke över tid: omkring 2-3:1. Dagsgräns: högst 4,5:1.</p>
+              </div>
+              <details class="omega-contributors">
+                <summary>Visa största omega-bidrag i perioden</summary>
+                <p class="mini-note">Källmarkering gäller O3/O6-värdet: etikett, Livsmedelsverket, USDA eller proxy. Omega som inte deklarerats eller kunnat verifieras räknas inte in.</p>
+                <div class="omega-contributor-columns">
+                  <div>
+                    <h3>O3</h3>
+                    <div id="trendOmega3Contributors" class="omega-contributor-list"></div>
+                  </div>
+                  <div>
+                    <h3>O6</h3>
+                    <div id="trendOmega6Contributors" class="omega-contributor-list"></div>
+                  </div>
+                </div>
+              </details>
               <div id="trendChart" class="trend-chart" role="img" aria-label="Tidsseriediagram med vikt, fett, protein och kolhydrater"></div>
               <p id="trendNote" class="note"></p>
             </div>
@@ -572,6 +593,6 @@
       </main>
     </div>
 
-    <script src="app.js?v=191" type="module"></script>
+    <script src="app.js?v=192" type="module"></script>
   </body>
 </html>

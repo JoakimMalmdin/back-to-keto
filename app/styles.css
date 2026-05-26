@@ -310,6 +310,11 @@ main {
   font-size: 0.82rem;
 }
 
+.dinner-proposal .proposal-omega {
+  margin-top: 2px;
+  font-size: 0.82rem;
+}
+
 .dinner-proposal .proposal-day-total {
   margin-top: 4px;
   color: var(--leaf-strong);
@@ -323,6 +328,22 @@ main {
 .dinner-note {
   padding-top: 9px;
   border-top: 1px solid var(--line);
+}
+
+.compass-use-button {
+  margin-top: 8px;
+  padding: 7px 10px;
+  border: 1px solid color-mix(in srgb, var(--leaf) 45%, var(--line));
+  border-radius: 6px;
+  background: #fffaf2;
+  color: var(--leaf-strong);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+}
+
+.compass-use-button:hover {
+  background: color-mix(in srgb, #fffaf2 78%, var(--leaf) 12%);
 }
 
 .hero-sync-button {
@@ -541,6 +562,14 @@ main {
   background: #fffaf2;
   color: var(--ink);
   font-size: 1rem;
+  font-weight: 400;
+}
+
+.omega-ratio-field small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.74rem;
   font-weight: 400;
 }
 
@@ -936,6 +965,85 @@ textarea {
   font-weight: 400;
   line-height: 1;
   white-space: nowrap;
+}
+
+.trend-omega-summary {
+  display: grid;
+  grid-template-columns: minmax(170px, 1fr) auto auto;
+  align-items: center;
+  gap: 6px 14px;
+  margin: 10px 0 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fffaf2;
+}
+
+.trend-omega-summary span,
+.trend-omega-summary small,
+.trend-omega-summary p {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 400;
+}
+
+.trend-omega-summary strong {
+  color: var(--ink);
+  font-size: 0.95rem;
+  font-weight: 400;
+}
+
+.trend-omega-summary p {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.omega-contributors {
+  margin: 8px 0 12px;
+  padding: 0;
+}
+
+.omega-contributors summary {
+  cursor: pointer;
+  color: var(--ink);
+  font-size: 0.86rem;
+  font-weight: 400;
+}
+
+.omega-contributor-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.omega-contributor-columns h3 {
+  margin: 0 0 5px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.omega-contributor-list > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px 8px;
+  padding: 5px 0;
+  border-top: 1px solid var(--line);
+  font-size: 0.76rem;
+}
+
+.omega-contributor-list strong {
+  font-weight: 400;
+}
+
+.omega-contributor-list span {
+  text-align: right;
+}
+
+.omega-source {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: 0.68rem;
 }
 
 .legend-weight {
@@ -1467,6 +1575,18 @@ textarea {
 
   .trend-average strong {
     font-size: 0.78rem;
+  }
+
+  .trend-omega-summary {
+    grid-template-columns: 1fr auto;
+  }
+
+  .trend-omega-summary small {
+    grid-column: 1 / -1;
+  }
+
+  .omega-contributor-columns {
+    grid-template-columns: 1fr;
   }
 
   .macro-target-grid {
