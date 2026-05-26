@@ -524,6 +524,26 @@ main {
   grid-row: 2;
 }
 
+.activity-grid .omega-ratio-field {
+  grid-column: 3;
+  grid-row: 1;
+}
+
+.omega-ratio-field output {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
+  padding: 8px 9px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fffaf2;
+  color: var(--ink);
+  font-size: 1rem;
+  font-weight: 400;
+}
+
 .body-measure-row {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
@@ -1407,12 +1427,17 @@ textarea {
     grid-column: 1 / -1;
   }
 
-  .activity-grid .walk-field {
+  .activity-grid .omega-ratio-field {
+    grid-column: 1 / -1;
     grid-row: 2;
   }
 
-  .activity-grid .motion-field {
+  .activity-grid .walk-field {
     grid-row: 3;
+  }
+
+  .activity-grid .motion-field {
+    grid-row: 4;
   }
 
   .health-row {

@@ -9,13 +9,13 @@
     <title>Back to Keto</title>
     <script>
       if (window.location.protocol === "file:") {
-        window.location.replace("https://joakimmalmdin.github.io/back-to-keto/app/?cache=190");
+        window.location.replace("https://joakimmalmdin.github.io/back-to-keto/app/?cache=191");
       }
     </script>
-    <link rel="manifest" href="manifest.webmanifest?v=190" />
+    <link rel="manifest" href="manifest.webmanifest?v=191" />
     <link rel="icon" href="icon.svg?v=146" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="apple-touch-icon.png?v=146" />
-    <link rel="stylesheet" href="styles.css?v=190" />
+    <link rel="stylesheet" href="styles.css?v=191" />
   </head>
   <body>
     <div class="app-shell">
@@ -24,7 +24,7 @@
           <p class="eyebrow">Back to Keto</p>
           <h1>Daglig keto-logg</h1>
           <div class="version-row">
-            <p class="version-pill">v1.1 beta · build 190</p>
+            <p class="version-pill">v1.1 beta · build 191</p>
             <span class="version-info">
               <button class="version-info-trigger" type="button" aria-label="Vad är nytt i v1.1 beta?" aria-describedby="versionInfoText">Info</button>
               <span class="version-info-text" id="versionInfoText" role="tooltip">
@@ -249,6 +249,10 @@
               <label>
                 Kaffe
                 <input id="coffeeInput" name="coffee" placeholder="t.ex. 3 koppar" />
+              </label>
+              <label class="omega-ratio-field">
+                Omega 6/Omega 3
+                <output id="omegaRatioOutput" aria-live="polite">--</output>
               </label>
               <fieldset class="segmented-field walk-field">
                 <legend>Promenad (över 11 min/km)</legend>
@@ -568,6 +572,6 @@
       </main>
     </div>
 
-    <script src="app.js?v=190" type="module"></script>
+    <script src="app.js?v=191" type="module"></script>
   </body>
 </html>

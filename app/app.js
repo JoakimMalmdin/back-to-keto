@@ -1,5 +1,5 @@
-import { parseNutritionText } from "./nutrition-parser.mjs?v=190";
-import { NUTRITION_CATALOG, NUTRITION_CATEGORIES, categoryName, foodName } from "./nutrition-catalog.mjs?v=190";
+import { parseNutritionText } from "./nutrition-parser.mjs?v=191";
+import { NUTRITION_CATALOG, NUTRITION_CATEGORIES, categoryName, foodName } from "./nutrition-catalog.mjs?v=191";
 
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
@@ -26,7 +26,7 @@ const legacyDefaultMacroTargets = {
   kcalTarget: 1900,
   kcalMax: 2000,
 };
-const appVersion = "190";
+const appVersion = "191";
 const appDisplayVersion = `v1.1 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -129,6 +129,7 @@ const fields = {
   notes: document.querySelector("#notesInput"),
 };
 const goalInput = document.querySelector("#goalInput");
+const omegaRatioOutput = document.querySelector("#omegaRatioOutput");
 const macroTargetInputs = {
   proteinMin: document.querySelector("#targetProteinMinInput"),
   proteinMax: document.querySelector("#targetProteinMaxInput"),
@@ -176,6 +177,13 @@ function stableAppUrl() {
 
 function decimal(value) {
   return Number(value).toLocaleString("sv-SE", { maximumFractionDigits: 1 });
+}
+
+function omegaRatioLabel(macros) {
+  const omega3 = Number(macros.omega3) || 0;
+  const omega6 = Number(macros.omega6) || 0;
+  if (omega3 <= 0) return "--";
+  return `${decimal(omega6 / omega3)}:1`;
 }
 
 function catalogUnitLabel(unit, amount = 1) {
@@ -617,6 +625,8 @@ function estimateMacros(entry) {
       fat,
       carbs,
       fiber: 0,
+      omega3: 0,
+      omega6: 0,
       sodiumMg: 0,
       potassiumMg: 0,
       magnesiumMg: 0,
@@ -667,6 +677,8 @@ function estimateMasterMacros(entry) {
     fat: parsed.totals.fat || 0,
     carbs: parsed.totals.carbs || 0,
     fiber: parsed.totals.fiber || 0,
+    omega3: parsed.totals.omega3 || 0,
+    omega6: parsed.totals.omega6 || 0,
     alcohol: parsed.totals.alcoholKcal || 0,
     sodiumMg: parsed.totals.sodiumMg || 0,
     potassiumMg: parsed.totals.potassiumMg || 0,
@@ -689,6 +701,8 @@ function estimateMasterMacros(entry) {
     fat: item.nutrients.fat || 0,
     carbs: item.nutrients.carbs || 0,
     fiber: item.nutrients.fiber,
+    omega3: item.nutrients.omega3 || 0,
+    omega6: item.nutrients.omega6 || 0,
     sodiumMg: item.nutrients.sodiumMg || 0,
     potassiumMg: item.nutrients.potassiumMg || 0,
     magnesiumMg: item.nutrients.magnesiumMg || 0,
@@ -1250,6 +1264,9 @@ function render(selectedDate = activeDate) {
       : "Dagens energiintag";
   }
   document.querySelector("#energyMetric").textContent = hasContent ? `${marker}${Math.round(macros.kcal)} kcal` : "--";
+  if (omegaRatioOutput) {
+    omegaRatioOutput.textContent = hasContent ? omegaRatioLabel(macros) : "--";
+  }
   const measureWarning = macros.unresolvedMeasures?.length
     ? `Kontrollera mängd: ${macros.unresolvedMeasures.join("; ")} kunde inte beräknas och ingår inte i summeringen.`
     : "";

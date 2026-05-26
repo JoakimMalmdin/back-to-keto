@@ -41,6 +41,8 @@ near(parsed.totals.carbs, 0.56, "En valnöt får inte räknas som en 30-gramspor
 
 parsed = parseNutritionText("30 g valnötter");
 near(parsed.items[0].grams, 30, "Valnötter i gram ska fortfarande använda angiven vikt");
+near(parsed.totals.omega3, 30 / 100 * 8.5, "O3 ska summeras för dagens kvot");
+near(parsed.totals.omega6, 30 / 100 * 37.7, "O6 ska summeras för dagens kvot");
 
 parsed = parseNutritionText("1 falukorv");
 assert(parsed.items.length === 0, "En hel falukorv utan gram får inte räknas som en skiva.");
