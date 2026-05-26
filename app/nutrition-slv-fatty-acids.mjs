@@ -1,4 +1,4 @@
-import { SLV_SOURCE } from "./nutrition-slv-core.mjs?v=183";
+import { SLV_SOURCE } from "./nutrition-slv-core.mjs?v=184";
 
 function fattyAcidProfile(catalogId, slvFoodNumber, officialName, omega3, omega6, note = "") {
   return Object.freeze({
@@ -15,6 +15,7 @@ function fattyAcidProfile(catalogId, slvFoodNumber, officialName, omega3, omega6
 // Fatty-acid-only LD matches. These supplement existing canonical records
 // without replacing product-label macros or existing electrolyte assumptions.
 export const SLV_FATTY_ACID_PROFILES = Object.freeze([
+  fattyAcidProfile("hellmanns-majonnas", 2189, "Rapsolja", 6.7, 14.9, "Beräknad profil: produktens 79 g fett/100 g multiplicerat med LD:s rapsoljeprofil (O-3 8,5 g och O-6 18,8 g/100 g olja). Äggulans mindre fettandel kan ge en liten avvikelse."),
   fattyAcidProfile("halloumi-zeta", 100, "Ost halloumi rå fett 22%", 0.1, 0.6, "Fettsyreprofil från motsvarande generiska halloumipost; produktens deklarerade makron behålls."),
   fattyAcidProfile("ica-makrill-tomatsas", 1296, "Makrill filé i tomatsås konserv.", 2.6, 0.7, "Fettsyreprofil från motsvarande konserverad LD-post; produktens deklarerade makron behålls."),
   fattyAcidProfile("ica-tonfisk-i-vatten", 1278, "Tonfisk i vatten konserv. avrunnen", 0.2, 0, "Fettsyreprofil från motsvarande konserverad LD-post; produktens deklarerade makron behålls."),

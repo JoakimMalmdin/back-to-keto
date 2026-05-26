@@ -54,6 +54,11 @@ assert(seltin.electrolyteSource.confidence === CONFIDENCE_LEVELS.label, "Seltin 
 assert(seltin.measures.some((entry) => entry.unit === "pinch"), "Seltin ska stödja krm/pinch.");
 assert(foodAliases(seltin).includes("reduced-sodium salt"), "Seltin ska kunna kännas igen på engelska.");
 
+const mayonnaise = findFoodById("hellmanns-majonnas");
+assert(mayonnaise.macroSource.type === SOURCE_TYPES.productLabel, "Hellmann's ska behålla etiketten som makrokälla.");
+assert(mayonnaise.fattyAcidSource.type === SOURCE_TYPES.livsmedelsverket, "Hellmann's ska bära en beräknad LD-baserad fettsyreprofil.");
+assert(mayonnaise.nutrientsPer100g.omega3 === 6.7 && mayonnaise.nutrientsPer100g.omega6 === 14.9, "Hellmann's ska beräknas från 79 g fett och rapsoljans profil.");
+
 const tuna = findFoodById("ica-tonfisk-i-vatten");
 assert(tuna.measures.some((entry) => entry.unit === "tin"), "Tonfisk i vatten ska stödja burk/tin.");
 assert(foodAliases(tuna).includes("tuna in water"), "Tonfisk i vatten ska kunna kännas igen på engelska.");

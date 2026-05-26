@@ -77,6 +77,9 @@ Categories are for finding foods in the UI. Coaching uses tags such as
   fisk/skaldjur, nötter/frön, bär, flera grönsaker samt ett begränsat antal
   tydligt motsvarande produkt- eller schablonposter. Otydliga recept- och
   varumärkesvariationer lämnas utan fettsyrevärde tills de verifierats.
+- För en produkt vars huvudsakliga fettkälla är uttryckligen angiven kan O-3/O-6
+  beräknas från etikettens fettmängd och en officiell fettsyreprofil för
+  fettkällan. Hellmann's majonnäs beräknas så från 79 g fett och LD:s rapsolja.
 
 ## First SLV Mapping Cohort
 
