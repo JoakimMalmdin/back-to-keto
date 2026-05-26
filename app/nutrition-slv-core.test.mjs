@@ -18,7 +18,7 @@ for (const item of expected) {
 
 for (const food of SLV_CORE_RESOLVED) {
   assert(Number.isInteger(food.slvFoodNumber), `Livsmedelsnummer saknas: ${food.selectionId}`);
-  for (const key of ["kcal", "fat", "protein", "carbs", "sodiumMg", "potassiumMg", "magnesiumMg"]) {
+  for (const key of ["kcal", "fat", "protein", "carbs", "fiber", "sodiumMg", "potassiumMg", "magnesiumMg"]) {
     assert(Number.isFinite(food.nutrientsPer100g[key]), `${key} saknas: ${food.selectionId}`);
   }
 }
@@ -26,6 +26,7 @@ for (const food of SLV_CORE_RESOLVED) {
 const avocado = SLV_CORE_RESOLVED.find((food) => food.selectionId === "avokado");
 assert(avocado.slvFoodNumber === 320, "Avokado ska matcha officiell post 320.");
 assert(avocado.nutrientsPer100g.potassiumMg === 600, "Avokado ska använda SLV:s kaliumvärde.");
+assert(avocado.nutrientsPer100g.fiber === 4.8, "Avokado ska använda SLV:s fibervärde.");
 const mincedBeef10 = SLV_CORE_RESOLVED.find((food) => food.selectionId === "notfars-10");
 const mincedBeef15 = SLV_CORE_RESOLVED.find((food) => food.selectionId === "notfars-15");
 assert(mincedBeef10.slvFoodNumber === 951 && mincedBeef10.nutrientsPer100g.fat === 11.3, "Nötfärs 10% ska använda officiell post 951.");

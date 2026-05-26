@@ -59,6 +59,11 @@ Categories are for finding foods in the UI. Coaching uses tags such as
 - Imported generic data must be attributed to Livsmedelsverket,
   Livsmedelsdatabasen, with the retrieved food identifier and retrieval date
   retained in the canonical record.
+- Fiber importeras som Livsmedelsverkets `FIBT`-värde och visas per 100 g.
+  `Kolhydrater` är fortsatt databasens tillgängliga kolhydrater; fiber får
+  därför inte dras av från kolhydraterna en gång till.
+- Produktposter utan verifierad fiberdeklaration visas med `Fiber --` tills
+  etikett eller beslutad officiell matchning ger ett kontrollerat värde.
 
 ## First SLV Mapping Cohort
 
@@ -95,6 +100,10 @@ Each food will have one record containing:
 
 The visible food list, macro totals and electrolyte totals must eventually be
 generated from the same record.
+
+- Runtime imports for the catalogue, parser and staged official data are
+  versioned with the app build so that an installed app cannot mix a newly
+  loaded interface with stale cached nutrition modules.
 
 ## Language Architecture
 

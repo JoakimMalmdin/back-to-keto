@@ -4,7 +4,7 @@ import {
   SUPPORTED_LOCALES,
   UNIT_DEFINITIONS,
   foodName,
-} from "./nutrition-catalog.mjs";
+} from "./nutrition-catalog.mjs?v=180";
 
 const NUMBER_WORDS = Object.freeze({
   en: 1,
@@ -186,7 +186,9 @@ function deriveGrams(food, amount, unit) {
 function scaleNutrients(food, grams) {
   const factor = grams / 100;
   return Object.fromEntries(
-    Object.entries(food.nutrientsPer100g).map(([nutrient, value]) => [nutrient, value * factor]),
+    Object.entries(food.nutrientsPer100g)
+      .filter(([, value]) => Number.isFinite(value))
+      .map(([nutrient, value]) => [nutrient, value * factor]),
   );
 }
 

@@ -1,4 +1,4 @@
-import { SLV_CORE_RESOLVED, SLV_SOURCE } from "./nutrition-slv-core.mjs";
+import { SLV_CORE_RESOLVED, SLV_SOURCE } from "./nutrition-slv-core.mjs?v=180";
 
 export const SUPPORTED_LOCALES = Object.freeze(["sv-SE", "en-GB"]);
 export const DEFAULT_LOCALE = "sv-SE";
@@ -81,6 +81,7 @@ function defineFood(food) {
     nutrientsPer100g: {},
     electrolyteSource: null,
     ...food,
+    nutrientsPer100g: Object.freeze({ fiber: null, ...(food.nutrientsPer100g || {}) }),
   });
 }
 
@@ -273,7 +274,7 @@ export const NUTRITION_CATALOG = Object.freeze([
       "sv-SE": ["matriket svenska köttbullar", "matriket köttbullar", "matriket köttbullar 73% kött", "svenska köttbullar 73% kött"],
       "en-GB": ["matriket swedish meatballs", "matriket meatballs 73% meat"],
     },
-    nutrientsPer100g: { kcal: 225, fat: 17, protein: 12, carbs: 8.5, sodiumMg: 629 },
+    nutrientsPer100g: { kcal: 225, fat: 17, protein: 12, carbs: 8.5, fiber: 4, sodiumMg: 629 },
     macroSource: source(SOURCE_TYPES.productLabel, "Matriket Svenska Köttbullar 73% kött, fotograferad etikett", "2026-05-25", CONFIDENCE_LEVELS.label),
     electrolyteSource: source(SOURCE_TYPES.productLabel, "Matriket Svenska Köttbullar 73% kött, salt 1,6 g/100 g", "2026-05-25", CONFIDENCE_LEVELS.calculated, "Natrium beräknat från deklarerat salt; kalium och magnesium saknas på etiketten."),
     tags: ["charcuterie", "protein", "sodium_source"],
@@ -339,7 +340,7 @@ export const NUTRITION_CATALOG = Object.freeze([
       "sv-SE": ["seltin"],
       "en-GB": ["seltin", "reduced-sodium salt"],
     },
-    nutrientsPer100g: { kcal: 0, fat: 0, protein: 0, carbs: 0, sodiumMg: 20000, potassiumMg: 21000, magnesiumMg: 1020 },
+    nutrientsPer100g: { kcal: 0, fat: 0, protein: 0, carbs: 0, fiber: 0, sodiumMg: 20000, potassiumMg: 21000, magnesiumMg: 1020 },
     measures: [measure("pinch", 1, 1.2), measure("teaspoon", 1, 6)],
     macroSource: source(SOURCE_TYPES.productLabel, "Seltin", "2026-05-22", CONFIDENCE_LEVELS.label),
     electrolyteSource: source(SOURCE_TYPES.productLabel, "Seltin", "2026-05-22", CONFIDENCE_LEVELS.label),

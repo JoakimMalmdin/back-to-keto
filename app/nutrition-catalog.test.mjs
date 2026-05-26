@@ -32,6 +32,8 @@ for (const food of NUTRITION_CATALOG) {
   assert(food.macroSource?.type, `Makrokälla saknas för ${food.id}`);
   assert(food.macroSource?.verifiedDate, `Verifieringsdatum saknas för ${food.id}`);
   assert(Number.isFinite(food.nutrientsPer100g.kcal), `kcal saknas för ${food.id}`);
+  assert(Object.hasOwn(food.nutrientsPer100g, "fiber"), `Fiberfält saknas för ${food.id}`);
+  assert(food.nutrientsPer100g.fiber === null || Number.isFinite(food.nutrientsPer100g.fiber), `Ogiltigt fibervärde för ${food.id}`);
   assert(Array.isArray(food.measures), `Måttform saknas för ${food.id}`);
   for (const locale of SUPPORTED_LOCALES) {
     assert(foodName(food, locale), `Visningsnamn saknas för ${food.id}: ${locale}`);
@@ -59,6 +61,7 @@ assert(bratwurst.electrolyteSource.confidence === CONFIDENCE_LEVELS.calculated, 
 
 const meatballs = findFoodById("matriket-svenska-kottbullar-73");
 assert(meatballs.nutrientsPer100g.carbs === 8.5, "Matriket-köttbullar ska använda etikettens kolhydratvärde.");
+assert(meatballs.nutrientsPer100g.fiber === 4, "Matriket-köttbullar ska använda etikettens fibervärde.");
 assert(meatballs.nutrientsPer100g.sodiumMg === 629, "Matriket-köttbullar ska härleda natrium från deklarerat salt.");
 assert(meatballs.measures.length === 0, "Köttbullar får inte få styckmått innan styckvikten har kontrollerats.");
 
@@ -88,6 +91,7 @@ assert(walnut.implicitUnit === "piece", "Valnöt utan enhetsord ska bara få anv
 const avocado = findFoodById("avokado");
 assert(avocado.macroSource.type === SOURCE_TYPES.livsmedelsverket, "Avokado ska vara importerad från SLV-kärnan.");
 assert(avocado.nutrientsPer100g.potassiumMg === 600, "Avokado ska bära officiellt kaliumvärde i masterkatalogen.");
+assert(avocado.nutrientsPer100g.fiber === 4.8, "Avokado ska bära officiellt fibervärde i masterkatalogen.");
 
 const egg = findFoodById("agg");
 assert(egg.measures.some((entry) => entry.unit === "piece"), "Ägg ska stödja tydliga styckeangivelser.");

@@ -39,6 +39,7 @@ parsed = parseNutritionText("2 stekta ägg, 0,5 avokado och 5 små jordgubbar");
 near(parsed.items.find((item) => item.foodId === "agg").grams, 102, "Två ägg ska tolkas som två stycken");
 near(parsed.items.find((item) => item.foodId === "avokado").grams, 82.5, "En halv avokado ska använda styckmått");
 near(parsed.items.find((item) => item.foodId === "jordgubbar").grams, 45, "Fem små jordgubbar ska använda styckmått");
+near(parsed.totals.fiber, 82.5 / 100 * 4.8 + 45 / 100 * 1.9, "Verifierad fiber ska summeras separat från kolhydrater");
 
 parsed = parseNutritionText("4 krm seltin");
 near(parsed.items[0].grams, 4.8, "Fyra krm Seltin ska ge rätt gram");
@@ -96,6 +97,7 @@ assert(parsed.unresolved.length === 0, "Matriket-köttbullar i gram ska kunna be
 near(parsed.totals.fat, 20.4, "120 g Matriket-köttbullar ska använda etikettens fettvärde");
 near(parsed.totals.protein, 14.4, "120 g Matriket-köttbullar ska använda etikettens proteinvärde");
 near(parsed.totals.carbs, 10.2, "120 g Matriket-köttbullar ska använda etikettens kolhydratvärde");
+near(parsed.totals.fiber, 4.8, "120 g Matriket-köttbullar ska använda etikettens fibervärde");
 
 parsed = parseNutritionText("150 g köttfärs 10%");
 assert(parsed.unresolved.length === 0, "Köttfärs med verifierad 10%-variant ska kunna beräknas.");

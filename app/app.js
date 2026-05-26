@@ -1,5 +1,5 @@
-import { parseNutritionText } from "./nutrition-parser.mjs";
-import { NUTRITION_CATALOG, NUTRITION_CATEGORIES, categoryName, foodName } from "./nutrition-catalog.mjs";
+import { parseNutritionText } from "./nutrition-parser.mjs?v=180";
+import { NUTRITION_CATALOG, NUTRITION_CATEGORIES, categoryName, foodName } from "./nutrition-catalog.mjs?v=180";
 
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
@@ -16,7 +16,7 @@ const defaultMacroTargets = {
   kcalTarget: 1900,
   kcalMax: 2000,
 };
-const appVersion = "179";
+const appVersion = "180";
 const appDisplayVersion = `v1.1 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -224,8 +224,9 @@ function renderFoodList() {
           const electrolytes = [nutrient.sodiumMg, nutrient.potassiumMg, nutrient.magnesiumMg].some(Number.isFinite)
             ? ` Na ${Math.round(nutrient.sodiumMg || 0)}, Ka ${Math.round(nutrient.potassiumMg || 0)}, Mg ${Math.round(nutrient.magnesiumMg || 0)} mg.`
             : "";
+          const fiber = Number.isFinite(nutrient.fiber) ? `${decimal(nutrient.fiber)} g` : "--";
           const sourceMark = food.macroSource?.type === "proxy" ? " (schablon)" : "";
-          return `<li><strong>${foodName(food)}${sourceMark}</strong>: ${decimal(nutrient.kcal || 0)} kcal, P ${decimal(nutrient.protein || 0)} g, F ${decimal(nutrient.fat || 0)} g, K ${decimal(nutrient.carbs || 0)} g.${electrolytes}${measures ? ` Mått: ${measures}.` : ""}${standard}</li>`;
+          return `<li><strong>${foodName(food)}${sourceMark}</strong>: ${decimal(nutrient.kcal || 0)} kcal, P ${decimal(nutrient.protein || 0)} g, F ${decimal(nutrient.fat || 0)} g, K ${decimal(nutrient.carbs || 0)} g, Fiber ${fiber}.${electrolytes}${measures ? ` Mått: ${measures}.` : ""}${standard}</li>`;
         })
         .join("");
       return `<div><h3>${categoryName(categoryId)}</h3><ul>${rows}</ul></div>`;
@@ -595,6 +596,7 @@ function estimateMacros(entry) {
       protein,
       fat,
       carbs,
+      fiber: 0,
       sodiumMg: 0,
       potassiumMg: 0,
       magnesiumMg: 0,
@@ -644,6 +646,7 @@ function estimateMasterMacros(entry) {
     protein: parsed.totals.protein || 0,
     fat: parsed.totals.fat || 0,
     carbs: parsed.totals.carbs || 0,
+    fiber: parsed.totals.fiber || 0,
     alcohol: parsed.totals.alcoholKcal || 0,
     sodiumMg: parsed.totals.sodiumMg || 0,
     potassiumMg: parsed.totals.potassiumMg || 0,
@@ -664,6 +667,7 @@ function estimateMasterMacros(entry) {
     protein: item.nutrients.protein || 0,
     fat: item.nutrients.fat || 0,
     carbs: item.nutrients.carbs || 0,
+    fiber: item.nutrients.fiber,
     sodiumMg: item.nutrients.sodiumMg || 0,
     potassiumMg: item.nutrients.potassiumMg || 0,
     magnesiumMg: item.nutrients.magnesiumMg || 0,
