@@ -55,6 +55,10 @@ near(item(parsed, "valnotter-proxy").grams, 4, "Valnöt ska inte falla tillbaka 
 near(item(parsed, "seltin").nutrients.potassiumMg, 252, "Ett krm Seltin ska ge rätt kalium");
 near(item(parsed, "magnesiumtablett-200").nutrients.magnesiumMg, 400, "Två magnesiumtabletter ska ge 400 mg magnesium");
 
+parsed = parseNutritionText("2 magnesiumtabletter 200 mg");
+assert(parsed.unresolved.length === 0, "Naturlig pluralform för magnesiumtabletter ska kunna beräknas.");
+near(item(parsed, "magnesiumtablett-200").nutrients.magnesiumMg, 400, "Två magnesiumtabletter 200 mg ska ge 400 mg magnesium");
+
 parsed = parseNutritionText("8 falukorvsskivor med 1 msk majonnäs, 2 plommontomater");
 near(item(parsed, "falukorv-proxy").grams, 160, "Åtta falukorvsskivor ska vara 160 g, inte åtta normalportioner");
 near(item(parsed, "plommontomat").grams, 40, "Plommontomater ska räknas styckevis");
