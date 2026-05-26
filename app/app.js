@@ -1,5 +1,5 @@
-import { parseNutritionText } from "./nutrition-parser.mjs?v=181";
-import { NUTRITION_CATALOG, NUTRITION_CATEGORIES, categoryName, foodName } from "./nutrition-catalog.mjs?v=181";
+import { parseNutritionText } from "./nutrition-parser.mjs?v=182";
+import { NUTRITION_CATALOG, NUTRITION_CATEGORIES, categoryName, foodName } from "./nutrition-catalog.mjs?v=182";
 
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
@@ -16,7 +16,7 @@ const defaultMacroTargets = {
   kcalTarget: 1900,
   kcalMax: 2000,
 };
-const appVersion = "181";
+const appVersion = "182";
 const appDisplayVersion = `v1.1 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -225,8 +225,10 @@ function renderFoodList() {
             ? ` Na ${Math.round(nutrient.sodiumMg || 0)}, Ka ${Math.round(nutrient.potassiumMg || 0)}, Mg ${Math.round(nutrient.magnesiumMg || 0)} mg.`
             : "";
           const fiber = Number.isFinite(nutrient.fiber) ? `${decimal(nutrient.fiber)} g` : "--";
+          const omega3 = Number.isFinite(nutrient.omega3) ? `${decimal(nutrient.omega3)} g` : "--";
+          const omega6 = Number.isFinite(nutrient.omega6) ? `${decimal(nutrient.omega6)} g` : "--";
           const sourceMark = food.macroSource?.type === "proxy" ? " (schablon)" : "";
-          return `<li><strong>${foodName(food)}${sourceMark}</strong>: ${decimal(nutrient.kcal || 0)} kcal, P ${decimal(nutrient.protein || 0)} g, F ${decimal(nutrient.fat || 0)} g, K ${decimal(nutrient.carbs || 0)} g, Fiber ${fiber}.${electrolytes}${measures ? ` Mått: ${measures}.` : ""}${standard}</li>`;
+          return `<li><strong>${foodName(food)}${sourceMark}</strong>: ${decimal(nutrient.kcal || 0)} kcal, P ${decimal(nutrient.protein || 0)} g, F ${decimal(nutrient.fat || 0)} g, K ${decimal(nutrient.carbs || 0)} g, Fiber ${fiber}, O-3 ${omega3}, O-6 ${omega6}.${electrolytes}${measures ? ` Mått: ${measures}.` : ""}${standard}</li>`;
         })
         .join("");
       return `<div><h3>${categoryName(categoryId)}</h3><ul>${rows}</ul></div>`;

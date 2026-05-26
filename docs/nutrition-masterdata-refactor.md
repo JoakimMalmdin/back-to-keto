@@ -64,6 +64,12 @@ Categories are for finding foods in the UI. Coaching uses tags such as
   därför inte dras av från kolhydraterna en gång till.
 - Produktposter utan verifierad fiberdeklaration visas med `Fiber --` tills
   etikett eller beslutad officiell matchning ger ett kontrollerat värde.
+- `O-3` visas per 100 g och beräknas från Livsmedelsverkets fettsyrevärden
+  `F18:3 + F20:5 + F22:5 + F22:6`; `O-6` beräknas som `F18:2 + F20:4`.
+  Eftersom `F18:3` inte särredovisar alla möjliga omega-3/omega-6-isomerer
+  är `O-3` en praktisk approximation inom databasens struktur.
+- Produktposter utan verifierade fettsyrevärden visas med `O-3 --, O-6 --`
+  tills etikett eller beslutad officiell matchning ger ett kontrollerat värde.
 
 ## First SLV Mapping Cohort
 

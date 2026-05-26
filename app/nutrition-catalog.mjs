@@ -1,4 +1,4 @@
-import { SLV_CORE_RESOLVED, SLV_SOURCE } from "./nutrition-slv-core.mjs?v=181";
+import { SLV_CORE_RESOLVED, SLV_SOURCE } from "./nutrition-slv-core.mjs?v=182";
 
 export const SUPPORTED_LOCALES = Object.freeze(["sv-SE", "en-GB"]);
 export const DEFAULT_LOCALE = "sv-SE";
@@ -81,7 +81,7 @@ function defineFood(food) {
     nutrientsPer100g: {},
     electrolyteSource: null,
     ...food,
-    nutrientsPer100g: Object.freeze({ fiber: null, ...(food.nutrientsPer100g || {}) }),
+    nutrientsPer100g: Object.freeze({ fiber: null, omega3: null, omega6: null, ...(food.nutrientsPer100g || {}) }),
   });
 }
 
