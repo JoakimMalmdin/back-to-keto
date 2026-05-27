@@ -1,7 +1,7 @@
-import { SLV_CORE_RESOLVED, SLV_SOURCE } from "./nutrition-slv-core.mjs?v=193";
-import { fattyAcidProfileFor } from "./nutrition-slv-fatty-acids.mjs?v=193";
-import { slvSupplementFor } from "./nutrition-slv-supplements.mjs?v=193";
-import { USDA_SOURCE, usdaFattyAcidProfileFor } from "./nutrition-usda-fatty-acids.mjs?v=193";
+import { SLV_CORE_RESOLVED, SLV_SOURCE } from "./nutrition-slv-core.mjs?v=194";
+import { fattyAcidProfileFor } from "./nutrition-slv-fatty-acids.mjs?v=194";
+import { slvSupplementFor } from "./nutrition-slv-supplements.mjs?v=194";
+import { USDA_SOURCE, usdaFattyAcidProfileFor } from "./nutrition-usda-fatty-acids.mjs?v=194";
 
 export const SUPPORTED_LOCALES = Object.freeze(["sv-SE", "en-GB"]);
 export const DEFAULT_LOCALE = "sv-SE";
@@ -456,7 +456,7 @@ export const NUTRITION_CATALOG = Object.freeze([
       "en-GB": ["beef stock", "stock cube", "beef stock cube"],
     },
     nutrientsPer100g: { kcal: 318, fat: 22, protein: 7.1, carbs: 23, sodiumMg: 10000 },
-    measures: [measure("cube", 1, 10), measure("glass", 1, 10, translations("1 tärning i 3,5 dl vatten", "1 cube in 350 ml water"))],
+    measures: [measure("cube", 1, 10), measure("glass", 1, 10, translations("1 tärning i 5 dl vatten", "1 cube in 500 ml water"))],
     implicitUnit: "cube",
     macroSource: source(SOURCE_TYPES.productLabel, "Knorr köttbuljong, fotograferad etikett", "2026-05-21", CONFIDENCE_LEVELS.label),
     electrolyteSource: source(SOURCE_TYPES.proxy, "Användarens angivna portionsschablon", "2026-05-21", CONFIDENCE_LEVELS.proxy, "1 glas med 1 tärning räknas som cirka 1000 mg natrium."),

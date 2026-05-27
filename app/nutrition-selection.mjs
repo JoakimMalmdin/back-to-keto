@@ -109,7 +109,7 @@ export const NUTRITION_SELECTION = Object.freeze([
   proxy("salt", "Salt", "Salt", "seasonings", 1, "salt", "Natrium beräknat från natriumklorid; stödjer krm och tsk."),
   labelled("collagen-nyttoteket", "Collagen", "Collagen", "supplements", 1, SELECTION_STATUSES.inCatalogue, "collagen-nyttoteket"),
   labelled("mollers-tran", "Möller's Tran", "Möller's Cod Liver Oil", "supplements", 1, SELECTION_STATUSES.inCatalogue, "mollers-tran", "Fotograferad etikett; standardportion 1 tsk (5 ml) med 1,11 g O3."),
-  labelled("knorr-kottbuljong", "Köttbuljongtärning", "Beef stock cube", "drinks", 1, SELECTION_STATUSES.inCatalogue, "knorr-kottbuljong", "Fotograferad etikett; standardportion 1 tärning i 3,5 dl vatten."),
+  labelled("knorr-kottbuljong", "Köttbuljongtärning", "Beef stock cube", "drinks", 1, SELECTION_STATUSES.inCatalogue, "knorr-kottbuljong", "Fotograferad etikett; standardportion 1 tärning i 5 dl vatten."),
   proxy("magnesiumtablett-200", "Magnesiumtablett 200 mg", "Magnesium tablet 200 mg", "supplements", 1, "magnesiumtablett-200", "Dosen 200 mg används som angiven tillskottsdos; produktetikett behöver fortfarande läggas in."),
 
   slvPromoted("agg", "Ägg", "Egg", "meat", 1, "Ägg", "Neutral grundpost för ägg; extra stekfett registreras separat."),

@@ -9,13 +9,13 @@
     <title>Back to Keto</title>
     <script>
       if (window.location.protocol === "file:") {
-        window.location.replace("https://joakimmalmdin.github.io/back-to-keto/app/?cache=193");
+        window.location.replace("https://joakimmalmdin.github.io/back-to-keto/app/?cache=194");
       }
     </script>
-    <link rel="manifest" href="manifest.webmanifest?v=193" />
+    <link rel="manifest" href="manifest.webmanifest?v=194" />
     <link rel="icon" href="icon.svg?v=146" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="apple-touch-icon.png?v=146" />
-    <link rel="stylesheet" href="styles.css?v=193" />
+    <link rel="stylesheet" href="styles.css?v=194" />
   </head>
   <body>
     <div class="app-shell">
@@ -24,7 +24,7 @@
           <p class="eyebrow">Back to Keto</p>
           <h1>Daglig keto-logg</h1>
           <div class="version-row">
-            <p class="version-pill">v1.1 beta · build 193</p>
+            <p class="version-pill">v1.1 beta · build 194</p>
             <span class="version-info">
               <button class="version-info-trigger" type="button" aria-label="Vad är nytt i v1.1 beta?" aria-describedby="versionInfoText">Info</button>
               <span class="version-info-text" id="versionInfoText" role="tooltip">
@@ -222,6 +222,10 @@
                 Navelmått cm
                 <input id="bellyInput" name="belly" type="number" step="0.1" inputmode="decimal" />
               </label>
+              <label>
+                Blodtryck
+                <input id="bloodPressureInput" name="bloodPressure" type="text" inputmode="text" placeholder="t.ex. 125/80" />
+              </label>
             </div>
 
             <label>
@@ -244,7 +248,7 @@
             <div class="activity-grid">
               <label>
                 Vatten
-                <input id="waterInput" name="water" placeholder="t.ex. 2,5 liter" />
+                <input id="waterInput" name="water" placeholder="t.ex. 1 liter inkl. måltidsglas" />
               </label>
               <label>
                 Kaffe
@@ -377,7 +381,7 @@
                 <span class="version-info electrolyte-info">
                   <button class="version-info-trigger" id="electrolyteInfoButton" type="button" aria-label="Hur elektrolytmålen ändras över tid" aria-describedby="electrolyteInfoText">Info</button>
                   <span class="version-info-text" id="electrolyteInfoText" role="tooltip">
-                    <strong>Målen ändras från keto-start:</strong> vecka 1 har högst mål för natrium och kalium, därefter sänks de stegvis till vecka 4+. Magnesium hålls på ungefär samma nivå. Motion +30 eller +60 min från ketovecka 2 lägger till 500 mg natrium för den dagen.
+                    <strong>Vägledningen ändras från keto-start:</strong> natrium trappas ned till 2300 mg från dag 29. Nivån är en övre vägledning, inte ett mål att fylla. Kalium och magnesium följs fortsatt via maten. Motion +30 eller +60 min från dag 8 ger 500 mg natriummarginal bara om varm dag eller svettning anges i Notering.
                   </span>
                 </span>
               </span>
@@ -387,7 +391,7 @@
               <h3 class="subhead">Dagsmål i mg</h3>
               <div class="target-bars electrolyte-bars">
                 <div>
-                  <span id="sodiumTargetLabel">Natrium mot 4000 mg</span>
+                  <span id="sodiumTargetLabel">Natrium mot 3000 mg</span>
                   <div class="target-bar sodium-target"><i id="sodiumBar"></i><b></b></div>
                   <strong id="sodiumText">0 mg</strong>
                 </div>
@@ -410,13 +414,13 @@
                     <tr><th>Period</th><th>Na</th><th>Ka</th><th>Mg</th></tr>
                   </thead>
                   <tbody>
-                    <tr data-electrolyte-phase="Vecka 1"><th>Vecka 1<span class="phase-period"></span></th><td>4500-5000</td><td>3000-3500</td><td>350-400</td></tr>
-                    <tr data-electrolyte-phase="Vecka 2"><th>Vecka 2<span class="phase-period"></span></th><td>4000</td><td>2800-3200</td><td>350</td></tr>
-                    <tr data-electrolyte-phase="Vecka 3"><th>Vecka 3<span class="phase-period"></span></th><td>3500-4000</td><td>2800-3000</td><td>350</td></tr>
-                    <tr data-electrolyte-phase="Vecka 4+"><th>Vecka 4+<span class="phase-period"></span></th><td>3000</td><td>2800</td><td>350</td></tr>
+                    <tr data-electrolyte-phase="Dag 1-14"><th>Dag 1-14<span class="phase-period"></span></th><td>3000</td><td>3500</td><td>350-400</td></tr>
+                    <tr data-electrolyte-phase="Dag 15-21"><th>Dag 15-21<span class="phase-period"></span></th><td>2750</td><td>3500</td><td>350-400</td></tr>
+                    <tr data-electrolyte-phase="Dag 22-28"><th>Dag 22-28<span class="phase-period"></span></th><td>2450</td><td>3500</td><td>350-400</td></tr>
+                    <tr data-electrolyte-phase="Dag 29+"><th>Dag 29+<span class="phase-period"></span></th><td>2300</td><td>3500</td><td>350-400</td></tr>
                   </tbody>
                 </table>
-                <p class="mini-note">mg per dag. Motion +30 eller +60 min från ketovecka 2: lägg till 500 mg natrium den dagen.</p>
+                <p class="mini-note">mg per dag. Natrium är övre vägledning, inte ett fyllnadsmål. Från dag 8 ger +30/+60 motion 500 mg marginal endast när varm dag eller svettning anges i Notering.</p>
               </details>
               <details class="macro-breakdown">
                 <summary>Beräknat från</summary>
@@ -593,6 +597,6 @@
       </main>
     </div>
 
-    <script src="app.js?v=193" type="module"></script>
+    <script src="app.js?v=194" type="module"></script>
   </body>
 </html>

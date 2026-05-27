@@ -1,5 +1,5 @@
-import { parseNutritionText } from "./nutrition-parser.mjs?v=193";
-import { NUTRITION_CATALOG, NUTRITION_CATEGORIES, SOURCE_TYPES, categoryName, foodName } from "./nutrition-catalog.mjs?v=193";
+import { parseNutritionText } from "./nutrition-parser.mjs?v=194";
+import { NUTRITION_CATALOG, NUTRITION_CATEGORIES, SOURCE_TYPES, categoryName, foodName } from "./nutrition-catalog.mjs?v=194";
 
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
@@ -26,7 +26,7 @@ const legacyDefaultMacroTargets = {
   kcalTarget: 1900,
   kcalMax: 2000,
 };
-const appVersion = "193";
+const appVersion = "194";
 const appDisplayVersion = `v1.1 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -34,10 +34,10 @@ let cloudSyncTimer = null;
 let applyingRemoteData = false;
 
 const electrolyteTargetPhases = [
-  { label: "Vecka 1", days: 7, sodiumMg: [4500, 5000], potassiumMg: [3000, 3500], magnesiumMg: [350, 400] },
-  { label: "Vecka 2", days: 14, sodiumMg: [4000, 4000], potassiumMg: [2800, 3200], magnesiumMg: [350, 350] },
-  { label: "Vecka 3", days: 21, sodiumMg: [3500, 4000], potassiumMg: [2800, 3000], magnesiumMg: [350, 350] },
-  { label: "Vecka 4+", days: Infinity, sodiumMg: [3000, 3000], potassiumMg: [2800, 2800], magnesiumMg: [350, 350] },
+  { label: "Dag 1-14", days: 14, sodiumMg: [3000, 3000], potassiumMg: [3500, 3500], magnesiumMg: [350, 400] },
+  { label: "Dag 15-21", days: 21, sodiumMg: [2750, 2750], potassiumMg: [3500, 3500], magnesiumMg: [350, 400] },
+  { label: "Dag 22-28", days: 28, sodiumMg: [2450, 2450], potassiumMg: [3500, 3500], magnesiumMg: [350, 400] },
+  { label: "Dag 29+", days: Infinity, sodiumMg: [2300, 2300], potassiumMg: [3500, 3500], magnesiumMg: [350, 400] },
 ];
 
 const electrolyteKeywords = {
@@ -107,8 +107,13 @@ const electrolyteSuggestions = {
 const maxDailyOmegaRatio = 4.5;
 const preferredPeriodOmegaRatio = "2-3:1";
 const compassSodiumPlanning = Object.freeze({
-  shareBeforeDinner: 0.65,
   maxDinnerSeasoningPinches: 2,
+});
+const hydrationGuideline = Object.freeze({
+  plainWaterLitres: 1,
+  coffeeLitresPerCup: 0.2,
+  brothLitresPerGlass: 0.5,
+  topUpLitres: 0.25,
 });
 
 const compassMealTargets = Object.freeze({
@@ -158,6 +163,7 @@ const fields = {
   ketones: document.querySelector("#ketonesInput"),
   waist: document.querySelector("#waistInput"),
   belly: document.querySelector("#bellyInput"),
+  bloodPressure: document.querySelector("#bloodPressureInput"),
   notes: document.querySelector("#notesInput"),
 };
 const goalInput = document.querySelector("#goalInput");
@@ -425,6 +431,7 @@ function emptyEntry(date = todayIso()) {
     ketones: "",
     waist: "",
     belly: "",
+    bloodPressure: "",
     notes: "",
   };
 }
@@ -636,7 +643,8 @@ function electrolyteTargetsForDate(date, entries, trainingDay = false) {
 }
 
 function isTrainingEntry(entry) {
-  return ["+30 min", "+60 min"].includes(entry?.motion) || entry?.trainingDay === "Ja";
+  const sweatyMotion = ["+30 min", "+60 min"].includes(entry?.motion) && /(varm|hett|svett)/i.test(entry?.notes || "");
+  return sweatyMotion || entry?.trainingDay === "Ja";
 }
 
 function electrolyteRangeLabel(range) {
@@ -841,6 +849,23 @@ function parseLiters(text = "") {
   return Number.isFinite(value) ? value : null;
 }
 
+function explicitBrothGlasses(entry) {
+  const matches = mealText(entry).matchAll(/(\d+(?:[,.]\d+)?)?\s*glas\s+(?:\w+\s+)?buljong/gi);
+  let glasses = 0;
+  for (const match of matches) {
+    glasses += match[1] ? Number(match[1].replace(",", ".")) : 1;
+  }
+  return glasses;
+}
+
+function drinkEstimate(entry) {
+  const water = parseLiters(entry.water || "") || 0;
+  const coffeeCups = numberFromFreeText(entry.coffee);
+  const coffee = Number.isFinite(coffeeCups) ? coffeeCups * hydrationGuideline.coffeeLitresPerCup : 0;
+  const broth = explicitBrothGlasses(entry) * hydrationGuideline.brothLitresPerGlass;
+  return { water, coffee, broth, total: water + coffee + broth };
+}
+
 function hasKeywordSignal(text = "", keywords = []) {
   const normalized = ` ${String(text).toLowerCase()} `;
   return keywords.some((keyword) => normalized.includes(keyword.toLowerCase()));
@@ -860,7 +885,7 @@ function dinnerGaps(macros, entry, macroTargets) {
     protein: Math.max(0, macroTargets.proteinMin - fullProtein(macros)),
     fat: Math.max(0, macroTargets.fatMin - macros.fat),
     carbs: Math.max(0, macroTargets.carbsMax - macros.carbs),
-    sodium: Math.max(0, electrolyteTargets.sodiumMg[0] - (macros.sodiumMg || 0)),
+    sodium: 0,
     potassium: Math.max(0, electrolyteTargets.potassiumMg[0] - (macros.potassiumMg || 0)),
     magnesium: Math.max(0, electrolyteTargets.magnesiumMg[0] - (macros.magnesiumMg || 0)),
     kcalTarget: Math.max(0, macroTargets.kcalTarget - macros.kcal),
@@ -962,11 +987,7 @@ function addProposalItemIfWithinEnergy(items, item, entry, gaps) {
 }
 
 function lunchWithPlannedSodium(entry, lunch) {
-  const electrolyteTargets = electrolyteTargetsForDate(entry.date, getEntries(), isTrainingEntry(entry));
-  const sodiumCheckpoint = electrolyteTargets.sodiumMg[0] * compassSodiumPlanning.shareBeforeDinner;
-  const afterLunch = projectedDayMacros(entry, { lunch });
-  if (afterLunch.sodiumMg >= sodiumCheckpoint - 500) return lunch;
-  return `${lunch}, 1 glas buljong`;
+  return lunch;
 }
 
 function buildDinnerProposal(entry, gaps, title, food, favorAvocado = false) {
@@ -1155,9 +1176,10 @@ function compassMagnesiumNote(macros) {
 
 function compassSodiumNote(macros, entry) {
   const targets = electrolyteTargetsForDate(entry.date, getEntries(), isTrainingEntry(entry));
-  const sodiumStillMissing = Math.max(0, targets.sodiumMg[0] - (Number(macros?.sodiumMg) || 0));
-  if (sodiumStillMissing < 250) return "";
-  return `Natrium: förslaget lämnar cirka ${Math.round(sodiumStillMissing)} mg kvar eftersom Kompassen inte lägger stora saltmängder på middagen. Fördela hellre mer tidigare på dagen, till exempel med buljong till lunch.`;
+  const sodium = Math.round(Number(macros?.sodiumMg) || 0);
+  const limit = targets.sodiumMg[1];
+  if (sodium > limit) return `Natrium: förslaget ger cirka ${sodium} mg, över dagens vägledning ${limit} mg. Välj mindre saltad mat eller minska aktiv saltning.`;
+  return `Natrium: cirka ${sodium} mg i planerad dag; ${limit} mg är en övre vägledning, inte ett mål att fylla.`;
 }
 
 function breakfastRuleNote(entry) {
@@ -1197,9 +1219,11 @@ function coach(entry, macros, kind) {
   if (kind === "strikt keto") notes.push("Stark keto-dag: låg kolhydratnivå och bra fettbas.");
   if (kind === "keto-ish") notes.push("Bra riktning, men håll koll på yoghurt, bär, tomat och processat.");
   if (kind === "riskzon") notes.push("Här behöver nästa måltid bli enklare: protein plus tydlig fettkälla, minimalt med kolhydrater.");
-  if (entry.sleep === "-6 timmar") notes.push("Kort sömn kan öka hunger, så prioritera salt, vatten och enkel mat idag.");
-  if (/1 liter/i.test(entry.water || "")) {
-    notes.push(isToday ? "Vatten hittills: fyll gärna på mot 2,5-3 liter under dagen." : "Vattenintaget var lågt; sikta hellre runt 2,5-3 liter.");
+  if (entry.sleep === "-6 timmar") notes.push("Kort sömn kan öka hunger, så prioritera enkel mat och följ törst och dagsform.");
+  const drinks = drinkEstimate(entry);
+  if (drinks.total > 0) {
+    const status = isToday ? "registrerat hittills" : "registrerat";
+    notes.push(`Dryck ${status}: cirka ${decimal(drinks.total)} liter inklusive vatten, kaffe och uttryckligt angiven buljong. Vanligt vatten har riktmärket cirka ${decimal(hydrationGuideline.plainWaterLitres)} liter inklusive måltidsglas; fyll på med cirka 250 ml vid törst, värme eller svettig motion.`);
   }
   if (entry.walk === "+60 min") notes.push("Stark promenadbonus idag: bra stöd för blodsocker, energi och fettförbränning.");
   if (entry.walk === "+30 min") notes.push("Promenad registrerad: snyggt stöd för rutinen utan att behöva krångla till maten.");
@@ -1599,18 +1623,18 @@ function render(selectedDate = activeDate) {
   document.querySelector("#sodiumText").textContent = hasContent ? `${Math.round(macros.sodiumMg)} mg` : "--";
   document.querySelector("#potassiumText").textContent = hasContent ? `${Math.round(macros.potassiumMg)} mg` : "--";
   document.querySelector("#magnesiumText").textContent = hasContent ? `${Math.round(macros.magnesiumMg)} mg` : "--";
-  const phaseExtra = electrolyteTargets.trainingAddition ? " Motion: +500 mg natrium." : "";
+  const phaseExtra = electrolyteTargets.trainingAddition ? " Motion: +500 mg natriummarginal." : "";
   document.querySelector("#electrolyteNote").textContent = hasContent
-    ? `${electrolyteTargets.label} från start ${electrolyteTargets.startDate}.${phaseExtra} Elektrolyter uppskattas från kända poster.`
-    : `${electrolyteTargets.label} från start ${electrolyteTargets.startDate}.${phaseExtra} Fyll i mat och dryck för uppskattad elektrolytbild.`;
+    ? `${electrolyteTargets.label} från start ${electrolyteTargets.startDate}.${phaseExtra} Natriumvärdet är en övre vägledning. Elektrolyter uppskattas från kända poster.`
+    : `${electrolyteTargets.label} från start ${electrolyteTargets.startDate}.${phaseExtra} Natriumvärdet är en övre vägledning. Fyll i mat och dryck för uppskattad elektrolytbild.`;
   document.querySelectorAll("[data-electrolyte-phase]").forEach((row) => {
     row.classList.toggle("active-phase", row.dataset.electrolytePhase === electrolyteTargets.label);
   });
   const phasePeriods = [
-    phaseRangeText(electrolyteTargets.startDate, 0, 6),
-    phaseRangeText(electrolyteTargets.startDate, 7, 13),
+    phaseRangeText(electrolyteTargets.startDate, 0, 13),
     phaseRangeText(electrolyteTargets.startDate, 14, 20),
-    phaseRangeText(electrolyteTargets.startDate, 21, null),
+    phaseRangeText(electrolyteTargets.startDate, 21, 27),
+    phaseRangeText(electrolyteTargets.startDate, 28, null),
   ];
   document.querySelectorAll(".phase-period").forEach((period, index) => {
     period.textContent = phasePeriods[index] || "";
@@ -1742,7 +1766,7 @@ function dailyReportData(entry) {
     }),
     { kcal: 0, fat: 0, carbs: 0, protein: 0 }
   );
-  return { kind: "daily", entry, rows, totals, generatedAt: nowStamp(), version: appDisplayVersion };
+  return { kind: "daily", entry, rows, totals, drinks: drinkEstimate(entry), generatedAt: nowStamp(), version: appDisplayVersion };
 }
 
 function openDailyReport() {
@@ -1819,6 +1843,10 @@ function weeklyReportData(year, week) {
   });
   const waterAverage = average(entries.map((entry) => numberFromFreeText(entry.water)));
   const coffeeAverage = average(entries.map((entry) => numberFromFreeText(entry.coffee)));
+  const drinkAverage = average(entries.map((entry) => {
+    const drinks = drinkEstimate(entry);
+    return drinks.total > 0 ? drinks.total : NaN;
+  }));
   const bloodGlucoseAverage = average(entries.map((entry) => (entry.bloodGlucose === "" ? NaN : Number(entry.bloodGlucose))));
   const ketonesAverage = average(entries.map((entry) => (entry.ketones === "" ? NaN : Number(entry.ketones))));
   const totals = rows.reduce(
@@ -1847,6 +1875,7 @@ function weeklyReportData(year, week) {
     motionMode: mode(entries.map((entry) => entry.motion || "Ingen")),
     waterAverage,
     coffeeAverage,
+    drinkAverage,
     bloodGlucoseAverage,
     ketonesAverage,
     generatedAt: nowStamp(),

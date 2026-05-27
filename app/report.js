@@ -76,7 +76,7 @@ function render() {
 }
 
 function renderDaily(root) {
-  const { entry, rows, totals } = report;
+  const { entry, rows, totals, drinks } = report;
   document.title = `Keto-rapport ${entry.date}`;
   const mealRows = rows
     .map(
@@ -103,12 +103,14 @@ function renderDaily(root) {
     <section class="summary" aria-label="Dagens basdata">
       <div><span>Dagens vikt</span><strong>${entry.weight ? `${decimal(entry.weight)} kg` : "--"}</strong></div>
       <div><span>Sömn</span><strong>${escapeHtml(entry.sleep || "--")}</strong></div>
-      <div><span>Vatten</span><strong>${escapeHtml(entry.water || "--")}</strong></div>
+      <div><span>Vanligt vatten</span><strong>${escapeHtml(entry.water || "--")}</strong></div>
       <div><span>Kaffe</span><strong>${escapeHtml(entry.coffee || "--")}</strong></div>
+      <div><span>Dryck uppsk. totalt</span><strong>${drinks?.total ? `${decimal(drinks.total)} liter` : "--"}</strong></div>
       <div><span>Promenad</span><strong>${escapeHtml(entry.walk || "--")}</strong></div>
       <div><span>Motion</span><strong>${escapeHtml(entry.motion || "--")}</strong></div>
       <div><span>Midjemått</span><strong>${entry.waist ? `${decimal(entry.waist)} cm` : "--"}</strong></div>
       <div><span>Navelmått</span><strong>${entry.belly ? `${decimal(entry.belly)} cm` : "--"}</strong></div>
+      <div><span>Blodtryck</span><strong>${escapeHtml(entry.bloodPressure || "--")}</strong></div>
       <div><span>Blodsocker</span><strong>${entry.bloodGlucose ? `${decimal(entry.bloodGlucose)} mmol/L` : "--"}</strong></div>
       <div><span>Ketoner</span><strong>${entry.ketones ? `${decimal(entry.ketones)} mmol/L` : "--"}</strong></div>
     </section>
@@ -198,8 +200,9 @@ function renderWeekly(root) {
       <div><span>Typvärde sömn</span><strong>${escapeHtml(report.sleepMode || "--")}</strong></div>
       <div><span>Typvärde promenad</span><strong>${escapeHtml(report.walkMode || "--")}</strong></div>
       <div><span>Typvärde motion</span><strong>${escapeHtml(report.motionMode || "--")}</strong></div>
-      <div><span>Vatten/dag</span><strong>${report.waterAverage === null ? "--" : `${decimal(report.waterAverage)} liter`}</strong></div>
+      <div><span>Vanligt vatten/dag</span><strong>${report.waterAverage === null ? "--" : `${decimal(report.waterAverage)} liter`}</strong></div>
       <div><span>Kaffe/dag</span><strong>${report.coffeeAverage === null ? "--" : `${decimal(report.coffeeAverage)} koppar`}</strong></div>
+      <div><span>Dryck uppsk./dag</span><strong>${report.drinkAverage === null ? "--" : `${decimal(report.drinkAverage)} liter`}</strong></div>
       <div><span>Blodsocker snitt</span><strong>${report.bloodGlucoseAverage === null ? "--" : `${decimal(report.bloodGlucoseAverage)} mmol/L`}</strong></div>
       <div><span>Ketoner snitt</span><strong>${report.ketonesAverage === null ? "--" : `${decimal(report.ketonesAverage)} mmol/L`}</strong></div>
     </section>
@@ -235,7 +238,7 @@ function renderWeekly(root) {
           </tr>
         </tfoot>
       </table>
-      <p class="note">Måltidsmedelvärden räknas på de dagar i veckan där respektive måltidsfält har text. Vatten och kaffe räknas som medel per dag där värde är angivet.</p>
+      <p class="note">Måltidsmedelvärden räknas på de dagar i veckan där respektive måltidsfält har text. Vanligt vatten och kaffe räknas som medel per dag där värde är angivet. Dryck totalt inkluderar vatten, kaffe och uttryckligt angivna glas buljong.</p>
     </section>
     ${checkinSection}`;
 

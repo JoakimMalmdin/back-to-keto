@@ -1,4 +1,4 @@
-import { SLV_SOURCE } from "./nutrition-slv-core.mjs?v=193";
+import { SLV_SOURCE } from "./nutrition-slv-core.mjs?v=194";
 
 function profile(catalogId, slvFoodNumber, officialName, nutrients, note = "") {
   return Object.freeze({
