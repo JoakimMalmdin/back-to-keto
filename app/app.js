@@ -1,5 +1,5 @@
-import { parseNutritionText } from "./nutrition-parser.mjs?v=195";
-import { NUTRITION_CATALOG, NUTRITION_CATEGORIES, SOURCE_TYPES, categoryName, foodName } from "./nutrition-catalog.mjs?v=195";
+import { parseNutritionText } from "./nutrition-parser.mjs?v=196";
+import { NUTRITION_CATALOG, NUTRITION_CATEGORIES, SOURCE_TYPES, categoryName, foodName } from "./nutrition-catalog.mjs?v=196";
 
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
@@ -26,7 +26,7 @@ const legacyDefaultMacroTargets = {
   kcalTarget: 1900,
   kcalMax: 2000,
 };
-const appVersion = "195";
+const appVersion = "196";
 const appDisplayVersion = `v1.1 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -2125,6 +2125,49 @@ document.querySelector("#blankLinkButton").addEventListener("click", async () =>
   document.querySelector("#toolsNote").textContent = "App-länk kopierad. Den öppnar senaste publicerade versionen; lokala loggar och inställningar följer inte med länken.";
 });
 
+function backupPayload(reason = "manual") {
+  return {
+    metadata: {
+      format: "btk-backup-v1",
+      appVersion: appDisplayVersion,
+      exportedAt: new Date().toISOString(),
+      reason,
+    },
+    entries: getEntries(),
+    goalWeight: getGoalWeight(),
+    macroTargets: getMacroTargets(),
+    weeklyCheckins: getWeeklyCheckins(),
+  };
+}
+
+function backupFileStamp(date = new Date()) {
+  const pad = (value) => String(value).padStart(2, "0");
+  return [
+    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`,
+    `${pad(date.getHours())}-${pad(date.getMinutes())}-${pad(date.getSeconds())}`,
+  ].join("_");
+}
+
+function downloadBackupFile(reason = "manual") {
+  const filename = `BTK_backup_${backupFileStamp()}_build${appVersion}.json`;
+  const blob = new Blob([JSON.stringify(backupPayload(reason), null, 2)], { type: "application/json;charset=utf-8" });
+  const downloadUrl = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = downloadUrl;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 0);
+  document.querySelector("#toolsNote").textContent = `Backup nedladdad: ${filename}`;
+  return filename;
+}
+
+function continueAfterBackup(reason, actionText) {
+  const filename = downloadBackupFile(reason);
+  return window.confirm(`Backupfilen ${filename} har laddats ner. ${actionText}`);
+}
+
 function setSyncStatus(message, isError = false) {
   if (syncStatus) {
     syncStatus.textContent = message;
@@ -2248,6 +2291,10 @@ async function syncNow() {
     setSyncStatus("Skriv och spara en synkkod först.", true);
     return;
   }
+  if (!continueAfterBackup("fore-synk", "Fortsätta med synkningen?")) {
+    setSyncStatus("Synk avbruten. Lokal backup är nedladdad.");
+    return;
+  }
   setSyncStatus("Synkar...");
   await pullCloudData();
 }
@@ -2322,32 +2369,45 @@ document.querySelector("#importButton").addEventListener("click", () => {
       .filter((entry) => entry && entry.date)
       .map((entry) => ({ ...emptyEntry(entry.date), ...entry }));
     if (cleaned.length === 0) throw new Error("No dated entries");
-    saveEntries(cleaned);
-    if (imported.goalWeight) saveGoalWeight(imported.goalWeight);
-    if (imported.macroTargets) saveMacroTargets(imported.macroTargets);
-    if (imported.weeklyCheckins) saveWeeklyCheckins(imported.weeklyCheckins);
+    if (!continueAfterBackup("fore-import", "Importen ersätter lokal data i den här webbläsaren. Fortsätta?")) {
+      document.querySelector("#toolsNote").textContent = "Import avbruten. Lokal backup är nedladdad.";
+      return;
+    }
+    applyingRemoteData = true;
+    try {
+      saveEntries(cleaned);
+      if (Object.prototype.hasOwnProperty.call(imported, "goalWeight")) saveGoalWeight(imported.goalWeight);
+      if (imported.macroTargets) saveMacroTargets(imported.macroTargets);
+      if (imported.weeklyCheckins) saveWeeklyCheckins(imported.weeklyCheckins);
+    } finally {
+      applyingRemoteData = false;
+    }
     fillForm(cleaned.sort((a, b) => a.date.localeCompare(b.date)).at(-1));
     render();
-    document.querySelector("#toolsNote").textContent = "Importerad data sparad i den här browsern.";
+    document.querySelector("#toolsNote").textContent = "Importerad data sparad lokalt. Synka separat om du vill uppdatera molnet.";
   } catch {
     document.querySelector("#toolsNote").textContent = "Importen fungerade inte. Kontrollera att du klistrat in exporterad data.";
   }
 });
 
 document.querySelector("#resetButton").addEventListener("click", () => {
-  if (!window.confirm("Rensa din lokala data i den här browsern?")) return;
+  if (!continueAfterBackup("fore-rensning", "Fortsätta och rensa lokal data i den här webbläsaren?")) return;
   localStorage.removeItem(storageKey);
   localStorage.removeItem(goalKey);
   localStorage.removeItem(macroTargetsKey);
   localStorage.removeItem(weeklyCheckinsKey);
   fillForm(emptyEntry());
   render();
+  document.querySelector("#toolsNote").textContent = "Lokal data rensad. Backupfilen finns bland dina hämtade filer.";
 });
 
-document.querySelector("#exportButton").addEventListener("click", async () => {
-  const payload = JSON.stringify({ entries: getEntries(), goalWeight: getGoalWeight(), macroTargets: getMacroTargets(), weeklyCheckins: getWeeklyCheckins() }, null, 2);
-  await navigator.clipboard.writeText(payload);
-  document.querySelector("#coachLine").textContent = "Data kopierad. Den kan importeras i appen på en annan enhet.";
+document.querySelector("#downloadBackupButton").addEventListener("click", () => {
+  downloadBackupFile();
+});
+
+document.querySelector("#exportButton").addEventListener("click", () => {
+  const filename = downloadBackupFile();
+  document.querySelector("#coachLine").textContent = `Backupfil nedladdad: ${filename}`;
 });
 
 if ("serviceWorker" in navigator) {
