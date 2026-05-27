@@ -1,7 +1,7 @@
-import { SLV_CORE_RESOLVED, SLV_SOURCE } from "./nutrition-slv-core.mjs?v=192";
-import { fattyAcidProfileFor } from "./nutrition-slv-fatty-acids.mjs?v=192";
-import { slvSupplementFor } from "./nutrition-slv-supplements.mjs?v=192";
-import { USDA_SOURCE, usdaFattyAcidProfileFor } from "./nutrition-usda-fatty-acids.mjs?v=192";
+import { SLV_CORE_RESOLVED, SLV_SOURCE } from "./nutrition-slv-core.mjs?v=193";
+import { fattyAcidProfileFor } from "./nutrition-slv-fatty-acids.mjs?v=193";
+import { slvSupplementFor } from "./nutrition-slv-supplements.mjs?v=193";
+import { USDA_SOURCE, usdaFattyAcidProfileFor } from "./nutrition-usda-fatty-acids.mjs?v=193";
 
 export const SUPPORTED_LOCALES = Object.freeze(["sv-SE", "en-GB"]);
 export const DEFAULT_LOCALE = "sv-SE";

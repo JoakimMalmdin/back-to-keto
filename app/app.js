@@ -1,5 +1,5 @@
-import { parseNutritionText } from "./nutrition-parser.mjs?v=192";
-import { NUTRITION_CATALOG, NUTRITION_CATEGORIES, SOURCE_TYPES, categoryName, foodName } from "./nutrition-catalog.mjs?v=192";
+import { parseNutritionText } from "./nutrition-parser.mjs?v=193";
+import { NUTRITION_CATALOG, NUTRITION_CATEGORIES, SOURCE_TYPES, categoryName, foodName } from "./nutrition-catalog.mjs?v=193";
 
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
@@ -26,7 +26,7 @@ const legacyDefaultMacroTargets = {
   kcalTarget: 1900,
   kcalMax: 2000,
 };
-const appVersion = "192";
+const appVersion = "193";
 const appDisplayVersion = `v1.1 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -106,6 +106,10 @@ const electrolyteSuggestions = {
 
 const maxDailyOmegaRatio = 4.5;
 const preferredPeriodOmegaRatio = "2-3:1";
+const compassSodiumPlanning = Object.freeze({
+  shareBeforeDinner: 0.65,
+  maxDinnerSeasoningPinches: 2,
+});
 
 const compassMealTargets = Object.freeze({
   breakfast: { label: "Frukost", protein: 45, fat: 35, carbs: 5, kcal: 530 },
@@ -957,6 +961,14 @@ function addProposalItemIfWithinEnergy(items, item, entry, gaps) {
   return candidate;
 }
 
+function lunchWithPlannedSodium(entry, lunch) {
+  const electrolyteTargets = electrolyteTargetsForDate(entry.date, getEntries(), isTrainingEntry(entry));
+  const sodiumCheckpoint = electrolyteTargets.sodiumMg[0] * compassSodiumPlanning.shareBeforeDinner;
+  const afterLunch = projectedDayMacros(entry, { lunch });
+  if (afterLunch.sodiumMg >= sodiumCheckpoint - 500) return lunch;
+  return `${lunch}, 1 glas buljong`;
+}
+
 function buildDinnerProposal(entry, gaps, title, food, favorAvocado = false) {
   const items = [];
   const baseMacros = proposalMacros([`100 g ${food}`], entry.date);
@@ -992,17 +1004,24 @@ function buildDinnerProposal(entry, gaps, title, food, favorAvocado = false) {
   }
 
   const potassiumAfterMeal = Math.max(0, gaps.potassium - macros.potassiumMg);
+  let seasoningPinches = 0;
   if (potassiumAfterMeal >= 180) {
-    const seltinPinches = Math.min(4, Math.ceil(potassiumAfterMeal / 252));
+    const seltinPinches = Math.min(1, Math.ceil(potassiumAfterMeal / 252));
     items.push(`${seltinPinches} krm seltin`);
+    seasoningPinches += seltinPinches;
     macros = proposalMacros(items, entry.date);
     sodiumStillNeeded = Math.max(0, gaps.sodium - macros.sodiumMg);
   }
 
   if (sodiumStillNeeded >= 300) {
-    const saltPinches = Math.max(1, Math.min(5, Math.round(sodiumStillNeeded / 472)));
-    items.push(`${saltPinches} krm salt`);
-    macros = proposalMacros(items, entry.date);
+    const saltPinches = Math.min(
+      compassSodiumPlanning.maxDinnerSeasoningPinches - seasoningPinches,
+      Math.max(1, Math.round(sodiumStillNeeded / 472)),
+    );
+    if (saltPinches > 0) {
+      items.push(`${saltPinches} krm salt`);
+      macros = proposalMacros(items, entry.date);
+    }
   }
 
   return {
@@ -1060,7 +1079,8 @@ function dinnerCompass(entry) {
 
   if (entry.breakfast?.trim() && !entry.lunch?.trim()) {
     const combinations = [];
-    for (const lunch of compassLunchCandidates) {
+    for (const originalLunch of compassLunchCandidates) {
+      const lunch = lunchWithPlannedSodium(entry, originalLunch);
       const lunchMacros = mealProposalMacros(lunch, entry.date);
       const afterLunch = projectedDayMacros(entry, { lunch });
       const gaps = dinnerGaps(afterLunch, entry, targets);
@@ -1083,7 +1103,7 @@ function dinnerCompass(entry) {
       ],
       projectedDay: best.day,
       targets,
-      note: [breakfastRuleNote(entry), compassOmegaNote(best.day), compassMagnesiumNote(best.day)].filter(Boolean).join(" "),
+      note: [breakfastRuleNote(entry), compassOmegaNote(best.day), compassSodiumNote(best.day, entry), compassMagnesiumNote(best.day)].filter(Boolean).join(" "),
     };
   }
 
@@ -1109,6 +1129,7 @@ function dinnerCompass(entry) {
       collagen > 0 ? `Kollagen (${decimal(collagen)} g) räknas inte in som fullvärdigt protein.` : "",
       breakfastRuleNote(entry),
       compassOmegaNote(best.day),
+      compassSodiumNote(best.day, entry),
       compassMagnesiumNote(best.day),
     ].filter(Boolean).join(" ");
     return {
@@ -1130,6 +1151,13 @@ function compassMagnesiumNote(macros) {
     return `Magnesium: dagstotalen blir cirka ${Math.round(magnesium)} mg. Överväg 1 magnesiumtablett 200 mg; då hamnar du omkring ${Math.round(magnesium + 200)} mg.`;
   }
   return `Magnesium: dagstotalen blir cirka ${Math.round(magnesium)} mg. Komplettera varsamt mot riktmärket 350-400 mg.`;
+}
+
+function compassSodiumNote(macros, entry) {
+  const targets = electrolyteTargetsForDate(entry.date, getEntries(), isTrainingEntry(entry));
+  const sodiumStillMissing = Math.max(0, targets.sodiumMg[0] - (Number(macros?.sodiumMg) || 0));
+  if (sodiumStillMissing < 250) return "";
+  return `Natrium: förslaget lämnar cirka ${Math.round(sodiumStillMissing)} mg kvar eftersom Kompassen inte lägger stora saltmängder på middagen. Fördela hellre mer tidigare på dagen, till exempel med buljong till lunch.`;
 }
 
 function breakfastRuleNote(entry) {
