@@ -1,5 +1,5 @@
-import { parseNutritionText } from "./nutrition-parser.mjs?v=194";
-import { NUTRITION_CATALOG, NUTRITION_CATEGORIES, SOURCE_TYPES, categoryName, foodName } from "./nutrition-catalog.mjs?v=194";
+import { parseNutritionText } from "./nutrition-parser.mjs?v=195";
+import { NUTRITION_CATALOG, NUTRITION_CATEGORIES, SOURCE_TYPES, categoryName, foodName } from "./nutrition-catalog.mjs?v=195";
 
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
@@ -26,7 +26,7 @@ const legacyDefaultMacroTargets = {
   kcalTarget: 1900,
   kcalMax: 2000,
 };
-const appVersion = "194";
+const appVersion = "195";
 const appDisplayVersion = `v1.1 beta · build ${appVersion}`;
 let activeDate = "";
 let supabaseClient = null;
@@ -104,7 +104,7 @@ const electrolyteSuggestions = {
   magnesium: "magnesium: pumpakärnor, mandel, spenat, avokado, lax eller tillskott",
 };
 
-const maxDailyOmegaRatio = 4.5;
+const maxDailyOmegaRatio = 4;
 const preferredPeriodOmegaRatio = "2-3:1";
 const compassSodiumPlanning = Object.freeze({
   maxDinnerSeasoningPinches: 2,
@@ -192,6 +192,12 @@ const weeklyCheckinButton = document.querySelector("#weeklyCheckinButton");
 const saveWeeklyCheckinButton = document.querySelector("#saveWeeklyCheckinButton");
 const weeklyCheckinPanel = document.querySelector("#weeklyCheckinPanel");
 const weeklyCheckinStatus = document.querySelector("#weeklyCheckinStatus");
+const weeklyCheckinWeekInput = document.querySelector("#checkinWeekInput");
+const weeklyCheckinLabels = {
+  averageWeight: document.querySelector("#checkinAverageWeightLabel"),
+  waist: document.querySelector("#checkinWaistLabel"),
+  belly: document.querySelector("#checkinBellyLabel"),
+};
 const weeklyCheckinInputs = {
   averageWeight: document.querySelector("#checkinAverageWeightInput"),
   waist: document.querySelector("#checkinWaistInput"),
@@ -470,6 +476,11 @@ function currentWeekKey() {
   return weekInputFromDate(fields.date?.value || activeDate || todayIso());
 }
 
+function selectedCheckinWeekKey() {
+  const weekKey = weeklyCheckinWeekInput?.value?.trim() || "";
+  return weekKey || currentWeekKey();
+}
+
 function numberInputValue(input) {
   const value = input?.value?.trim() || "";
   return value ? Number(value) : "";
@@ -486,7 +497,12 @@ function weeklyAverageWeight(weekKey = currentWeekKey()) {
   return weeklyAverageField("weight", weekKey);
 }
 
-function fillWeeklyCheckin(weekKey = currentWeekKey()) {
+function fillWeeklyCheckin(weekKey = selectedCheckinWeekKey()) {
+  const parsedWeek = parseWeekInput(weekKey);
+  const weekLabel = parsedWeek ? parsedWeek.week : "--";
+  if (weeklyCheckinLabels.averageWeight) weeklyCheckinLabels.averageWeight.textContent = `Medelvikt vecka ${weekLabel} kg`;
+  if (weeklyCheckinLabels.waist) weeklyCheckinLabels.waist.textContent = `Medelmidjemått vecka ${weekLabel} cm`;
+  if (weeklyCheckinLabels.belly) weeklyCheckinLabels.belly.textContent = `Medelnavelmått vecka ${weekLabel} cm`;
   const checkin = getWeeklyCheckins()[weekKey] || {};
   const averageWeight = weeklyAverageWeight(weekKey);
   const averageWaist = weeklyAverageField("waist", weekKey);
@@ -507,7 +523,11 @@ function fillWeeklyCheckin(weekKey = currentWeekKey()) {
 }
 
 function saveCurrentWeeklyCheckin() {
-  const weekKey = currentWeekKey();
+  const weekKey = selectedCheckinWeekKey();
+  if (!parseWeekInput(weekKey)) {
+    setSaveStatus("Ange vecka som ÅÅÅÅ-VV, t.ex. 2026-22.", true);
+    return;
+  }
   const checkins = getWeeklyCheckins();
   const averageWaist = weeklyAverageField("waist", weekKey);
   const averageBelly = weeklyAverageField("belly", weekKey);
@@ -1304,7 +1324,7 @@ function renderMacroBreakdown(macros, hasContent) {
     .sort(foodItemSort)
     .map((item) => {
       const count = Number.isInteger(item.count) ? item.count : decimal(item.count);
-      return `<div><strong>${item.label}</strong><span class="macro-count">${item.amountLabel || `x ${count}`}</span><span class="macro-value">${decimal(item.fat)} g F</span><span class="macro-value">${decimal(item.protein)} g P</span><span class="macro-value">${decimal(item.carbs)} g K</span></div>`;
+      return `<div><strong>${item.label}</strong><span class="macro-count">${item.amountLabel || `x ${count}`}</span><span class="macro-value">${decimal(item.fat)} g F</span><span class="macro-value">${decimal(item.protein)} g P</span><span class="macro-value">${decimal(item.carbs)} g K</span><span class="macro-value">${decimal(item.omega3 || 0)} g O3</span><span class="macro-value">${decimal(item.omega6 || 0)} g O6</span></div>`;
     })
     .join("");
   breakdown.innerHTML = `${unresolvedText ? `<p class="measure-warning">${unresolvedText}</p>` : ""}${rows}`;
@@ -1703,7 +1723,7 @@ function saveCurrentEntry(options = {}) {
   saveEntries(entries);
   render(entry.date);
   fillForm(entry);
-  if (weeklyCheckinPanel && !weeklyCheckinPanel.hidden) fillWeeklyCheckin();
+  if (weeklyCheckinPanel && !weeklyCheckinPanel.hidden) fillWeeklyCheckin(selectedCheckinWeekKey());
   if (options.silent) return;
   setSaveStatus(`Sparat ${nowStamp()} · dag ${entry.date}`);
 }
@@ -1942,9 +1962,16 @@ weeklyCheckinButton?.addEventListener("click", () => {
   const willOpen = weeklyCheckinPanel.hidden;
   weeklyCheckinPanel.hidden = !willOpen;
   weeklyCheckinButton?.classList.toggle("active", willOpen);
-  if (willOpen) fillWeeklyCheckin();
+  if (willOpen) {
+    if (weeklyCheckinWeekInput && !weeklyCheckinWeekInput.value.trim()) {
+      weeklyCheckinWeekInput.value = currentWeekKey();
+    }
+    fillWeeklyCheckin();
+    weeklyCheckinWeekInput?.focus();
+  }
 });
 saveWeeklyCheckinButton?.addEventListener("click", saveCurrentWeeklyCheckin);
+weeklyCheckinWeekInput?.addEventListener("change", () => fillWeeklyCheckin());
 electrolyteInfoButton?.addEventListener("click", (event) => {
   event.preventDefault();
   event.stopPropagation();
@@ -2039,7 +2066,7 @@ fields.date.addEventListener("change", () => {
   const date = fields.date.value || todayIso();
   const existing = findEntry(date);
   fillForm(existing || emptyEntry(date));
-  if (weeklyCheckinPanel && !weeklyCheckinPanel.hidden) fillWeeklyCheckin();
+  if (weeklyCheckinPanel && !weeklyCheckinPanel.hidden) fillWeeklyCheckin(selectedCheckinWeekKey());
   updateTrendFilterState();
   render(date);
   setSaveStatus(existing ? `Visar sparad rad för ${date}` : `Ny tom rad för ${date}`);

@@ -9,13 +9,13 @@
     <title>Back to Keto</title>
     <script>
       if (window.location.protocol === "file:") {
-        window.location.replace("https://joakimmalmdin.github.io/back-to-keto/app/?cache=194");
+        window.location.replace("https://joakimmalmdin.github.io/back-to-keto/app/?cache=195");
       }
     </script>
-    <link rel="manifest" href="manifest.webmanifest?v=194" />
+    <link rel="manifest" href="manifest.webmanifest?v=195" />
     <link rel="icon" href="icon.svg?v=146" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="apple-touch-icon.png?v=146" />
-    <link rel="stylesheet" href="styles.css?v=194" />
+    <link rel="stylesheet" href="styles.css?v=195" />
   </head>
   <body>
     <div class="app-shell">
@@ -24,7 +24,7 @@
           <p class="eyebrow">Back to Keto</p>
           <h1>Daglig keto-logg</h1>
           <div class="version-row">
-            <p class="version-pill">v1.1 beta · build 194</p>
+            <p class="version-pill">v1.1 beta · build 195</p>
             <span class="version-info">
               <button class="version-info-trigger" type="button" aria-label="Vad är nytt i v1.1 beta?" aria-describedby="versionInfoText">Info</button>
               <span class="version-info-text" id="versionInfoText" role="tooltip">
@@ -89,17 +89,21 @@
               <button class="text-button report-inline-button" id="weeklyCheckinButton" type="button">Vecko<wbr>incheckning</button>
             </div>
             <div class="weekly-checkin-panel" id="weeklyCheckinPanel" hidden>
+              <label class="checkin-week-field">
+                Vecka
+                <input id="checkinWeekInput" type="text" inputmode="numeric" placeholder="t.ex. 2026-22" />
+              </label>
               <div class="three-col">
                 <label>
-                  Medelvikt aktuell vecka kg
+                  <span id="checkinAverageWeightLabel">Medelvikt vecka -- kg</span>
                   <input id="checkinAverageWeightInput" type="text" readonly />
                 </label>
                 <label>
-                  Medelmidja aktuell vecka cm
+                  <span id="checkinWaistLabel">Medelmidjemått vecka -- cm</span>
                   <input id="checkinWaistInput" type="text" readonly />
                 </label>
                 <label>
-                  Medelnavelmått aktuell vecka cm
+                  <span id="checkinBellyLabel">Medelnavelmått vecka -- cm</span>
                   <input id="checkinBellyInput" type="text" readonly />
                 </label>
               </div>
@@ -256,8 +260,10 @@
               </label>
               <label class="omega-ratio-field">
                 Omega 6/Omega 3
-                <output id="omegaRatioOutput" aria-live="polite">--</output>
-                <small id="omegaTotalsOutput">O3 -- · O6 --</small>
+                <span class="omega-display">
+                  <output id="omegaRatioOutput" aria-live="polite">--</output>
+                  <small id="omegaTotalsOutput">O3 -- · O6 --</small>
+                </span>
               </label>
               <fieldset class="segmented-field walk-field">
                 <legend>Promenad (över 11 min/km)</legend>
@@ -489,7 +495,7 @@
                 <span>Periodkvot Omega 6/Omega 3</span>
                 <strong id="trendOmegaRatio">--</strong>
                 <small id="trendOmegaTotals">Summerat O3 -- · O6 --</small>
-                <p>Riktmärke över tid: omkring 2-3:1. Dagsgräns: högst 4,5:1.</p>
+                <p>Riktmärke över tid: omkring 2-3:1. Dagsgräns: högst 4:1.</p>
               </div>
               <details class="omega-contributors">
                 <summary>Visa största omega-bidrag i perioden</summary>
@@ -597,6 +603,6 @@
       </main>
     </div>
 
-    <script src="app.js?v=194" type="module"></script>
+    <script src="app.js?v=195" type="module"></script>
   </body>
 </html>

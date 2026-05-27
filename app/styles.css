@@ -401,6 +401,8 @@ main {
 }
 
 .compact-metric {
+  display: flex;
+  flex-direction: column;
   grid-column: span 2;
   min-height: 76px;
   padding: 12px 10px;
@@ -425,7 +427,8 @@ main {
 }
 
 .compact-metric strong {
-  margin-top: 7px;
+  margin-top: auto;
+  padding-top: 7px;
   font-size: 1.08rem;
 }
 
@@ -501,6 +504,10 @@ main {
   display: none;
 }
 
+.checkin-week-field {
+  width: calc((100% - 16px) / 3);
+}
+
 .top-fields {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -533,6 +540,8 @@ main {
 
 .activity-grid .segmented-field {
   align-self: start;
+  gap: 4px;
+  font-size: 0.8rem;
 }
 
 .activity-grid .walk-field {
@@ -550,12 +559,19 @@ main {
   grid-row: 1;
 }
 
-.omega-ratio-field output {
+.activity-grid > label input,
+.activity-grid .segmented-control,
+.omega-display {
+  min-height: 44px;
+  height: 44px;
+}
+
+.omega-display {
   display: flex;
   align-items: center;
+  gap: 8px;
   width: 100%;
   min-width: 0;
-  min-height: 40px;
   padding: 8px 9px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -565,12 +581,19 @@ main {
   font-weight: 400;
 }
 
+.omega-ratio-field output {
+  flex: 0 0 auto;
+  color: var(--ink);
+  font-size: 1rem;
+}
+
 .omega-ratio-field small {
-  display: block;
-  margin-top: 4px;
+  display: inline-block;
+  min-width: 0;
   color: var(--muted);
   font-size: 0.74rem;
   font-weight: 400;
+  line-height: 1.15;
 }
 
 .body-measure-row {
@@ -631,13 +654,24 @@ input[type="date"] {
   display: block;
   appearance: none;
   -webkit-appearance: none;
+  height: 40px;
+  line-height: 22px;
   text-align: left;
 }
 
 input[type="date"]::-webkit-date-and-time-value {
+  display: flex;
+  align-items: center;
+  height: 100%;
   margin: 0;
-  min-height: 1.2em;
+  min-height: 100%;
   text-align: left;
+}
+
+.health-row input,
+.health-row select {
+  height: 40px;
+  min-height: 40px;
 }
 
 textarea {
@@ -941,6 +975,9 @@ textarea {
 }
 
 .trend-average {
+  display: flex;
+  flex-direction: column;
+  min-height: 55px;
   min-width: 0;
   padding: 6px 7px;
   border: 1px solid var(--line);
@@ -959,7 +996,8 @@ textarea {
 
 .trend-average strong {
   display: block;
-  margin-top: 4px;
+  margin-top: auto;
+  padding-top: 4px;
   color: var(--ink);
   font-size: 0.86rem;
   font-weight: 400;
@@ -1223,7 +1261,15 @@ textarea {
   margin-top: 10px;
 }
 
-#macroBreakdown > div,
+#macroBreakdown > div {
+  display: grid;
+  grid-template-columns: minmax(110px, 1fr) minmax(112px, max-content) repeat(5, minmax(49px, 61px));
+  gap: 6px;
+  align-items: center;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
 #electrolyteBreakdown > div {
   display: grid;
   grid-template-columns: minmax(110px, 1fr) minmax(112px, max-content) repeat(3, minmax(54px, 64px));
@@ -1516,6 +1562,10 @@ textarea {
 
   .three-col {
     grid-template-columns: 1fr;
+  }
+
+  .checkin-week-field {
+    width: 100%;
   }
 
   .body-measure-row {

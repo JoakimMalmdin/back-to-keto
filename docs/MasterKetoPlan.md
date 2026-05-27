@@ -184,7 +184,7 @@ Seltin ar inte bara krydda utan ett koncentrerat kaliumbidrag:
 
 - Frukostplanen ska innehalla `1 tsk Möller's Tran` nar denna regel ar
   implementerad och anvands.
-- Dagsmenyn ska sikta pa en O6/O3-kvot om hogst `4,5:1`.
+- Dagsmenyn ska sikta pa en O6/O3-kvot om hogst `4:1`.
 - Periodmedel ska over tid helst ligga omkring `2--3:1`.
 - Appen bor visa bade totala gram O3 och O6, periodkvot och viktigaste
   bidragande livsmedel med tydlig kallmarkering.
@@ -216,8 +216,8 @@ Beslutat preliminart personligt riktmarke:
   vattenglasen till lunch och middag.
 - Normal grundrytm omfattar dessutom `0,5 liter buljong` samt kaffe enligt
   faktiskt registrerat intag.
-- Med tva vattenglas a `250 ml`, `0,5 liter buljong` och `3--4` koppar kaffe
-  a `200 ml` blir total dryck cirka `2,1--2,3 liter` nar vattenmalet nas,
+- Med tva vattenglas a `200 ml`, `0,5 liter buljong` och `3--4` koppar kaffe
+  a `200 ml` blir total dryck cirka `2,0--2,2 liter` nar vattenmalet nas,
   fore vatska fran maten.
 - Vid torst, varm dag eller svettig motion: fyll pa med cirka `250 ml` i
   taget och bedom behovet, i stallet for att automatiskt hoja dagsmalet.
