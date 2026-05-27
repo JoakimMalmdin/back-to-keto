@@ -1,5 +1,5 @@
-import { parseNutritionText } from "./nutrition-parser.mjs?v=196";
-import { NUTRITION_CATALOG, NUTRITION_CATEGORIES, SOURCE_TYPES, categoryName, foodName } from "./nutrition-catalog.mjs?v=196";
+import { parseNutritionText } from "./nutrition-parser.mjs?v=197";
+import { NUTRITION_CATALOG, NUTRITION_CATEGORIES, SOURCE_TYPES, categoryName, foodName } from "./nutrition-catalog.mjs?v=197";
 
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
@@ -26,8 +26,9 @@ const legacyDefaultMacroTargets = {
   kcalTarget: 1900,
   kcalMax: 2000,
 };
-const appVersion = "196";
+const appVersion = "197";
 const appDisplayVersion = `v1.1 beta · build ${appVersion}`;
+const syncTimeoutMs = 10000;
 let activeDate = "";
 let supabaseClient = null;
 let cloudSyncTimer = null;
@@ -113,7 +114,8 @@ const hydrationGuideline = Object.freeze({
   plainWaterLitres: 1,
   coffeeLitresPerCup: 0.2,
   brothLitresPerGlass: 0.5,
-  topUpLitres: 0.25,
+  waterLitresPerGlass: 0.2,
+  topUpLitres: 0.2,
 });
 
 const compassMealTargets = Object.freeze({
@@ -169,6 +171,12 @@ const fields = {
 const goalInput = document.querySelector("#goalInput");
 const omegaRatioOutput = document.querySelector("#omegaRatioOutput");
 const omegaTotalsOutput = document.querySelector("#omegaTotalsOutput");
+const hydrationEstimateOutput = document.querySelector("#hydrationEstimateOutput");
+const mealNutritionSummaries = {
+  breakfast: document.querySelector("#breakfastNutritionSummary"),
+  lunch: document.querySelector("#lunchNutritionSummary"),
+  dinner: document.querySelector("#dinnerNutritionSummary"),
+};
 const macroTargetInputs = {
   proteinMin: document.querySelector("#targetProteinMinInput"),
   proteinMax: document.querySelector("#targetProteinMaxInput"),
@@ -840,6 +848,30 @@ function estimateMasterMacros(entry) {
   };
 }
 
+function mealNutritionSummaryText(macros) {
+  return `[Fett ${decimal(macros.fat || 0)} g · Protein ${decimal(macros.protein || 0)} g · Kolh. ${decimal(macros.carbs || 0)} g · Na ${Math.round(macros.sodiumMg || 0)} mg · Ka ${Math.round(macros.potassiumMg || 0)} mg · Mg ${Math.round(macros.magnesiumMg || 0)} mg · O6/O3 ${omegaRatioLabel(macros)}]`;
+}
+
+function renderMealNutritionSummaries(entry) {
+  for (const [key, element] of Object.entries(mealNutritionSummaries)) {
+    if (!element) continue;
+    const text = String(entry?.[key] || "").trim();
+    if (!text) {
+      element.textContent = "[Fett -- · Protein -- · Kolh. -- · Na -- · Ka -- · Mg -- · O6/O3 --]";
+      continue;
+    }
+    const mealEntry = emptyEntry(entry.date || todayIso());
+    mealEntry[key] = text;
+    const macros = estimateMacros(mealEntry);
+    if (macros.unresolvedMeasures?.length && macros.items.length === 0) {
+      element.textContent = "[Inte beräknat: kontrollera mängdangivelse]";
+      continue;
+    }
+    const partial = macros.unresolvedMeasures?.length ? " · delvis beräknat" : "";
+    element.textContent = `${mealNutritionSummaryText(macros).slice(0, -1)}${partial}]`;
+  }
+}
+
 function partialEntry(entry, keys) {
   const partial = emptyEntry(entry.date || todayIso());
   for (const key of keys) {
@@ -870,7 +902,7 @@ function parseLiters(text = "") {
 }
 
 function explicitBrothGlasses(entry) {
-  const matches = mealText(entry).matchAll(/(\d+(?:[,.]\d+)?)?\s*glas\s+(?:\w+\s+)?buljong/gi);
+  const matches = hydrationMealText(entry).matchAll(/(\d+(?:[,.]\d+)?)?\s*glas\s+(?:\w+\s+)?buljong/gi);
   let glasses = 0;
   for (const match of matches) {
     glasses += match[1] ? Number(match[1].replace(",", ".")) : 1;
@@ -878,12 +910,57 @@ function explicitBrothGlasses(entry) {
   return glasses;
 }
 
+function hydrationMealText(entry) {
+  return [entry.breakfast, entry.lunch, entry.dinner, entry.extras].filter(Boolean).join("\n");
+}
+
+function explicitWaterGlasses(entry) {
+  const matches = hydrationMealText(entry).matchAll(/(\d+(?:[,.]\d+)?)?\s*glas\s+(?:\w+\s+)?vatten\b/gi);
+  let glasses = 0;
+  for (const match of matches) {
+    glasses += match[1] ? Number(match[1].replace(",", ".")) : 1;
+  }
+  return glasses;
+}
+
+function explicitWaterLitres(entry) {
+  let litres = 0;
+  for (const match of hydrationMealText(entry).matchAll(/(\d+(?:[,.]\d+)?)\s*(liter|l|dl|cl|ml)\s+(?:\w+\s+)?vatten\b/gi)) {
+    const amount = Number(match[1].replace(",", "."));
+    const unit = match[2].toLowerCase();
+    const multiplier = unit === "liter" || unit === "l" ? 1 : unit === "dl" ? 0.1 : unit === "cl" ? 0.01 : 0.001;
+    litres += amount * multiplier;
+  }
+  return litres;
+}
+
+function explicitMealCoffeeCups(entry) {
+  const text = hydrationMealText(entry);
+  let cups = 0;
+  for (const match of text.matchAll(/(\d+(?:[,.]\d+)?)?\s*(?:kopp|koppar)\s+(?:\w+\s+)?kaffe\b/gi)) {
+    cups += match[1] ? Number(match[1].replace(",", ".")) : 1;
+  }
+  for (const match of text.matchAll(/\bkaffe\s*(\d+(?:[,.]\d+)?)\s*(?:kopp|koppar)\b/gi)) {
+    cups += Number(match[1].replace(",", "."));
+  }
+  return cups;
+}
+
 function drinkEstimate(entry) {
-  const water = parseLiters(entry.water || "") || 0;
-  const coffeeCups = numberFromFreeText(entry.coffee);
-  const coffee = Number.isFinite(coffeeCups) ? coffeeCups * hydrationGuideline.coffeeLitresPerCup : 0;
+  const legacyWater = parseLiters(entry.water || "") || 0;
+  const mealWater = explicitWaterLitres(entry) + explicitWaterGlasses(entry) * hydrationGuideline.waterLitresPerGlass;
+  const coffeeCups = (numberFromFreeText(entry.coffee) || 0) + explicitMealCoffeeCups(entry);
+  const coffee = coffeeCups > 0 ? coffeeCups * hydrationGuideline.coffeeLitresPerCup : 0;
   const broth = explicitBrothGlasses(entry) * hydrationGuideline.brothLitresPerGlass;
-  return { water, coffee, broth, total: water + coffee + broth };
+  return { legacyWater, mealWater, coffee, broth, total: legacyWater + mealWater + coffee + broth };
+}
+
+function renderHydrationEstimate(entry) {
+  if (!hydrationEstimateOutput) return;
+  const drinks = drinkEstimate(entry);
+  hydrationEstimateOutput.textContent = drinks.total > 0
+    ? `${decimal(drinks.total)} liter`
+    : "-- liter";
 }
 
 function hasKeywordSignal(text = "", keywords = []) {
@@ -1243,7 +1320,7 @@ function coach(entry, macros, kind) {
   const drinks = drinkEstimate(entry);
   if (drinks.total > 0) {
     const status = isToday ? "registrerat hittills" : "registrerat";
-    notes.push(`Dryck ${status}: cirka ${decimal(drinks.total)} liter inklusive vatten, kaffe och uttryckligt angiven buljong. Vanligt vatten har riktmärket cirka ${decimal(hydrationGuideline.plainWaterLitres)} liter inklusive måltidsglas; fyll på med cirka 250 ml vid törst, värme eller svettig motion.`);
+    notes.push(`Dryck ${status}: cirka ${decimal(drinks.total)} liter inklusive registrerat vatten, kaffe och buljong. Riktmärket för vanligt vatten är cirka ${decimal(hydrationGuideline.plainWaterLitres)} liter inklusive måltidsglas; fyll på med cirka 200 ml vid törst, värme eller svettig motion.`);
   }
   if (entry.walk === "+60 min") notes.push("Stark promenadbonus idag: bra stöd för blodsocker, energi och fettförbränning.");
   if (entry.walk === "+30 min") notes.push("Promenad registrerad: snyggt stöd för rutinen utan att behöva krångla till maten.");
@@ -1553,6 +1630,8 @@ function render(selectedDate = activeDate) {
   activeDate = latest.date;
   const hasContent = hasEntryContent(latest);
   const macros = estimateMacros(latest);
+  renderMealNutritionSummaries(latest);
+  renderHydrationEstimate(latest);
   const kind = hasContent ? classify(latest, macros) : "ny logg";
   const startWeight = baselineWeight(entries);
   const startDate = entries[0]?.date || latest.date || todayIso();
@@ -1757,7 +1836,7 @@ function mealReportRows(entry) {
     ["Frukost", "breakfast"],
     ["Lunch", "lunch"],
     ["Middag", "dinner"],
-    ["Övrigt matintag", "extras"],
+    ["Övrig mat och dryck", "extras"],
   ];
   return meals.map(([label, key]) => {
     const text = entry[key] || "";
@@ -1842,7 +1921,7 @@ function weeklyReportData(year, week) {
     ["Frukost", "breakfast"],
     ["Lunch", "lunch"],
     ["Middag", "dinner"],
-    ["Övrigt matintag", "extras"],
+    ["Övrig mat och dryck", "extras"],
   ];
   const rows = meals.map(([label, key]) => {
     const macros = entries
@@ -2075,6 +2154,12 @@ fields.date.addEventListener("change", () => {
 form.addEventListener("input", (event) => {
   if (event.target === goalInput) return;
   if (Object.values(macroTargetInputs).includes(event.target)) return;
+  if ([fields.breakfast, fields.lunch, fields.dinner].includes(event.target)) {
+    renderMealNutritionSummaries(formEntry());
+  }
+  if ([fields.breakfast, fields.lunch, fields.dinner, fields.extras, fields.coffee].includes(event.target)) {
+    renderHydrationEstimate(formEntry());
+  }
   queueAutosave();
 });
 
@@ -2265,21 +2350,40 @@ async function pullCloudData() {
 }
 
 async function supabaseRpc(functionName, payload) {
-  const response = await fetch(`${supabaseClient.url}/rest/v1/rpc/${functionName}`, {
-    method: "POST",
-    headers: {
-      apikey: supabaseClient.anonKey,
-      authorization: `Bearer ${supabaseClient.anonKey}`,
-      "content-type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
-  const text = await response.text();
-  const data = text ? JSON.parse(text) : null;
-  if (!response.ok) {
-    return { data: null, error: { message: data?.message || response.statusText } };
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), syncTimeoutMs);
+  try {
+    const response = await fetch(`${supabaseClient.url}/rest/v1/rpc/${functionName}`, {
+      method: "POST",
+      headers: {
+        apikey: supabaseClient.anonKey,
+        authorization: `Bearer ${supabaseClient.anonKey}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+    const text = await response.text();
+    let data = null;
+    if (text) {
+      try {
+        data = JSON.parse(text);
+      } catch {
+        data = { message: text };
+      }
+    }
+    if (!response.ok) {
+      return { data: null, error: { message: data?.message || response.statusText } };
+    }
+    return { data, error: null };
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      return { data: null, error: { message: "Synkningen tog för lång tid. Försök igen." } };
+    }
+    return { data: null, error: { message: `Nätverksfel: ${error?.message || "okänt fel"}.` } };
+  } finally {
+    window.clearTimeout(timeout);
   }
-  return { data, error: null };
 }
 
 async function syncNow() {

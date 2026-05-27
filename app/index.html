@@ -9,13 +9,13 @@
     <title>Back to Keto</title>
     <script>
       if (window.location.protocol === "file:") {
-        window.location.replace("https://joakimmalmdin.github.io/back-to-keto/app/?cache=196");
+        window.location.replace("https://joakimmalmdin.github.io/back-to-keto/app/?cache=197");
       }
     </script>
-    <link rel="manifest" href="manifest.webmanifest?v=196" />
+    <link rel="manifest" href="manifest.webmanifest?v=197" />
     <link rel="icon" href="icon.svg?v=146" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="apple-touch-icon.png?v=146" />
-    <link rel="stylesheet" href="styles.css?v=196" />
+    <link rel="stylesheet" href="styles.css?v=197" />
   </head>
   <body>
     <div class="app-shell">
@@ -24,7 +24,7 @@
           <p class="eyebrow">Back to Keto</p>
           <h1>Daglig keto-logg</h1>
           <div class="version-row">
-            <p class="version-pill">v1.1 beta · build 196</p>
+            <p class="version-pill">v1.1 beta · build 197</p>
             <span class="version-info">
               <button class="version-info-trigger" type="button" aria-label="Vad är nytt i v1.1 beta?" aria-describedby="versionInfoText">Info</button>
               <span class="version-info-text" id="versionInfoText" role="tooltip">
@@ -235,24 +235,28 @@
             <label>
               Frukost
               <textarea id="breakfastInput" name="breakfast" rows="2"></textarea>
+              <p class="meal-nutrition-summary" id="breakfastNutritionSummary">[Fett -- · Protein -- · Kolh. -- · Na -- · Ka -- · Mg -- · O6/O3 --]</p>
             </label>
             <label>
               Lunch
               <textarea id="lunchInput" name="lunch" rows="2"></textarea>
+              <p class="meal-nutrition-summary" id="lunchNutritionSummary">[Fett -- · Protein -- · Kolh. -- · Na -- · Ka -- · Mg -- · O6/O3 --]</p>
             </label>
             <label>
               Middag
               <textarea id="dinnerInput" name="dinner" rows="2"></textarea>
+              <p class="meal-nutrition-summary" id="dinnerNutritionSummary">[Fett -- · Protein -- · Kolh. -- · Na -- · Ka -- · Mg -- · O6/O3 --]</p>
             </label>
             <label>
-              Övrigt matintag
+              Övrig mat och dryck
               <textarea id="extrasInput" name="extras" rows="2" placeholder="t.ex. ost, nötter, skinka, extra kaffe med grädde"></textarea>
             </label>
 
             <div class="activity-grid">
               <label>
-                Vatten
-                <input id="waterInput" name="water" placeholder="t.ex. 1 liter inkl. måltidsglas" />
+                Vatten, uppskattning i liter
+                <input id="waterInput" name="water" type="hidden" />
+                <output class="hydration-display" id="hydrationEstimateOutput" aria-live="polite">-- liter</output>
               </label>
               <label>
                 Kaffe
@@ -604,6 +608,6 @@
       </main>
     </div>
 
-    <script src="app.js?v=196" type="module"></script>
+    <script src="app.js?v=197" type="module"></script>
   </body>
 </html>
