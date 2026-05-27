@@ -1,11 +1,13 @@
-import { parseNutritionText } from "./nutrition-parser.mjs?v=197";
-import { NUTRITION_CATALOG, NUTRITION_CATEGORIES, SOURCE_TYPES, categoryName, foodName } from "./nutrition-catalog.mjs?v=197";
+import { parseNutritionText } from "./nutrition-parser.mjs?v=198";
+import { NUTRITION_CATALOG, NUTRITION_CATEGORIES, SOURCE_TYPES, categoryName, foodName } from "./nutrition-catalog.mjs?v=198";
 
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
 const macroTargetsKey = "btk.keto.macroTargets.v1";
 const weeklyCheckinsKey = "btk.keto.weeklyCheckins.v1";
+const syncRecoveryKey = "btk.keto.syncRecovery.v1";
+const syncRecoveryLimit = 5;
 const defaultMacroTargets = {
   proteinMin: 145,
   proteinMax: 145,
@@ -26,7 +28,7 @@ const legacyDefaultMacroTargets = {
   kcalTarget: 1900,
   kcalMax: 2000,
 };
-const appVersion = "197";
+const appVersion = "198";
 const appDisplayVersion = `v1.1 beta · build ${appVersion}`;
 const syncTimeoutMs = 10000;
 let activeDate = "";
@@ -2253,6 +2255,18 @@ function continueAfterBackup(reason, actionText) {
   return window.confirm(`Backupfilen ${filename} har laddats ner. ${actionText}`);
 }
 
+function saveSyncRecoveryPoint() {
+  try {
+    const existing = JSON.parse(localStorage.getItem(syncRecoveryKey) || "[]");
+    const recoveryPoints = Array.isArray(existing) ? existing : [];
+    recoveryPoints.unshift(backupPayload("fore-synk-lokal"));
+    localStorage.setItem(syncRecoveryKey, JSON.stringify(recoveryPoints.slice(0, syncRecoveryLimit)));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function setSyncStatus(message, isError = false) {
   if (syncStatus) {
     syncStatus.textContent = message;
@@ -2395,11 +2409,11 @@ async function syncNow() {
     setSyncStatus("Skriv och spara en synkkod först.", true);
     return;
   }
-  if (!continueAfterBackup("fore-synk", "Fortsätta med synkningen?")) {
-    setSyncStatus("Synk avbruten. Lokal backup är nedladdad.");
+  if (!saveSyncRecoveryPoint()) {
+    setSyncStatus("Synk avbruten: lokal återställningspunkt kunde inte skapas. Ladda ner en backupfil först.", true);
     return;
   }
-  setSyncStatus("Synkar...");
+  setSyncStatus("Lokal återställningspunkt skapad. Synkar...");
   await pullCloudData();
 }
 
