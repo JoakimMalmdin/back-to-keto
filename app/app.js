@@ -1,5 +1,5 @@
-import { parseNutritionText } from "./nutrition-parser.mjs?v=199";
-import { NUTRITION_CATALOG, NUTRITION_CATEGORIES, SOURCE_TYPES, categoryName, foodName } from "./nutrition-catalog.mjs?v=199";
+import { parseNutritionText } from "./nutrition-parser.mjs?v=199.1";
+import { NUTRITION_CATALOG, NUTRITION_CATEGORIES, SOURCE_TYPES, categoryName, foodName } from "./nutrition-catalog.mjs?v=199.1";
 
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
@@ -28,7 +28,7 @@ const legacyDefaultMacroTargets = {
   kcalTarget: 1900,
   kcalMax: 2000,
 };
-const appVersion = "199";
+const appVersion = "199.1";
 const appDisplayVersion = `v1.1 beta · build ${appVersion}`;
 const syncTimeoutMs = 10000;
 let activeDate = "";
@@ -1104,11 +1104,36 @@ function compassDinnerProteinChoices(dateText) {
   return compassDinnerProteins.filter(({ food }) => food !== "oxfilé" || isFridayOrSaturday(dateText));
 }
 
-function buildDinnerProposal(entry, gaps, title, food, favorAvocado = false) {
+function compassRemainingMealTargets(entry, targets) {
+  const breakfastMacros = estimateMacros(partialEntry(entry, ["breakfast"]));
+  const remainingProtein = Math.max(0, targets.proteinMin - fullProtein(breakfastMacros));
+  const lunchProtein = Math.max(45, Math.min(70, remainingProtein / 2));
+  return {
+    lunchProtein,
+    dinnerProtein: Math.max(30, remainingProtein - lunchProtein),
+  };
+}
+
+function strengthenLunchProtein(entry, lunch, targetProtein) {
+  let macros = mealProposalMacros(lunch, entry.date);
+  const shortfall = targetProtein - fullProtein(macros);
+  if (shortfall < 8) return lunch;
+  const chickenProteinPerGram = 31 / 100;
+  const grams = Math.min(125, Math.max(50, roundUp(shortfall / chickenProteinPerGram, 25)));
+  const strengthened = `${lunch}, ${grams} g kycklingfilé utan skinn`;
+  macros = mealProposalMacros(strengthened, entry.date);
+  return fullProtein(macros) >= targetProtein - 6 ? strengthened : lunch;
+}
+
+function buildDinnerProposal(entry, gaps, title, food, options = {}) {
+  const { favorAvocado = false, proteinTarget = null } = options;
   const items = [];
   const baseMacros = proposalMacros([`100 g ${food}`], entry.date);
   const proteinPerGram = baseMacros.protein > 0 ? baseMacros.protein / 100 : 0.2;
-  const proteinGrams = Math.min(550, Math.max(125, roundUp(Math.max(gaps.protein, 25) / proteinPerGram, 25)));
+  const dinnerProteinTarget = proteinTarget == null
+    ? gaps.protein
+    : Math.min(gaps.protein, Math.max(25, proteinTarget));
+  const proteinGrams = Math.min(550, Math.max(125, roundUp(Math.max(dinnerProteinTarget, 25) / proteinPerGram, 25)));
   items.push(`${proteinGrams} g ${food}`);
   let macros = proposalMacros(items, entry.date);
 
@@ -1191,16 +1216,23 @@ function dinnerCompass(entry) {
 
   if (entry.breakfast?.trim() && !entry.lunch?.trim()) {
     const combinations = [];
+    const splitTargets = compassRemainingMealTargets(entry, targets);
     for (const originalLunch of compassLunchCandidates) {
-      const lunch = lunchWithPlannedSodium(entry, originalLunch);
+      const lunch = strengthenLunchProtein(entry, lunchWithPlannedSodium(entry, originalLunch), splitTargets.lunchProtein);
       const lunchMacros = mealProposalMacros(lunch, entry.date);
       const afterLunch = projectedDayMacros(entry, { lunch });
       const gaps = dinnerGaps(afterLunch, entry, targets);
       for (const dinnerProtein of compassDinnerProteinChoices(entry.date)) {
-        const dinner = buildDinnerProposal(entry, gaps, dinnerProtein.title, dinnerProtein.food, true);
+        const dinner = buildDinnerProposal(entry, gaps, dinnerProtein.title, dinnerProtein.food, {
+          favorAvocado: true,
+          proteinTarget: splitTargets.dinnerProtein,
+        });
         const plans = { lunch, dinner: dinner.meal };
         const day = projectedDayMacros(entry, plans);
-        const balancePenalty = Math.abs(fullProtein(lunchMacros) - fullProtein(dinner.macros)) * 6;
+        const balancePenalty =
+          Math.abs(fullProtein(lunchMacros) - splitTargets.lunchProtein) * 10 +
+          Math.abs(fullProtein(dinner.macros) - splitTargets.dinnerProtein) * 10 +
+          Math.abs(fullProtein(lunchMacros) - fullProtein(dinner.macros)) * 8;
         const score = allocationScore(lunchMacros, "lunch") + allocationScore(dinner.macros, "dinner") + balancePenalty + dayPlanScore(day, entry, plans, targets);
         combinations.push({ lunch, lunchMacros, dinner, day, score });
       }
@@ -1227,7 +1259,7 @@ function dinnerCompass(entry) {
     const gaps = dinnerGaps(macros, entry, targets);
     const choices = compassDinnerProteinChoices(entry.date)
       .map(({ title, food }) => {
-        const proposal = buildDinnerProposal(entry, gaps, title, food, true);
+        const proposal = buildDinnerProposal(entry, gaps, title, food, { favorAvocado: true });
         const plans = { dinner: proposal.meal };
         const day = projectedDayMacros(entry, plans);
         return { ...proposal, day, score: dayPlanScore(day, entry, plans, targets) };
