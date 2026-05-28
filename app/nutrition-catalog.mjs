@@ -1,7 +1,7 @@
-import { SLV_CORE_RESOLVED, SLV_SOURCE } from "./nutrition-slv-core.mjs?v=195";
-import { fattyAcidProfileFor } from "./nutrition-slv-fatty-acids.mjs?v=195";
-import { slvSupplementFor } from "./nutrition-slv-supplements.mjs?v=195";
-import { USDA_SOURCE, usdaFattyAcidProfileFor } from "./nutrition-usda-fatty-acids.mjs?v=195";
+import { SLV_CORE_RESOLVED, SLV_SOURCE } from "./nutrition-slv-core.mjs?v=199";
+import { fattyAcidProfileFor } from "./nutrition-slv-fatty-acids.mjs?v=199";
+import { slvSupplementFor } from "./nutrition-slv-supplements.mjs?v=199";
+import { USDA_SOURCE, usdaFattyAcidProfileFor } from "./nutrition-usda-fatty-acids.mjs?v=199";
 
 export const SUPPORTED_LOCALES = Object.freeze(["sv-SE", "en-GB"]);
 export const DEFAULT_LOCALE = "sv-SE";
@@ -251,7 +251,7 @@ export const NUTRITION_CATALOG = Object.freeze([
       "en-GB": ["cream 36%", "whipping cream 36%"],
     },
     nutrientsPer100g: { kcal: 340, fat: 36, protein: 2.3, carbs: 2.9, fiber: 0 },
-    measures: [measure("dl", 1, 100), measure("tablespoon", 1, 15)],
+    measures: [measure("dl", 1, 100), measure("tablespoon", 1, 15), measure("teaspoon", 1, 5)],
     macroSource: source(SOURCE_TYPES.producer, "Arla Köket Vispgrädde 36%", "2026-05-24", CONFIDENCE_LEVELS.label),
     electrolyteSource: source(SOURCE_TYPES.unknown, "Salt deklarerat; mineralprofil ej verifierad", "2026-05-24", CONFIDENCE_LEVELS.proxy),
     tags: ["dairy", "fat_source"],
@@ -265,7 +265,7 @@ export const NUTRITION_CATALOG = Object.freeze([
       "en-GB": ["cream 40%", "whipping cream 40%"],
     },
     nutrientsPer100g: { kcal: 375, fat: 40, protein: 2.2, carbs: 2.9, fiber: 0 },
-    measures: [measure("dl", 1, 100), measure("tablespoon", 1, 15)],
+    measures: [measure("dl", 1, 100), measure("tablespoon", 1, 15), measure("teaspoon", 1, 5)],
     macroSource: source(SOURCE_TYPES.producer, "Arla Ko Färsk vispgrädde 40%", "2026-05-24", CONFIDENCE_LEVELS.label),
     electrolyteSource: source(SOURCE_TYPES.unknown, "Salt deklarerat; mineralprofil ej verifierad", "2026-05-24", CONFIDENCE_LEVELS.proxy),
     tags: ["dairy", "fat_source"],
@@ -387,6 +387,21 @@ export const NUTRITION_CATALOG = Object.freeze([
     defaultMeasure: { unit: "tin", amount: 1 },
     macroSource: source(SOURCE_TYPES.productLabel, "ICA Tonfisk i vatten", "2026-05-21", CONFIDENCE_LEVELS.label, "Värden per 100 g avrunnen vikt; burkens avrunna standardvikt måste bekräftas."),
     electrolyteSource: source(SOURCE_TYPES.proxy, "Nuvarande BTK-schablon tills natrium/mineraler kontrollerats", "2026-05-23", CONFIDENCE_LEVELS.proxy),
+    tags: ["fish", "complete_protein"],
+  }),
+  defineFood({
+    id: "lidl-tonfisk-i-vatten",
+    names: translations("Lidl tonfisk i vatten", "Lidl tuna in water"),
+    category: "seafood",
+    aliases: {
+      "sv-SE": ["lidl tonfisk i vatten", "bonit tonfisk i vatten", "tonfisk lidl", "lidl tonfisk"],
+      "en-GB": ["lidl tuna in water", "bonit tuna in water", "lidl tuna"],
+    },
+    nutrientsPer100g: { kcal: 111, fat: 0.7, protein: 26, carbs: 0, fiber: 0, omega3: 0.2, omega6: 0, sodiumMg: 354 },
+    measures: [measure("tin", 1, 168, translations("1 burk, avrunnen vikt", "1 tin, drained weight")), measure("portion", 1, 56)],
+    defaultMeasure: { unit: "tin", amount: 1 },
+    macroSource: source(SOURCE_TYPES.productLabel, "Lidl/Bonit tonfisk i vatten, fotograferad etikett", "2026-05-28", CONFIDENCE_LEVELS.label),
+    electrolyteSource: source(SOURCE_TYPES.productLabel, "Lidl/Bonit tonfisk i vatten, salt 0,90 g/100 g", "2026-05-28", CONFIDENCE_LEVELS.calculated, "Natrium beräknat från deklarerat salt; kalium och magnesium saknas på etiketten."),
     tags: ["fish", "complete_protein"],
   }),
   defineFood({
@@ -550,6 +565,14 @@ export const NUTRITION_CATALOG = Object.freeze([
     aliases: { "sv-SE": ["oxfilé", "oxfile"], "en-GB": ["beef fillet", "beef tenderloin"] },
     tags: ["complete_protein", "potassium_source"],
   }),
+  defineProxyFood({
+    id: "flankstek",
+    names: translations("Flankstek", "Flank steak"),
+    category: "meat",
+    aliases: { "sv-SE": ["flankstek"], "en-GB": ["flank steak"] },
+    nutrientsPer100g: { kcal: 134, fat: 5.1, protein: 22, carbs: 0, fiber: 0, omega3: 0.03, omega6: 0.08, sodiumMg: 58, potassiumMg: 333, magnesiumMg: 22 },
+    tags: ["complete_protein", "potassium_source"],
+  }, "Mager nötköttsschablon för flankstek; produktetikett saknade näringsvärden."),
   defineSlvFood("flaskkotlett-benfri", {
     names: translations("Benfri fläskkotlett", "Boneless pork chop"),
     category: "meat",
@@ -763,7 +786,7 @@ export const NUTRITION_CATALOG = Object.freeze([
     names: translations("Chianti", "Chianti"),
     category: "drinks",
     aliases: { "sv-SE": ["chianti"], "en-GB": ["chianti"] },
-    nutrientsPer100g: { kcal: 83, fat: 0, protein: 0, carbs: 2, sodiumMg: 5, potassiumMg: 127, magnesiumMg: 18, alcoholKcal: 75.3 },
+    nutrientsPer100g: { kcal: 83, fat: 0, protein: 0, carbs: 0.67, sodiumMg: 5, potassiumMg: 127, magnesiumMg: 18, alcoholKcal: 75.3 },
     measures: [measure("glass", 1, 150)],
     tags: ["alcohol"],
   }),
@@ -807,6 +830,21 @@ export const NUTRITION_CATALOG = Object.freeze([
     defaultMeasure: { unit: "tablespoon", amount: 1 },
     tags: ["fat_source", "sauce"],
   }),
+  defineFood({
+    id: "frenchs-yellow-mustard",
+    names: translations("French's Yellow Mustard", "French's Yellow Mustard"),
+    category: "seasonings",
+    aliases: {
+      "sv-SE": ["frenchs senap", "french's senap", "yellow mustard", "gul senap", "senap yellow"],
+      "en-GB": ["frenchs mustard", "french's mustard", "yellow mustard"],
+    },
+    nutrientsPer100g: { kcal: 85, fat: 4.4, protein: 4.3, carbs: 1.2, fiber: 3.5, omega3: 0.2, omega6: 0.8, sodiumMg: 1220 },
+    measures: [measure("teaspoon", 1, 5), measure("tablespoon", 1, 15)],
+    defaultMeasure: { unit: "teaspoon", amount: 1 },
+    macroSource: source(SOURCE_TYPES.productLabel, "French's Classic Yellow Mustard, fotograferad etikett", "2026-05-28", CONFIDENCE_LEVELS.label),
+    electrolyteSource: source(SOURCE_TYPES.productLabel, "French's Classic Yellow Mustard, salt 3,10 g/100 ml", "2026-05-28", CONFIDENCE_LEVELS.calculated, "Natrium beräknat från deklarerat salt; 100 ml behandlas som cirka 100 g."),
+    tags: ["sauce", "sodium_source"],
+  }),
   defineProxyFood({
     id: "kaviar",
     names: translations("Kaviar", "Smoked cod roe spread"),
@@ -824,6 +862,20 @@ export const NUTRITION_CATALOG = Object.freeze([
     aliases: { "sv-SE": ["creme fraiche", "cremefraiche", "creme fraiche"], "en-GB": ["creme fraiche"] },
     nutrientsPer100g: { kcal: 340, fat: 34, protein: 2.4, carbs: 2.8, sodiumMg: 35, potassiumMg: 90, magnesiumMg: 8 },
     measures: [measure("dl", 1, 100), measure("tablespoon", 1, 15), measure("teaspoon", 1, 5)],
+    tags: ["dairy", "fat_source"],
+  }),
+  defineFood({
+    id: "creme-fraiche-32",
+    names: translations("Crème fraiche 32%", "Creme fraiche 32%"),
+    category: "dairy",
+    aliases: {
+      "sv-SE": ["crème fraiche 32%", "creme fraiche 32%", "cremefraiche 32%", "lidl creme fraiche", "lidl crème fraiche"],
+      "en-GB": ["creme fraiche 32%", "lidl creme fraiche"],
+    },
+    nutrientsPer100g: { kcal: 309, fat: 32, protein: 2.4, carbs: 2.4, fiber: 0, omega3: 0.3, omega6: 1.0, sodiumMg: 28 },
+    measures: [measure("dl", 1, 100), measure("tablespoon", 1, 15), measure("teaspoon", 1, 5)],
+    macroSource: source(SOURCE_TYPES.productLabel, "Lidl Crème fraiche 32%, fotograferad etikett", "2026-05-28", CONFIDENCE_LEVELS.label),
+    electrolyteSource: source(SOURCE_TYPES.productLabel, "Lidl Crème fraiche 32%, salt 0,07 g/100 g", "2026-05-28", CONFIDENCE_LEVELS.calculated, "Natrium beräknat från deklarerat salt; kalium och magnesium saknas på etiketten."),
     tags: ["dairy", "fat_source"],
   }),
   defineProxyFood({
@@ -1095,12 +1147,29 @@ export const NUTRITION_CATALOG = Object.freeze([
     implicitUnit: "piece",
     tags: ["berry"],
   }),
-  defineSlvFood("kaffe", {
+  defineFood({
+    id: "lindt-mork-choklad-85",
+    names: translations("Lindt mörk choklad 85%", "Lindt dark chocolate 85%"),
+    category: "seasonings",
+    aliases: {
+      "sv-SE": ["lindt 85", "lindt 85%", "lindt mörk choklad 85%", "lindt mork choklad 85%", "mörk choklad 85%", "mork choklad 85%", "choklad 85%"],
+      "en-GB": ["lindt 85", "lindt 85%", "lindt dark chocolate 85%", "dark chocolate 85%"],
+    },
+    nutrientsPer100g: { kcal: 584, fat: 46, protein: 12.5, carbs: 22, fiber: 10, omega3: 0.1, omega6: 1.3, sodiumMg: 4 },
+    measures: [measure("piece", 1, 10, translations("1 ruta, uppskattat", "1 square, estimated"))],
+    macroSource: source(SOURCE_TYPES.productLabel, "Lindt & Sprüngli mörk choklad 85%, fotograferad etikett", "2026-05-28", CONFIDENCE_LEVELS.label),
+    electrolyteSource: source(SOURCE_TYPES.productLabel, "Lindt & Sprüngli mörk choklad 85%, salt 0,01 g/100 g", "2026-05-28", CONFIDENCE_LEVELS.calculated, "Natrium beräknat från deklarerat salt; kalium och magnesium saknas på etiketten."),
+    tags: ["treat"],
+  }),
+  defineFood({
     id: "kaffe",
     names: translations("Kaffe bryggt", "Brewed coffee"),
     category: "drinks",
     aliases: { "sv-SE": ["kaffe", "kaffe svart", "bryggkaffe", "kaffe bryggt"], "en-GB": ["coffee", "black coffee", "brewed coffee"] },
+    nutrientsPer100g: { kcal: 2, fat: 0, protein: 0, carbs: 0, fiber: 0, omega3: 0, omega6: 0, sodiumMg: 4, potassiumMg: 102, magnesiumMg: 8 },
     measures: [measure("cup", 1, 200)],
+    macroSource: source(SOURCE_TYPES.proxy, "BTK rimlighetscheck av bryggkaffe", "2026-05-28", CONFIDENCE_LEVELS.proxy, "LD:s kolhydratvärde används inte för keto-loggning; svart kaffe räknas som 0 g kolhydrater."),
+    electrolyteSource: source(SOURCE_TYPES.livsmedelsverket, "Livsmedelsverket, kaffe bryggt", "2026-05-28", CONFIDENCE_LEVELS.analysed, "Mineraler behålls från analyserad post; en kopp räknas som 200 ml."),
     tags: ["drink"],
   }),
   defineProxyFood({

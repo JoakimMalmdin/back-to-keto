@@ -1,5 +1,5 @@
-import { parseNutritionText } from "./nutrition-parser.mjs?v=198";
-import { NUTRITION_CATALOG, NUTRITION_CATEGORIES, SOURCE_TYPES, categoryName, foodName } from "./nutrition-catalog.mjs?v=198";
+import { parseNutritionText } from "./nutrition-parser.mjs?v=199";
+import { NUTRITION_CATALOG, NUTRITION_CATEGORIES, SOURCE_TYPES, categoryName, foodName } from "./nutrition-catalog.mjs?v=199";
 
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
@@ -28,7 +28,7 @@ const legacyDefaultMacroTargets = {
   kcalTarget: 1900,
   kcalMax: 2000,
 };
-const appVersion = "198";
+const appVersion = "199";
 const appDisplayVersion = `v1.1 beta · build ${appVersion}`;
 const syncTimeoutMs = 10000;
 let activeDate = "";
@@ -134,7 +134,7 @@ const compassBreakfastCandidates = Object.freeze([
 
 const compassLunchCandidates = Object.freeze([
   "200 g laxfilé, 0,5 avokado, 50 g spenat, 1 msk majonnäs, 1 krm seltin",
-  "200 g oxfilé, 0,5 avokado, 50 g spenat, 1 msk majonnäs, 1 krm seltin",
+  "200 g kycklingfilé utan skinn, 0,5 avokado, 50 g spenat, 1 msk majonnäs, 1 krm seltin",
   "1 burk tonfisk i vatten, 80 g halloumi, 0,5 avokado, 1 msk majonnäs, 1 krm seltin",
 ]);
 
@@ -178,6 +178,7 @@ const mealNutritionSummaries = {
   breakfast: document.querySelector("#breakfastNutritionSummary"),
   lunch: document.querySelector("#lunchNutritionSummary"),
   dinner: document.querySelector("#dinnerNutritionSummary"),
+  extras: document.querySelector("#extrasNutritionSummary"),
 };
 const macroTargetInputs = {
   proteinMin: document.querySelector("#targetProteinMinInput"),
@@ -510,9 +511,9 @@ function weeklyAverageWeight(weekKey = currentWeekKey()) {
 function fillWeeklyCheckin(weekKey = selectedCheckinWeekKey()) {
   const parsedWeek = parseWeekInput(weekKey);
   const weekLabel = parsedWeek ? parsedWeek.week : "--";
-  if (weeklyCheckinLabels.averageWeight) weeklyCheckinLabels.averageWeight.textContent = `Medelvikt vecka ${weekLabel} kg`;
-  if (weeklyCheckinLabels.waist) weeklyCheckinLabels.waist.textContent = `Medelmidjemått vecka ${weekLabel} cm`;
-  if (weeklyCheckinLabels.belly) weeklyCheckinLabels.belly.textContent = `Medelnavelmått vecka ${weekLabel} cm`;
+  if (weeklyCheckinLabels.averageWeight) weeklyCheckinLabels.averageWeight.textContent = `Medelvikt kg, vecka ${weekLabel}`;
+  if (weeklyCheckinLabels.waist) weeklyCheckinLabels.waist.textContent = `Medelmidjemått cm, vecka ${weekLabel}`;
+  if (weeklyCheckinLabels.belly) weeklyCheckinLabels.belly.textContent = `Medelnavelmått cm, vecka ${weekLabel}`;
   const checkin = getWeeklyCheckins()[weekKey] || {};
   const averageWeight = weeklyAverageWeight(weekKey);
   const averageWaist = weeklyAverageField("waist", weekKey);
@@ -851,7 +852,7 @@ function estimateMasterMacros(entry) {
 }
 
 function mealNutritionSummaryText(macros) {
-  return `[Fett ${decimal(macros.fat || 0)} g · Protein ${decimal(macros.protein || 0)} g · Kolh. ${decimal(macros.carbs || 0)} g · Na ${Math.round(macros.sodiumMg || 0)} mg · Ka ${Math.round(macros.potassiumMg || 0)} mg · Mg ${Math.round(macros.magnesiumMg || 0)} mg · O6/O3 ${omegaRatioLabel(macros)}]`;
+  return `[Fett ${decimal(macros.fat || 0)} g · Protein ${decimal(macros.protein || 0)} g · Kolh. ${decimal(macros.carbs || 0)} g · ${Math.round(macros.kcal || 0)} kcal · Na ${Math.round(macros.sodiumMg || 0)} mg · Ka ${Math.round(macros.potassiumMg || 0)} mg · Mg ${Math.round(macros.magnesiumMg || 0)} mg · O6/O3 ${omegaRatioLabel(macros)}]`;
 }
 
 function renderMealNutritionSummaries(entry) {
@@ -859,7 +860,7 @@ function renderMealNutritionSummaries(entry) {
     if (!element) continue;
     const text = String(entry?.[key] || "").trim();
     if (!text) {
-      element.textContent = "[Fett -- · Protein -- · Kolh. -- · Na -- · Ka -- · Mg -- · O6/O3 --]";
+      element.textContent = "[Fett -- · Protein -- · Kolh. -- · kcal -- · Na -- · Ka -- · Mg -- · O6/O3 --]";
       continue;
     }
     const mealEntry = emptyEntry(entry.date || todayIso());
@@ -885,14 +886,14 @@ function partialEntry(entry, keys) {
 function fullProtein(macros) {
   if (macros.source === "manual") return macros.protein || 0;
   return (macros.items || [])
-    .filter((item) => item.label !== "Collagen")
+    .filter((item) => item.foodId !== "collagen-nyttoteket" && !/collagen|kollagen/i.test(item.label || ""))
     .reduce((sum, item) => sum + item.protein, 0);
 }
 
 function collagenProtein(macros) {
   if (macros.source === "manual") return 0;
   return (macros.items || [])
-    .filter((item) => item.label === "Collagen")
+    .filter((item) => item.foodId === "collagen-nyttoteket" || /collagen|kollagen/i.test(item.label || ""))
     .reduce((sum, item) => sum + item.protein, 0);
 }
 
@@ -980,11 +981,16 @@ function hasElectrolyteSignal(text, type) {
 
 function dinnerGaps(macros, entry, macroTargets) {
   const electrolyteTargets = electrolyteTargetsForDate(entry.date, getEntries(), isTrainingEntry(entry));
+  const sodiumCurrent = Number(macros.sodiumMg) || 0;
+  const sodiumLimit = electrolyteTargets.sodiumMg[1];
   return {
     protein: Math.max(0, macroTargets.proteinMin - fullProtein(macros)),
     fat: Math.max(0, macroTargets.fatMin - macros.fat),
     carbs: Math.max(0, macroTargets.carbsMax - macros.carbs),
-    sodium: 0,
+    sodium: Math.max(0, sodiumLimit - sodiumCurrent),
+    sodiumCurrent,
+    sodiumLimit,
+    sodiumMargin: Math.max(0, sodiumLimit - sodiumCurrent),
     potassium: Math.max(0, electrolyteTargets.potassiumMg[0] - (macros.potassiumMg || 0)),
     magnesium: Math.max(0, electrolyteTargets.magnesiumMg[0] - (macros.magnesiumMg || 0)),
     kcalTarget: Math.max(0, macroTargets.kcalTarget - macros.kcal),
@@ -1089,6 +1095,15 @@ function lunchWithPlannedSodium(entry, lunch) {
   return lunch;
 }
 
+function isFridayOrSaturday(dateText) {
+  const day = new Date(`${dateText || todayIso()}T12:00:00`).getDay();
+  return day === 5 || day === 6;
+}
+
+function compassDinnerProteinChoices(dateText) {
+  return compassDinnerProteins.filter(({ food }) => food !== "oxfilé" || isFridayOrSaturday(dateText));
+}
+
 function buildDinnerProposal(entry, gaps, title, food, favorAvocado = false) {
   const items = [];
   const baseMacros = proposalMacros([`100 g ${food}`], entry.date);
@@ -1114,34 +1129,11 @@ function buildDinnerProposal(entry, gaps, title, food, favorAvocado = false) {
     mayonnaiseTablespoons -= 0.5;
   }
 
-  let sodiumStillNeeded = Math.max(0, gaps.sodium - macros.sodiumMg);
-  if (sodiumStillNeeded >= 700 && macros.carbs + 2.3 <= gaps.carbs) {
-    const candidate = addProposalItemIfWithinEnergy(items, "1 glas buljong", entry, gaps);
-    if (candidate) {
-      macros = candidate;
-      sodiumStillNeeded = Math.max(0, gaps.sodium - macros.sodiumMg);
-    }
-  }
-
   const potassiumAfterMeal = Math.max(0, gaps.potassium - macros.potassiumMg);
-  let seasoningPinches = 0;
-  if (potassiumAfterMeal >= 180) {
+  if (potassiumAfterMeal >= 180 && gaps.sodiumMargin >= 240) {
     const seltinPinches = Math.min(1, Math.ceil(potassiumAfterMeal / 252));
     items.push(`${seltinPinches} krm seltin`);
-    seasoningPinches += seltinPinches;
     macros = proposalMacros(items, entry.date);
-    sodiumStillNeeded = Math.max(0, gaps.sodium - macros.sodiumMg);
-  }
-
-  if (sodiumStillNeeded >= 300) {
-    const saltPinches = Math.min(
-      compassSodiumPlanning.maxDinnerSeasoningPinches - seasoningPinches,
-      Math.max(1, Math.round(sodiumStillNeeded / 472)),
-    );
-    if (saltPinches > 0) {
-      items.push(`${saltPinches} krm salt`);
-      macros = proposalMacros(items, entry.date);
-    }
   }
 
   return {
@@ -1204,11 +1196,12 @@ function dinnerCompass(entry) {
       const lunchMacros = mealProposalMacros(lunch, entry.date);
       const afterLunch = projectedDayMacros(entry, { lunch });
       const gaps = dinnerGaps(afterLunch, entry, targets);
-      for (const dinnerProtein of compassDinnerProteins) {
+      for (const dinnerProtein of compassDinnerProteinChoices(entry.date)) {
         const dinner = buildDinnerProposal(entry, gaps, dinnerProtein.title, dinnerProtein.food, true);
         const plans = { lunch, dinner: dinner.meal };
         const day = projectedDayMacros(entry, plans);
-        const score = allocationScore(lunchMacros, "lunch") + allocationScore(dinner.macros, "dinner") + dayPlanScore(day, entry, plans, targets);
+        const balancePenalty = Math.abs(fullProtein(lunchMacros) - fullProtein(dinner.macros)) * 6;
+        const score = allocationScore(lunchMacros, "lunch") + allocationScore(dinner.macros, "dinner") + balancePenalty + dayPlanScore(day, entry, plans, targets);
         combinations.push({ lunch, lunchMacros, dinner, day, score });
       }
     }
@@ -1232,7 +1225,7 @@ function dinnerCompass(entry) {
     const macros = estimateMacros(beforeDinnerEntry);
     const collagen = collagenProtein(macros);
     const gaps = dinnerGaps(macros, entry, targets);
-    const choices = compassDinnerProteins
+    const choices = compassDinnerProteinChoices(entry.date)
       .map(({ title, food }) => {
         const proposal = buildDinnerProposal(entry, gaps, title, food, true);
         const plans = { dinner: proposal.meal };
@@ -1244,7 +1237,7 @@ function dinnerCompass(entry) {
     const planId = registerCompassPlan("dinner", entry.date, best.meal);
     const balance =
       `Kvar efter frukost och lunch: ca ${Math.round(gaps.protein)} g protein, ${Math.round(gaps.fat)} g fett och högst ${decimal(gaps.carbs)} g kolhydrater. ` +
-      `Elektrolyter kvar: Na ${Math.round(gaps.sodium)} mg, Ka ${Math.round(gaps.potassium)} mg, Mg ${Math.round(gaps.magnesium)} mg.`;
+      `Elektrolyter: Na ${Math.round(gaps.sodiumCurrent)} mg av övre vägledning ${Math.round(gaps.sodiumLimit)} mg (${Math.round(gaps.sodiumMargin)} mg marginal), Ka ${Math.round(gaps.potassium)} mg kvar, Mg ${Math.round(gaps.magnesium)} mg kvar.`;
     const notes = [
       collagen > 0 ? `Kollagen (${decimal(collagen)} g) räknas inte in som fullvärdigt protein.` : "",
       breakfastRuleNote(entry),
@@ -1537,6 +1530,8 @@ function renderTrendChart(entries) {
     })
     .filter((row) => Number.isFinite(row.weight) || Number.isFinite(row.fat) || Number.isFinite(row.protein) || Number.isFinite(row.carbs));
 
+  renderEnergyOmegaChart(selection.entries);
+
   if (rows.length < 2) {
     chart.innerHTML = '<p class="empty-chart">Diagrammet visas när minst två dagar har data.</p>';
     note.textContent = `${selection.notePrefix || "Spara minst två dagar med vikt eller matposter för att se utvecklingen."}${averageNote}`;
@@ -1626,6 +1621,111 @@ function renderTrendChart(entries) {
   note.textContent = `${selection.notePrefix}Senast i urvalet: ${latest.weight ? `${decimal(latest.weight)} kg, ` : ""}${decimal(latest.fat || 0)} g fett, ${decimal(latest.protein || 0)} g protein, ${decimal(latest.carbs || 0)} g kolhydrater.${averageNote}`;
 }
 
+function renderEnergyOmegaChart(entries) {
+  const chart = document.querySelector("#energyOmegaChart");
+  if (!chart) return;
+
+  const rows = entries
+    .map((entry) => {
+      const macros = estimateMacros(entry);
+      const hasFoodText = [entry.breakfast, entry.lunch, entry.dinner, entry.extras].some((text) => String(text || "").trim());
+      const hasFoodData = hasFoodText || macros.source === "manual" || (macros.items || []).length > 0;
+      const omega3 = Number(macros.omega3) || 0;
+      const omega6 = Number(macros.omega6) || 0;
+      return {
+        date: entry.date,
+        hasFoodData,
+        kcal: hasFoodData ? Number(macros.kcal) || 0 : null,
+        ratio: hasFoodData && omega3 > 0 ? omega6 / omega3 : null,
+        zeroKcal: hasFoodData && (Number(macros.kcal) || 0) <= 0,
+        zeroOmega: hasFoodData && omega3 <= 0 && omega6 <= 0,
+      };
+    })
+    .filter((row) => row.hasFoodData);
+
+  if (rows.length < 2) {
+    chart.innerHTML = '<p class="empty-chart">Energi- och omegadiagrammet visas när minst två dagar har matdata.</p>';
+    return;
+  }
+
+  const width = 640;
+  const height = 250;
+  const pad = { top: 34, right: 58, bottom: 42, left: 48 };
+  const plotWidth = width - pad.left - pad.right;
+  const plotHeight = height - pad.top - pad.bottom;
+  const xFor = (index) => pad.left + (rows.length === 1 ? plotWidth / 2 : (index / (rows.length - 1)) * plotWidth);
+  const kcalMax = 3000;
+  const ratioMin = 0.5;
+  const ratioMax = 5;
+  const yKcal = (value) => pad.top + ((kcalMax - value) / kcalMax) * plotHeight;
+  const yRatio = (value) => pad.top + ((ratioMax - value) / (ratioMax - ratioMin)) * plotHeight;
+  const kcalPoints = rows
+    .map((row, index) => (Number.isFinite(row.kcal) ? { x: xFor(index), y: yKcal(Math.min(row.kcal, kcalMax)), value: row.kcal } : null))
+    .filter(Boolean);
+  const ratioPoints = rows
+    .map((row, index) => (Number.isFinite(row.ratio) && row.ratio <= ratioMax ? { x: xFor(index), y: yRatio(Math.max(row.ratio, ratioMin)), value: row.ratio } : null))
+    .filter(Boolean);
+  const cappedRatioLabels = rows
+    .map((row, index) => (Number.isFinite(row.ratio) && row.ratio > ratioMax ? { x: xFor(index), value: row.ratio } : null))
+    .filter(Boolean);
+  const gridLines = [0, 0.25, 0.5, 0.75, 1].map((ratio) => {
+    const y = pad.top + ratio * plotHeight;
+    return {
+      y,
+      kcal: kcalMax - ratio * kcalMax,
+      omega: ratioMax - ratio * (ratioMax - ratioMin),
+    };
+  });
+  const guideRatios = [2.5, 4].map((value) => ({ value, y: yRatio(value) }));
+  const labelIndexes = rows.length <= 5 ? rows.map((_, index) => index) : [0, Math.floor((rows.length - 1) / 2), rows.length - 1];
+  const chartDateLabel = (index, labelPosition) => {
+    const [, , monthText, dayText] = rows[index].date.match(/^(\d{4})-(\d{2})-(\d{2})$/) || [];
+    if (!monthText || !dayText) return rows[index].date.slice(5);
+    const month = Number(monthText);
+    const day = Number(dayText);
+    const previousLabelIndex = labelIndexes[labelPosition - 1];
+    const previousLabelMonth = Number(rows[previousLabelIndex]?.date.slice(5, 7));
+    return labelPosition === 0 || month !== previousLabelMonth ? `${day}/${month}` : `${day}`;
+  };
+  const markerBottom = height - pad.bottom;
+  const markerTop = markerBottom - 22;
+
+  chart.innerHTML = `
+    <svg viewBox="0 0 ${width} ${height}" aria-hidden="true">
+      <g class="chart-grid">
+        ${gridLines
+          .map(
+            (line) => `
+              <line x1="${pad.left}" y1="${line.y.toFixed(1)}" x2="${width - pad.right}" y2="${line.y.toFixed(1)}"></line>
+              <text x="${pad.left - 8}" y="${(line.y + 4).toFixed(1)}" text-anchor="end">${Math.round(line.kcal)}</text>
+              <text x="${width - pad.right + 8}" y="${(line.y + 4).toFixed(1)}">${decimal(line.omega)}:1</text>
+            `
+          )
+          .join("")}
+      </g>
+      ${guideRatios.map((line) => `<line class="omega-guide-line" x1="${pad.left}" y1="${line.y.toFixed(1)}" x2="${width - pad.right}" y2="${line.y.toFixed(1)}"></line><text class="omega-guide-label" x="${width - pad.right - 4}" y="${(line.y - 3).toFixed(1)}" text-anchor="end">${decimal(line.value)}:1</text>`).join("")}
+      <line class="chart-axis" x1="${pad.left}" y1="${pad.top}" x2="${pad.left}" y2="${height - pad.bottom}"></line>
+      <line class="chart-axis" x1="${width - pad.right}" y1="${pad.top}" x2="${width - pad.right}" y2="${height - pad.bottom}"></line>
+      <line class="chart-axis" x1="${pad.left}" y1="${height - pad.bottom}" x2="${width - pad.right}" y2="${height - pad.bottom}"></line>
+      <path class="chart-line kcal-line" d="${chartPath(kcalPoints)}"></path>
+      <path class="chart-line omega-ratio-line" d="${chartPath(ratioPoints)}"></path>
+      ${kcalPoints.map((point) => `<circle class="kcal-dot" cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="2"></circle>`).join("")}
+      ${ratioPoints.map((point) => `<circle class="omega-ratio-dot" cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="2"></circle>`).join("")}
+      ${rows.map((row, index) => row.zeroKcal ? `<line class="zero-kcal-marker" x1="${xFor(index).toFixed(1)}" y1="${markerTop}" x2="${xFor(index).toFixed(1)}" y2="${markerBottom}"></line>` : "").join("")}
+      ${rows.map((row, index) => row.zeroOmega ? `<line class="zero-omega-marker" x1="${(xFor(index) + 3).toFixed(1)}" y1="${markerTop}" x2="${(xFor(index) + 3).toFixed(1)}" y2="${markerBottom}"></line>` : "").join("")}
+      ${cappedRatioLabels.map((point) => `<text class="omega-capped-label" x="${point.x.toFixed(1)}" y="${pad.top - 10}" text-anchor="middle">${decimal(point.value)}:1</text>`).join("")}
+      ${labelIndexes
+        .map(
+          (index, labelPosition) =>
+            `<text class="chart-date" x="${xFor(index).toFixed(1)}" y="${height - 14}" text-anchor="middle">${chartDateLabel(index, labelPosition)}</text>`
+        )
+        .join("")}
+      <text class="axis-label" x="${pad.left - 8}" y="22" text-anchor="end">kcal</text>
+      <text class="axis-label" x="${width - pad.right + 8}" y="22">O6/O3</text>
+    </svg>
+  `;
+}
+
 function render(selectedDate = activeDate) {
   const entries = getEntries().sort((a, b) => a.date.localeCompare(b.date));
   const latest = entries.find((entry) => entry.date === selectedDate) || entries.at(-1) || emptyEntry();
@@ -1643,6 +1743,8 @@ function render(selectedDate = activeDate) {
   const electrolyteTargets = electrolyteTargetsForDate(latest.date, entries, isTrainingEntry(latest));
   const kcalRange = macroKcalRange(targets);
   const toGoal = latest.weight && goalWeight ? latest.weight - goalWeight : 0;
+  const proteinForGoal = fullProtein(macros);
+  const collagenForDisplay = collagenProtein(macros);
 
   document.querySelector("#todayDate").textContent = latest.date;
   document.querySelector("#currentWeight").textContent = latest.weight ? decimal(latest.weight) : "--";
@@ -1703,7 +1805,7 @@ function render(selectedDate = activeDate) {
   document.querySelector("#fatBar").style.width = `${Math.min(macros.fatPct, 100)}%`;
   document.querySelector("#proteinBar").style.width = `${Math.min(macros.proteinPct, 100)}%`;
   document.querySelector("#carbBar").style.width = `${Math.min(macros.carbPct, 100)}%`;
-  document.querySelector("#proteinGramBar").style.width = `${Math.min((macros.protein / targets.proteinMax) * 100, 100)}%`;
+  document.querySelector("#proteinGramBar").style.width = `${Math.min((proteinForGoal / targets.proteinMax) * 100, 100)}%`;
   document.querySelector("#fatGramBar").style.width = `${Math.min((macros.fat / targets.fatMax) * 100, 100)}%`;
   document.querySelector("#carbGramBar").style.width = `${Math.min((macros.carbs / targets.carbsMax) * 100, 100)}%`;
   document.querySelector("#proteinTargetLabel").textContent = `Protein mot ${targetRangeLabel(targets.proteinMin, targets.proteinMax)} g`;
@@ -1712,7 +1814,7 @@ function render(selectedDate = activeDate) {
   document.querySelector("#fatText").textContent = hasContent ? `${macros.fatPct}%` : "--";
   document.querySelector("#proteinText").textContent = hasContent ? `${macros.proteinPct}%` : "--";
   document.querySelector("#carbText").textContent = hasContent ? `${macros.carbPct}%` : "--";
-  document.querySelector("#proteinGramText").textContent = hasContent ? `${decimal(macros.protein)} g` : "--";
+  document.querySelector("#proteinGramText").textContent = hasContent ? `${decimal(proteinForGoal)} g` : "--";
   document.querySelector("#fatGramText").textContent = hasContent ? `${decimal(macros.fat)} g` : "--";
   document.querySelector("#carbGramText").textContent = hasContent ? `${decimal(macros.carbs)} g` : "--";
   document.querySelector("#sodiumTargetLabel").textContent = `Natrium mot ${electrolyteRangeLabel(electrolyteTargets.sodiumMg)} mg`;
@@ -1740,14 +1842,17 @@ function render(selectedDate = activeDate) {
   document.querySelectorAll(".phase-period").forEach((period, index) => {
     period.textContent = phasePeriods[index] || "";
   });
+  const collagenNote = collagenForDisplay > 0
+    ? ` Kollagen ${decimal(collagenForDisplay)} g visas i total proteinmängd och kcal, men räknas inte mot målet för fullvärdigt protein.`
+    : "";
   document.querySelector("#macroNote").textContent =
     macros.source === "manual"
-      ? "Makron bygger på manuellt inmatade gram för fett, protein och kolhydrater."
+      ? `Makron bygger på manuellt inmatade gram för fett, protein och kolhydrater.${collagenNote}`
       : measureWarning
         ? measureWarning
       : macros.alcohol > 0
-        ? "Övre staplarna visar kaloriprocent. Alkohol ger energi men visas inte som fett, protein eller kolhydrater."
-        : `Automatisk uppskattning. Personligt mål: ${targetRangeLabel(targets.proteinMin, targets.proteinMax)} g protein, ${targetRangeLabel(targets.fatMin, targets.fatMax)} g fett, ${targetRangeLabel(targets.carbsMin, targets.carbsMax)} g kolhydrater (${roundedKcal(kcalRange.min)}-${roundedKcal(kcalRange.max)} kcal). Energimål ${targets.kcalTarget} kcal, max ${targets.kcalMax} kcal.`;
+        ? `Övre staplarna visar kaloriprocent. Alkohol ger energi men visas inte som fett, protein eller kolhydrater.${collagenNote}`
+        : `Automatisk uppskattning. Personligt mål: ${targetRangeLabel(targets.proteinMin, targets.proteinMax)} g protein, ${targetRangeLabel(targets.fatMin, targets.fatMax)} g fett, ${targetRangeLabel(targets.carbsMin, targets.carbsMax)} g kolhydrater (${roundedKcal(kcalRange.min)}-${roundedKcal(kcalRange.max)} kcal). Energimål ${targets.kcalTarget} kcal, max ${targets.kcalMax} kcal.${collagenNote}`;
   renderMacroBreakdown(macros, hasContent);
   renderElectrolyteBreakdown(macros, hasContent);
   renderTrendChart(entries);

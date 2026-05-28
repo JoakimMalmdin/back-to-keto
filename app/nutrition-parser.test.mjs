@@ -68,8 +68,8 @@ near(parsed.items[0].grams, 50, "En halv dl grädde ska bli 50 g");
 near(parsed.totals.fat, 20, "En halv dl 40-procentig grädde ska ge rätt fett");
 
 parsed = parseNutritionText("1 tsk grädde 40%");
-assert(parsed.items[0].conversionMethod === "derived_measure", "Tesked grädde ska märkas som härledd från msk.");
-near(parsed.items[0].grams, 5, "Härledd tesked grädde ska vara 5 g");
+assert(parsed.items[0].conversionMethod === "declared_measure", "Tesked grädde ska vara ett uttryckligt katalogmått.");
+near(parsed.items[0].grams, 5, "Tesked grädde ska vara 5 g");
 
 parsed = parseNutritionText("1 tsk grädde", { defaultFoodAliases: { "grädde": "vispgradde-40" } });
 assert(parsed.unresolved.length === 0, "Personlig standard för ospecificerad grädde ska kunna beräknas.");

@@ -1117,6 +1117,26 @@ textarea {
   background: var(--gold);
 }
 
+.legend-kcal {
+  background: var(--blue);
+}
+
+.legend-omega-ratio {
+  background: var(--berry);
+}
+
+.legend-zero-kcal {
+  background: #c94343;
+}
+
+.legend-zero-omega {
+  background: var(--leaf-strong);
+}
+
+.chart-legend-secondary {
+  margin-top: 12px;
+}
+
 .trend-chart {
   min-height: 0;
   overflow: hidden;
@@ -1138,6 +1158,8 @@ textarea {
 
 .chart-grid text,
 .carb-limit-label,
+.omega-guide-label,
+.omega-capped-label,
 .chart-date,
 .axis-label {
   fill: var(--muted);
@@ -1183,6 +1205,31 @@ textarea {
   stroke-dasharray: 7 5;
 }
 
+.kcal-line {
+  stroke: var(--blue);
+}
+
+.omega-ratio-line {
+  stroke: var(--berry);
+  stroke-dasharray: 7 5;
+}
+
+.omega-guide-line {
+  stroke: #d9cfbf;
+  stroke-width: 1;
+  stroke-dasharray: 3 5;
+}
+
+.zero-kcal-marker {
+  stroke: #c94343;
+  stroke-width: 2;
+}
+
+.zero-omega-marker {
+  stroke: var(--leaf-strong);
+  stroke-width: 2;
+}
+
 .weight-dot {
   fill: transparent;
   stroke: var(--blue);
@@ -1204,6 +1251,18 @@ textarea {
 .carb-dot {
   fill: transparent;
   stroke: var(--gold);
+  stroke-width: 1.05;
+}
+
+.kcal-dot {
+  fill: transparent;
+  stroke: var(--blue);
+  stroke-width: 1.05;
+}
+
+.omega-ratio-dot {
+  fill: transparent;
+  stroke: var(--berry);
   stroke-width: 1.05;
 }
 

@@ -9,13 +9,13 @@
     <title>Back to Keto</title>
     <script>
       if (window.location.protocol === "file:") {
-        window.location.replace("https://joakimmalmdin.github.io/back-to-keto/app/?cache=198");
+        window.location.replace("https://joakimmalmdin.github.io/back-to-keto/app/?cache=199");
       }
     </script>
-    <link rel="manifest" href="manifest.webmanifest?v=198" />
+    <link rel="manifest" href="manifest.webmanifest?v=199" />
     <link rel="icon" href="icon.svg?v=146" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="apple-touch-icon.png?v=146" />
-    <link rel="stylesheet" href="styles.css?v=198" />
+    <link rel="stylesheet" href="styles.css?v=199" />
   </head>
   <body>
     <div class="app-shell">
@@ -24,7 +24,7 @@
           <p class="eyebrow">Back to Keto</p>
           <h1>Daglig keto-logg</h1>
           <div class="version-row">
-            <p class="version-pill">v1.1 beta · build 198</p>
+            <p class="version-pill">v1.1 beta · build 199</p>
             <span class="version-info">
               <button class="version-info-trigger" type="button" aria-label="Vad är nytt i v1.1 beta?" aria-describedby="versionInfoText">Info</button>
               <span class="version-info-text" id="versionInfoText" role="tooltip">
@@ -95,15 +95,15 @@
               </label>
               <div class="three-col">
                 <label>
-                  <span id="checkinAverageWeightLabel">Medelvikt vecka -- kg</span>
+                  <span id="checkinAverageWeightLabel">Medelvikt kg, vecka --</span>
                   <input id="checkinAverageWeightInput" type="text" readonly />
                 </label>
                 <label>
-                  <span id="checkinWaistLabel">Medelmidjemått vecka -- cm</span>
+                  <span id="checkinWaistLabel">Medelmidjemått cm, vecka --</span>
                   <input id="checkinWaistInput" type="text" readonly />
                 </label>
                 <label>
-                  <span id="checkinBellyLabel">Medelnavelmått vecka -- cm</span>
+                  <span id="checkinBellyLabel">Medelnavelmått cm, vecka --</span>
                   <input id="checkinBellyInput" type="text" readonly />
                 </label>
               </div>
@@ -235,21 +235,22 @@
             <label>
               Frukost
               <textarea id="breakfastInput" name="breakfast" rows="2"></textarea>
-              <p class="meal-nutrition-summary" id="breakfastNutritionSummary">[Fett -- · Protein -- · Kolh. -- · Na -- · Ka -- · Mg -- · O6/O3 --]</p>
+              <p class="meal-nutrition-summary" id="breakfastNutritionSummary">[Fett -- · Protein -- · Kolh. -- · kcal -- · Na -- · Ka -- · Mg -- · O6/O3 --]</p>
             </label>
             <label>
               Lunch
               <textarea id="lunchInput" name="lunch" rows="2"></textarea>
-              <p class="meal-nutrition-summary" id="lunchNutritionSummary">[Fett -- · Protein -- · Kolh. -- · Na -- · Ka -- · Mg -- · O6/O3 --]</p>
+              <p class="meal-nutrition-summary" id="lunchNutritionSummary">[Fett -- · Protein -- · Kolh. -- · kcal -- · Na -- · Ka -- · Mg -- · O6/O3 --]</p>
             </label>
             <label>
               Middag
               <textarea id="dinnerInput" name="dinner" rows="2"></textarea>
-              <p class="meal-nutrition-summary" id="dinnerNutritionSummary">[Fett -- · Protein -- · Kolh. -- · Na -- · Ka -- · Mg -- · O6/O3 --]</p>
+              <p class="meal-nutrition-summary" id="dinnerNutritionSummary">[Fett -- · Protein -- · Kolh. -- · kcal -- · Na -- · Ka -- · Mg -- · O6/O3 --]</p>
             </label>
             <label>
               Övrig mat och dryck
               <textarea id="extrasInput" name="extras" rows="2" placeholder="t.ex. ost, nötter, skinka, extra kaffe med grädde"></textarea>
+              <p class="meal-nutrition-summary" id="extrasNutritionSummary">[Fett -- · Protein -- · Kolh. -- · kcal -- · Na -- · Ka -- · Mg -- · O6/O3 --]</p>
             </label>
 
             <div class="activity-grid">
@@ -443,7 +444,7 @@
         <section class="trend-panel" aria-labelledby="trendTitle">
           <details class="info-details">
             <summary id="trendTitle">
-              <span>Tidsserie</span>
+              <span>Tidsserier</span>
               <span class="badge" id="trendRange">--</span>
             </summary>
             <div class="trend-content">
@@ -495,6 +496,13 @@
                   </div>
                 </div>
               </div>
+              <div id="trendChart" class="trend-chart" role="img" aria-label="Tidsseriediagram med vikt, fett, protein och kolhydrater"></div>
+              <div class="chart-legend chart-legend-secondary" aria-label="Diagramförklaring för energi och omega">
+                <span><i class="legend-kcal"></i>kcal</span>
+                <span><i class="legend-omega-ratio"></i>O6/O3</span>
+                <span><i class="legend-zero-kcal"></i>0 kcal</span>
+                <span><i class="legend-zero-omega"></i>0 omega</span>
+              </div>
               <div class="trend-omega-summary">
                 <span>Periodkvot Omega 6/Omega 3</span>
                 <strong id="trendOmegaRatio">--</strong>
@@ -515,7 +523,7 @@
                   </div>
                 </div>
               </details>
-              <div id="trendChart" class="trend-chart" role="img" aria-label="Tidsseriediagram med vikt, fett, protein och kolhydrater"></div>
+              <div id="energyOmegaChart" class="trend-chart energy-omega-chart" role="img" aria-label="Tidsseriediagram med kcal och omegakvot"></div>
               <p id="trendNote" class="note"></p>
             </div>
           </details>
@@ -608,6 +616,6 @@
       </main>
     </div>
 
-    <script src="app.js?v=198" type="module"></script>
+    <script src="app.js?v=199" type="module"></script>
   </body>
 </html>
