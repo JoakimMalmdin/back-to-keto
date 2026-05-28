@@ -1137,6 +1137,13 @@ textarea {
   margin-top: 12px;
 }
 
+.chart-title {
+  margin: 12px 0 6px;
+  color: var(--ink);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
 .trend-chart {
   min-height: 0;
   overflow: hidden;
@@ -1207,6 +1214,13 @@ textarea {
 
 .kcal-line {
   stroke: var(--blue);
+}
+
+.kcal-target-line {
+  stroke: var(--blue);
+  stroke-width: 0.8;
+  stroke-dasharray: 4 5;
+  opacity: 0.75;
 }
 
 .omega-ratio-line {

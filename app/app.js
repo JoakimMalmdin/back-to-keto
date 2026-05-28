@@ -1,5 +1,5 @@
-import { parseNutritionText } from "./nutrition-parser.mjs?v=199.1";
-import { NUTRITION_CATALOG, NUTRITION_CATEGORIES, SOURCE_TYPES, categoryName, foodName } from "./nutrition-catalog.mjs?v=199.1";
+import { parseNutritionText } from "./nutrition-parser.mjs?v=199.2";
+import { NUTRITION_CATALOG, NUTRITION_CATEGORIES, SOURCE_TYPES, categoryName, foodName } from "./nutrition-catalog.mjs?v=199.2";
 
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
@@ -28,7 +28,7 @@ const legacyDefaultMacroTargets = {
   kcalTarget: 1900,
   kcalMax: 2000,
 };
-const appVersion = "199.1";
+const appVersion = "199.2";
 const appDisplayVersion = `v1.1 beta · build ${appVersion}`;
 const syncTimeoutMs = 10000;
 let activeDate = "";
@@ -286,6 +286,7 @@ function catalogUnitLabel(unit, amount = 1) {
     glass: "glas",
     bottle: amount === 1 ? "flaska" : "flaskor",
     tablet: amount === 1 ? "tablett" : "tabletter",
+    scoop: amount === 1 ? "skopa" : "skopor",
     slice: amount === 1 ? "skiva" : "skivor",
     cube: amount === 1 ? "tärning" : "tärningar",
     leaf: "blad",
@@ -760,6 +761,7 @@ function masterAmountLabel(item) {
     glass: "glas",
     bottle: "flaska",
     tablet: "tablett",
+    scoop: "skopa",
     slice: "skiva",
     cube: "tärning",
     cup: "kopp",
@@ -1686,10 +1688,11 @@ function renderEnergyOmegaChart(entries) {
   const plotWidth = width - pad.left - pad.right;
   const plotHeight = height - pad.top - pad.bottom;
   const xFor = (index) => pad.left + (rows.length === 1 ? plotWidth / 2 : (index / (rows.length - 1)) * plotWidth);
-  const kcalMax = 3000;
+  const kcalMax = 2500;
   const ratioMin = 0.5;
   const ratioMax = 5;
   const yKcal = (value) => pad.top + ((kcalMax - value) / kcalMax) * plotHeight;
+  const kcalTargetY = yKcal(1800);
   const yRatio = (value) => pad.top + ((ratioMax - value) / (ratioMax - ratioMin)) * plotHeight;
   const kcalPoints = rows
     .map((row, index) => (Number.isFinite(row.kcal) ? { x: xFor(index), y: yKcal(Math.min(row.kcal, kcalMax)), value: row.kcal } : null))
@@ -1736,6 +1739,7 @@ function renderEnergyOmegaChart(entries) {
           .join("")}
       </g>
       ${guideRatios.map((line) => `<line class="omega-guide-line" x1="${pad.left}" y1="${line.y.toFixed(1)}" x2="${width - pad.right}" y2="${line.y.toFixed(1)}"></line><text class="omega-guide-label" x="${width - pad.right - 4}" y="${(line.y - 3).toFixed(1)}" text-anchor="end">${decimal(line.value)}:1</text>`).join("")}
+      <line class="kcal-target-line" x1="${pad.left}" y1="${kcalTargetY.toFixed(1)}" x2="${width - pad.right}" y2="${kcalTargetY.toFixed(1)}"></line>
       <line class="chart-axis" x1="${pad.left}" y1="${pad.top}" x2="${pad.left}" y2="${height - pad.bottom}"></line>
       <line class="chart-axis" x1="${width - pad.right}" y1="${pad.top}" x2="${width - pad.right}" y2="${height - pad.bottom}"></line>
       <line class="chart-axis" x1="${pad.left}" y1="${height - pad.bottom}" x2="${width - pad.right}" y2="${height - pad.bottom}"></line>

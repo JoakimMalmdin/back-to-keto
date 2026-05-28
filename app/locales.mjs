@@ -1,3 +1,6 @@
+export const DEFAULT_UI_LOCALE = "sv-SE";
+export const SUPPORTED_UI_LOCALES = Object.freeze(["sv-SE", "en-GB"]);
+
 export const UI_LOCALES = Object.freeze({
   "sv-SE": Object.freeze({
     appName: "Back to Keto",
@@ -15,7 +18,9 @@ export const UI_LOCALES = Object.freeze({
     weeklyCheckin: "Veckoincheckning",
     currentMacros: "Aktuell makrobild",
     currentElectrolytes: "Aktuell elektrolytbild",
-    timeSeries: "Tidsserie",
+    timeSeries: "Tidsserier",
+    chartWeightMacros: "Vikt och makron",
+    chartEnergyOmega: "Energi och omegakvot",
     fat: "Fett",
     protein: "Protein",
     carbs: "Kolhydrater",
@@ -47,6 +52,8 @@ export const UI_LOCALES = Object.freeze({
     currentMacros: "Current macros",
     currentElectrolytes: "Current electrolytes",
     timeSeries: "Time series",
+    chartWeightMacros: "Weight and macros",
+    chartEnergyOmega: "Energy and omega ratio",
     fat: "Fat",
     protein: "Protein",
     carbs: "Carbohydrates",
@@ -64,5 +71,5 @@ export const UI_LOCALES = Object.freeze({
 });
 
 export function uiText(locale, key) {
-  return UI_LOCALES[locale]?.[key] || UI_LOCALES["sv-SE"][key] || key;
+  return UI_LOCALES[locale]?.[key] || UI_LOCALES[DEFAULT_UI_LOCALE][key] || key;
 }

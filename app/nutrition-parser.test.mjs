@@ -76,6 +76,21 @@ assert(parsed.unresolved.length === 0, "Personlig standard för ospecificerad gr
 assert(parsed.items[0].foodId === "vispgradde-40", "Personlig standard ska välja grädde 40% utan att ändra katalogalias.");
 near(parsed.items[0].grams, 5, "Personlig gräddstandard ska fortfarande stödja tesked.");
 
+parsed = parseNutritionText("1,25 dl grädde 40%");
+assert(parsed.unresolved.length === 0, "Decimaler med dl ska kunna beräknas generellt.");
+near(parsed.items[0].grams, 125, "1,25 dl grädde ska bli 125 g");
+
+parsed = parseNutritionText("1,5 tsk french yellow mustard");
+assert(parsed.unresolved.length === 0, "Decimaler med tsk ska kunna beräknas även när produktaliaset är engelskt.");
+assert(parsed.items[0].foodId === "frenchs-yellow-mustard", "French yellow mustard ska matcha rätt produktpost.");
+near(parsed.items[0].grams, 7.5, "1,5 tsk senap ska bli 7,5 g");
+
+parsed = parseNutritionText("0,5 skopa whey");
+assert(parsed.unresolved.length === 0, "Decimaler med skopa ska kunna beräknas.");
+assert(parsed.items[0].foodId === "vassleisolat", "Whey ska matcha vassleisolat.");
+near(parsed.items[0].grams, 15, "0,5 skopa whey ska bli 15 g");
+near(parsed.totals.protein, 13.5, "0,5 skopa whey ska ge rätt protein");
+
 parsed = parseNutritionText("1 skiva gurka");
 assert(parsed.unresolved.length === 0, "Gurka ska kunna anges med skiva.");
 near(parsed.items[0].grams, 15, "En skiva gurka ska vara cirka 15 g");

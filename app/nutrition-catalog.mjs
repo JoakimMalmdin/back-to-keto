@@ -1,7 +1,7 @@
-import { SLV_CORE_RESOLVED, SLV_SOURCE } from "./nutrition-slv-core.mjs?v=199.1";
-import { fattyAcidProfileFor } from "./nutrition-slv-fatty-acids.mjs?v=199.1";
-import { slvSupplementFor } from "./nutrition-slv-supplements.mjs?v=199.1";
-import { USDA_SOURCE, usdaFattyAcidProfileFor } from "./nutrition-usda-fatty-acids.mjs?v=199.1";
+import { SLV_CORE_RESOLVED, SLV_SOURCE } from "./nutrition-slv-core.mjs?v=199.2";
+import { fattyAcidProfileFor } from "./nutrition-slv-fatty-acids.mjs?v=199.2";
+import { slvSupplementFor } from "./nutrition-slv-supplements.mjs?v=199.2";
+import { USDA_SOURCE, usdaFattyAcidProfileFor } from "./nutrition-usda-fatty-acids.mjs?v=199.2";
 
 export const SUPPORTED_LOCALES = Object.freeze(["sv-SE", "en-GB"]);
 export const DEFAULT_LOCALE = "sv-SE";
@@ -41,6 +41,7 @@ export const UNIT_DEFINITIONS = Object.freeze({
   glass: { labels: translations("glas", "glass"), aliases: { "sv-SE": ["glas"], "en-GB": ["glass", "glasses"] } },
   bottle: { labels: translations("flaska", "bottle"), aliases: { "sv-SE": ["flaska", "flaskor"], "en-GB": ["bottle", "bottles"] } },
   tablet: { labels: translations("tablett", "tablet"), aliases: { "sv-SE": ["tablett", "tabletter"], "en-GB": ["tablet", "tablets"] } },
+  scoop: { labels: translations("skopa", "scoop"), aliases: { "sv-SE": ["skopa", "skopor"], "en-GB": ["scoop", "scoops"] } },
   slice: { labels: translations("skiva", "slice"), aliases: { "sv-SE": ["skiva", "skivor"], "en-GB": ["slice", "slices"] } },
   cube: { labels: translations("tärning", "cube"), aliases: { "sv-SE": ["tärning", "tärningar"], "en-GB": ["cube", "cubes"] } },
   leaf: { labels: translations("blad", "leaf"), aliases: { "sv-SE": ["blad"], "en-GB": ["leaf", "leaves"] } },
@@ -446,6 +447,19 @@ export const NUTRITION_CATALOG = Object.freeze([
     electrolyteSource: source(SOURCE_TYPES.unknown, "Mineraler ej relevanta/deklarerade", "2026-05-23", CONFIDENCE_LEVELS.proxy),
     tags: ["supplement", "incomplete_protein"],
   }),
+  defineProxyFood({
+    id: "vassleisolat",
+    names: translations("Vassleisolat", "Whey isolate"),
+    category: "supplements",
+    aliases: {
+      "sv-SE": ["whey", "vassle", "vassleisolat", "vassle isolate", "whey isolate"],
+      "en-GB": ["whey", "whey isolate", "whey protein isolate", "protein powder"],
+    },
+    nutrientsPer100g: { kcal: 360, fat: 1, protein: 90, carbs: 2, fiber: 0, omega3: 0, omega6: 0, sodiumMg: 200, potassiumMg: 350, magnesiumMg: 40 },
+    measures: [measure("scoop", 1, 30), measure("tablespoon", 1, 10), measure("teaspoon", 1, 3.3)],
+    defaultMeasure: { unit: "scoop", amount: 1 },
+    tags: ["supplement", "protein_source"],
+  }, "Generisk vassleisolatpost tills produktetikett verifieras. 1 skopa räknas som 30 g."),
   defineFood({
     id: "mollers-tran",
     names: translations("Möller's Tran", "Möller's Cod Liver Oil"),
@@ -835,8 +849,8 @@ export const NUTRITION_CATALOG = Object.freeze([
     names: translations("French's Yellow Mustard", "French's Yellow Mustard"),
     category: "seasonings",
     aliases: {
-      "sv-SE": ["frenchs senap", "french's senap", "yellow mustard", "gul senap", "senap yellow"],
-      "en-GB": ["frenchs mustard", "french's mustard", "yellow mustard"],
+      "sv-SE": ["frenchs senap", "french's senap", "french yellow mustard", "frenchs yellow mustard", "french's yellow mustard", "yellow mustard", "gul senap", "senap yellow"],
+      "en-GB": ["frenchs mustard", "french's mustard", "french yellow mustard", "frenchs yellow mustard", "french's yellow mustard", "yellow mustard"],
     },
     nutrientsPer100g: { kcal: 85, fat: 4.4, protein: 4.3, carbs: 1.2, fiber: 3.5, omega3: 0.2, omega6: 0.8, sodiumMg: 1220 },
     measures: [measure("teaspoon", 1, 5), measure("tablespoon", 1, 15)],
