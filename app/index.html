@@ -9,13 +9,13 @@
     <title>Back to Keto</title>
     <script>
       if (window.location.protocol === "file:") {
-        window.location.replace("https://joakimmalmdin.github.io/back-to-keto/app/?cache=199.2");
+        window.location.replace("https://joakimmalmdin.github.io/back-to-keto/app/?cache=199.3");
       }
     </script>
-    <link rel="manifest" href="manifest.webmanifest?v=199.2" />
+    <link rel="manifest" href="manifest.webmanifest?v=199.3" />
     <link rel="icon" href="icon.svg?v=146" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="apple-touch-icon.png?v=146" />
-    <link rel="stylesheet" href="styles.css?v=199.2" />
+    <link rel="stylesheet" href="styles.css?v=199.3" />
   </head>
   <body>
     <div class="app-shell">
@@ -24,7 +24,7 @@
           <p class="eyebrow">Back to Keto</p>
           <h1>Daglig keto-logg</h1>
           <div class="version-row">
-            <p class="version-pill">v1.1 beta · build 199.2</p>
+            <p class="version-pill">v1.1 beta · build 199.3</p>
             <span class="version-info">
               <button class="version-info-trigger" type="button" aria-label="Vad är nytt i v1.1 beta?" aria-describedby="versionInfoText">Info</button>
               <span class="version-info-text" id="versionInfoText" role="tooltip">
@@ -469,7 +469,7 @@
               <div class="chart-legend" aria-label="Diagramförklaring">
                 <span><i class="legend-weight"></i>Vikt, kg</span>
                 <span><i class="legend-fat"></i>Fett, g</span>
-                <span><i class="legend-protein"></i>Protein, g</span>
+                <span><i class="legend-protein"></i>Protein exkl. collagen, g</span>
                 <span><i class="legend-carbs"></i>Kolhydrater, g</span>
               </div>
               <div class="chart-actions">
@@ -483,7 +483,7 @@
                     <strong id="trendAvgCarbs">--</strong>
                   </div>
                   <div class="trend-average">
-                    <span>Medel proteinintag/dag</span>
+                    <span>Medel fullvärdigt protein/dag</span>
                     <strong id="trendAvgProtein">--</strong>
                   </div>
                   <div class="trend-average">
@@ -618,6 +618,6 @@
       </main>
     </div>
 
-    <script src="app.js?v=199.2" type="module"></script>
+    <script src="app.js?v=199.3" type="module"></script>
   </body>
 </html>

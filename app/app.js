@@ -1,5 +1,5 @@
-import { parseNutritionText } from "./nutrition-parser.mjs?v=199.2";
-import { NUTRITION_CATALOG, NUTRITION_CATEGORIES, SOURCE_TYPES, categoryName, foodName } from "./nutrition-catalog.mjs?v=199.2";
+import { parseNutritionText } from "./nutrition-parser.mjs?v=199.3";
+import { NUTRITION_CATALOG, NUTRITION_CATEGORIES, SOURCE_TYPES, categoryName, foodName } from "./nutrition-catalog.mjs?v=199.3";
 
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
@@ -28,7 +28,7 @@ const legacyDefaultMacroTargets = {
   kcalTarget: 1900,
   kcalMax: 2000,
 };
-const appVersion = "199.2";
+const appVersion = "199.3";
 const appDisplayVersion = `v1.1 beta · build ${appVersion}`;
 const syncTimeoutMs = 10000;
 let activeDate = "";
@@ -125,10 +125,12 @@ const compassMealTargets = Object.freeze({
   lunch: { label: "Lunch", protein: 50, fat: 45, carbs: 6, kcal: 625 },
   dinner: { label: "Middag", protein: 50, fat: 50, carbs: 5, kcal: 655 },
 });
+const compassMaxSingleProteinFatSourceGrams = 250;
+const compassWheyTablespoonLimit = 2;
 
 const compassBreakfastCandidates = Object.freeze([
-  "1 tsk Möllers Tran, 2 ägg, 125 g laxfilé, 0,5 avokado, 1 glas buljong",
   "1 tsk Möllers Tran, 3 ägg, 60 g bacon, 50 g spenat, 1 glas buljong",
+  "1 tsk Möllers Tran, 2 ägg, 125 g laxfilé, 0,5 avokado, 1 glas buljong",
   "1 tsk Möllers Tran, 2 ägg, 100 g halloumi, 0,5 avokado, 1 glas buljong",
 ]);
 
@@ -1109,7 +1111,7 @@ function compassDinnerProteinChoices(dateText) {
 function compassRemainingMealTargets(entry, targets) {
   const breakfastMacros = estimateMacros(partialEntry(entry, ["breakfast"]));
   const remainingProtein = Math.max(0, targets.proteinMin - fullProtein(breakfastMacros));
-  const lunchProtein = Math.max(45, Math.min(70, remainingProtein / 2));
+  const lunchProtein = remainingProtein > 0 ? Math.max(40, Math.min(75, remainingProtein / 2)) : 0;
   return {
     lunchProtein,
     dinnerProtein: Math.max(30, remainingProtein - lunchProtein),
@@ -1121,10 +1123,19 @@ function strengthenLunchProtein(entry, lunch, targetProtein) {
   const shortfall = targetProtein - fullProtein(macros);
   if (shortfall < 8) return lunch;
   const chickenProteinPerGram = 31 / 100;
-  const grams = Math.min(125, Math.max(50, roundUp(shortfall / chickenProteinPerGram, 25)));
+  const grams = Math.min(compassMaxSingleProteinFatSourceGrams, Math.max(50, roundUp(shortfall / chickenProteinPerGram, 25)));
   const strengthened = `${lunch}, ${grams} g kycklingfilé utan skinn`;
   macros = mealProposalMacros(strengthened, entry.date);
   return fullProtein(macros) >= targetProtein - 6 ? strengthened : lunch;
+}
+
+function addWheyForProteinIfUseful(items, entry, gaps, targetProtein) {
+  const macros = proposalMacros(items, entry.date);
+  const proteinShortfall = Math.max(0, Math.min(gaps.protein, targetProtein) - fullProtein(macros));
+  if (proteinShortfall < 8) return macros;
+  const tablespoons = Math.min(compassWheyTablespoonLimit, Math.max(1, Math.ceil((proteinShortfall / 9) * 2) / 2));
+  const candidate = addProposalItemIfWithinEnergy(items, `${decimal(tablespoons)} msk vassleisolat`, entry, gaps);
+  return candidate || macros;
 }
 
 function buildDinnerProposal(entry, gaps, title, food, options = {}) {
@@ -1135,9 +1146,13 @@ function buildDinnerProposal(entry, gaps, title, food, options = {}) {
   const dinnerProteinTarget = proteinTarget == null
     ? gaps.protein
     : Math.min(gaps.protein, Math.max(25, proteinTarget));
-  const proteinGrams = Math.min(550, Math.max(125, roundUp(Math.max(dinnerProteinTarget, 25) / proteinPerGram, 25)));
+  const proteinGrams = Math.min(
+    compassMaxSingleProteinFatSourceGrams,
+    Math.max(125, roundUp(Math.max(dinnerProteinTarget, 25) / proteinPerGram, 25)),
+  );
   items.push(`${proteinGrams} g ${food}`);
   let macros = proposalMacros(items, entry.date);
+  macros = addWheyForProteinIfUseful(items, entry, gaps, dinnerProteinTarget);
 
   const potassiumStillNeeded = Math.max(0, gaps.potassium - macros.potassiumMg);
   const carbsAfterAvocado = macros.carbs + 3.3;
@@ -1201,7 +1216,8 @@ function dinnerCompass(entry) {
         const macros = mealProposalMacros(meal, date);
         const score = allocationScore(macros, "breakfast") +
           (repeatsPreviousMeal(date, "breakfast", meal) ? 3000 : 0) +
-          Math.max(0, omegaRatioValue(macros) - maxDailyOmegaRatio) * 600;
+          Math.max(0, omegaRatioValue(macros) - maxDailyOmegaRatio) * 600 -
+          (/\bbacon\b/i.test(meal) ? 180 : 0);
         return { meal, macros, score };
       })
       .sort((a, b) => a.score - b.score);
@@ -1525,7 +1541,7 @@ function renderTrendChart(entries) {
     element.textContent = value === null ? "--" : `${round ? Math.round(value) : decimal(value)} ${unit}`;
   };
   updateTrendAverage("#trendAvgCarbs", completedMacros.map((macros) => macros.carbs), "g");
-  updateTrendAverage("#trendAvgProtein", completedMacros.map((macros) => macros.protein), "g");
+  updateTrendAverage("#trendAvgProtein", completedMacros.map((macros) => fullProtein(macros)), "g");
   updateTrendAverage("#trendAvgFat", completedMacros.map((macros) => macros.fat), "g");
   updateTrendAverage("#trendAvgKcal", completedMacros.map((macros) => macros.kcal), "kcal", true);
   const periodOmega = completedMacros.reduce(
@@ -1558,7 +1574,7 @@ function renderTrendChart(entries) {
         date: entry.date,
         weight: Number(entry.weight),
         fat: hasEntryContent(entry) ? macros.fat : null,
-        protein: hasEntryContent(entry) ? macros.protein : null,
+        protein: hasEntryContent(entry) ? fullProtein(macros) : null,
         carbs: hasEntryContent(entry) ? macros.carbs : null,
       };
     })
@@ -1652,7 +1668,7 @@ function renderTrendChart(entries) {
       <text class="axis-label" x="${width - pad.right + 8}" y="22">gram</text>
     </svg>
   `;
-  note.textContent = `${selection.notePrefix}Senast i urvalet: ${latest.weight ? `${decimal(latest.weight)} kg, ` : ""}${decimal(latest.fat || 0)} g fett, ${decimal(latest.protein || 0)} g protein, ${decimal(latest.carbs || 0)} g kolhydrater.${averageNote}`;
+  note.textContent = `${selection.notePrefix}Senast i urvalet: ${latest.weight ? `${decimal(latest.weight)} kg, ` : ""}${decimal(latest.fat || 0)} g fett, ${decimal(latest.protein || 0)} g fullvärdigt protein, ${decimal(latest.carbs || 0)} g kolhydrater.${averageNote}`;
 }
 
 function renderEnergyOmegaChart(entries) {
