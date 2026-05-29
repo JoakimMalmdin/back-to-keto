@@ -1,5 +1,5 @@
-import { parseNutritionText } from "./nutrition-parser.mjs?v=199.3";
-import { NUTRITION_CATALOG, NUTRITION_CATEGORIES, SOURCE_TYPES, categoryName, foodName } from "./nutrition-catalog.mjs?v=199.3";
+import { parseNutritionText } from "./nutrition-parser.mjs?v=200";
+import { NUTRITION_CATALOG, NUTRITION_CATEGORIES, SOURCE_TYPES, categoryName, foodName } from "./nutrition-catalog.mjs?v=200";
 
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
@@ -28,8 +28,8 @@ const legacyDefaultMacroTargets = {
   kcalTarget: 1900,
   kcalMax: 2000,
 };
-const appVersion = "199.3";
-const appDisplayVersion = `v1.1 beta · build ${appVersion}`;
+const appVersion = "200";
+const appDisplayVersion = `v1.2 beta · build ${appVersion}`;
 const syncTimeoutMs = 10000;
 let activeDate = "";
 let supabaseClient = null;
@@ -1138,6 +1138,32 @@ function addWheyForProteinIfUseful(items, entry, gaps, targetProtein) {
   return candidate || macros;
 }
 
+function bestRestOfDayPlanAfterBreakfast(entry, targets) {
+  const combinations = [];
+  const splitTargets = compassRemainingMealTargets(entry, targets);
+  for (const originalLunch of compassLunchCandidates) {
+    const lunch = strengthenLunchProtein(entry, lunchWithPlannedSodium(entry, originalLunch), splitTargets.lunchProtein);
+    const lunchMacros = mealProposalMacros(lunch, entry.date);
+    const afterLunch = projectedDayMacros(entry, { lunch });
+    const gaps = dinnerGaps(afterLunch, entry, targets);
+    for (const dinnerProtein of compassDinnerProteinChoices(entry.date)) {
+      const dinner = buildDinnerProposal(entry, gaps, dinnerProtein.title, dinnerProtein.food, {
+        favorAvocado: true,
+        proteinTarget: splitTargets.dinnerProtein,
+      });
+      const plans = { lunch, dinner: dinner.meal };
+      const day = projectedDayMacros(entry, plans);
+      const balancePenalty =
+        Math.abs(fullProtein(lunchMacros) - splitTargets.lunchProtein) * 10 +
+        Math.abs(fullProtein(dinner.macros) - splitTargets.dinnerProtein) * 10 +
+        Math.abs(fullProtein(lunchMacros) - fullProtein(dinner.macros)) * 8;
+      const score = allocationScore(lunchMacros, "lunch") + allocationScore(dinner.macros, "dinner") + balancePenalty + dayPlanScore(day, entry, plans, targets);
+      combinations.push({ lunch, lunchMacros, dinner, day, score });
+    }
+  }
+  return combinations.sort((a, b) => a.score - b.score)[0] || null;
+}
+
 function buildDinnerProposal(entry, gaps, title, food, options = {}) {
   const { favorAvocado = false, proteinTarget = null } = options;
   const items = [];
@@ -1214,48 +1240,31 @@ function dinnerCompass(entry) {
     const choices = compassBreakfastCandidates
       .map((meal) => {
         const macros = mealProposalMacros(meal, date);
-        const score = allocationScore(macros, "breakfast") +
+        const projectedEntry = emptyEntry(date);
+        projectedEntry.breakfast = meal;
+        const restPlan = bestRestOfDayPlanAfterBreakfast(projectedEntry, targets);
+        const dayScore = restPlan ? restPlan.score : 5000;
+        const score = allocationScore(macros, "breakfast") + dayScore +
           (repeatsPreviousMeal(date, "breakfast", meal) ? 3000 : 0) +
           Math.max(0, omegaRatioValue(macros) - maxDailyOmegaRatio) * 600 -
           (/\bbacon\b/i.test(meal) ? 180 : 0);
-        return { meal, macros, score };
+        return { meal, macros, score, restPlan };
       })
       .sort((a, b) => a.score - b.score);
     const best = choices[0];
     const planId = registerCompassPlan("breakfast", date, best.meal);
+    const plannedDay = best.restPlan?.day || null;
     return {
-      balance: `Förslag för frukost ${date}. Måltidsram: cirka 45 g protein, 35 g fett och högst 5 g kolhydrater.`,
+      balance: `Förslag för frukost ${date}. Frukosten väljs mot hela nästa dags protein-, energi-, elektrolyt- och omega-plan.`,
       proposals: [{ title: "Frukost i morgon", field: "breakfast", date, planId, ...best }],
-      projectedDay: null,
+      projectedDay: plannedDay,
       targets,
       note: "Frukostregeln inkluderar 1 tsk Möller's Tran. När frukosten är registrerad räknar Kompassen om lunch och middag utifrån vad du faktiskt åt.",
     };
   }
 
   if (entry.breakfast?.trim() && !entry.lunch?.trim()) {
-    const combinations = [];
-    const splitTargets = compassRemainingMealTargets(entry, targets);
-    for (const originalLunch of compassLunchCandidates) {
-      const lunch = strengthenLunchProtein(entry, lunchWithPlannedSodium(entry, originalLunch), splitTargets.lunchProtein);
-      const lunchMacros = mealProposalMacros(lunch, entry.date);
-      const afterLunch = projectedDayMacros(entry, { lunch });
-      const gaps = dinnerGaps(afterLunch, entry, targets);
-      for (const dinnerProtein of compassDinnerProteinChoices(entry.date)) {
-        const dinner = buildDinnerProposal(entry, gaps, dinnerProtein.title, dinnerProtein.food, {
-          favorAvocado: true,
-          proteinTarget: splitTargets.dinnerProtein,
-        });
-        const plans = { lunch, dinner: dinner.meal };
-        const day = projectedDayMacros(entry, plans);
-        const balancePenalty =
-          Math.abs(fullProtein(lunchMacros) - splitTargets.lunchProtein) * 10 +
-          Math.abs(fullProtein(dinner.macros) - splitTargets.dinnerProtein) * 10 +
-          Math.abs(fullProtein(lunchMacros) - fullProtein(dinner.macros)) * 8;
-        const score = allocationScore(lunchMacros, "lunch") + allocationScore(dinner.macros, "dinner") + balancePenalty + dayPlanScore(day, entry, plans, targets);
-        combinations.push({ lunch, lunchMacros, dinner, day, score });
-      }
-    }
-    const best = combinations.sort((a, b) => a.score - b.score)[0];
+    const best = bestRestOfDayPlanAfterBreakfast(entry, targets);
     const lunchPlanId = registerCompassPlan("lunch", entry.date, best.lunch);
     const dinnerPlanId = registerCompassPlan("dinner", entry.date, best.dinner.meal);
     return {

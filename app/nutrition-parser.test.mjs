@@ -100,6 +100,12 @@ assert(parsed.items[0].conversionMethod === "derived_measure", "Tesked yoghurt s
 near(parsed.items[0].grams, 10, "Två teskedar yoghurt ska vara 10 g när 1 dl är 100 g");
 near(parsed.totals.carbs, 0.37, "Två teskedar yoghurt ska ge rätt kolhydratvärde");
 
+parsed = parseNutritionText("1,5 kopp kaffe");
+assert(parsed.unresolved.length === 0, "Kaffe ska kunna anges med decimal i koppar.");
+near(parsed.items[0].grams, 300, "1,5 kopp kaffe ska räknas som 300 ml/g.");
+near(parsed.totals.carbs, 0, "Kaffe ska inte bidra med kolhydrater i keto-loggningen.");
+near(parsed.totals.potassiumMg, 306, "Kaffe ska fortfarande bidra till elektrolytbilden enligt LD-värdet.");
+
 parsed = parseNutritionText("majonnäs med osötad ketchup");
 assert(parsed.unresolved.length === 0, "Såser med uttrycklig standardportion ska kunna räknas när mängd saknas.");
 near(parsed.items.find((item) => item.foodId === "hellmanns-majonnas").grams, 15, "Majonnäs utan mängd ska använda synlig standardmatsked.");
