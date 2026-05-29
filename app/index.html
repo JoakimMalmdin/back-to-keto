@@ -9,13 +9,13 @@
     <title>Back to Keto</title>
     <script>
       if (window.location.protocol === "file:") {
-        window.location.replace("https://joakimmalmdin.github.io/back-to-keto/app/?cache=200");
+        window.location.replace("https://joakimmalmdin.github.io/back-to-keto/app/?cache=201");
       }
     </script>
-    <link rel="manifest" href="manifest.webmanifest?v=200" />
+    <link rel="manifest" href="manifest.webmanifest?v=201" />
     <link rel="icon" href="icon.svg?v=146" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="apple-touch-icon.png?v=146" />
-    <link rel="stylesheet" href="styles.css?v=200" />
+    <link rel="stylesheet" href="styles.css?v=201" />
   </head>
   <body>
     <div class="app-shell">
@@ -24,7 +24,7 @@
           <p class="eyebrow">Back to Keto</p>
           <h1>Daglig keto-logg</h1>
           <div class="version-row">
-            <p class="version-pill">v1.2 beta · build 200</p>
+            <p class="version-pill">v1.2 beta · build 201</p>
             <span class="version-info">
               <button class="version-info-trigger" type="button" aria-label="Vad är nytt i v1.2 beta?" aria-describedby="versionInfoText">Info</button>
               <span class="version-info-text" id="versionInfoText" role="tooltip">
@@ -318,6 +318,58 @@
               </div>
             </details>
 
+            <details class="manual-macros manual-product-panel">
+              <summary>Manuell produkt</summary>
+              <p class="mini-note">Lägg till en tillfällig produkt i Övrig mat och dryck när livsmedlet saknas i listan.</p>
+              <div class="manual-product-grid">
+                <label>
+                  Namn
+                  <input id="manualProductNameInput" type="text" placeholder="t.ex. Lindt 85%" />
+                </label>
+                <label>
+                  Mängd g
+                  <input id="manualProductGramsInput" type="number" step="0.1" inputmode="decimal" />
+                </label>
+                <label>
+                  kcal
+                  <input id="manualProductKcalInput" type="number" step="0.1" inputmode="decimal" />
+                </label>
+                <label>
+                  Fett g
+                  <input id="manualProductFatInput" type="number" step="0.1" inputmode="decimal" />
+                </label>
+                <label>
+                  Protein g
+                  <input id="manualProductProteinInput" type="number" step="0.1" inputmode="decimal" />
+                </label>
+                <label>
+                  Kolh. g
+                  <input id="manualProductCarbsInput" type="number" step="0.1" inputmode="decimal" />
+                </label>
+                <label>
+                  Na mg
+                  <input id="manualProductSodiumInput" type="number" step="1" inputmode="numeric" />
+                </label>
+                <label>
+                  Ka mg
+                  <input id="manualProductPotassiumInput" type="number" step="1" inputmode="numeric" />
+                </label>
+                <label>
+                  Mg mg
+                  <input id="manualProductMagnesiumInput" type="number" step="1" inputmode="numeric" />
+                </label>
+                <label>
+                  O3 g
+                  <input id="manualProductOmega3Input" type="number" step="0.01" inputmode="decimal" />
+                </label>
+                <label>
+                  O6 g
+                  <input id="manualProductOmega6Input" type="number" step="0.01" inputmode="decimal" />
+                </label>
+              </div>
+              <button class="secondary-button" id="addManualProductButton" type="button">Lägg till i Övrig mat och dryck</button>
+            </details>
+
             <label>
               Notering
               <textarea id="notesInput" name="notes" rows="2"></textarea>
@@ -573,6 +625,10 @@
                 Synkkod
                 <input id="syncCodeInput" name="syncCode" type="password" autocomplete="off" placeholder="Välj en egen kod" />
               </label>
+              <label>
+                Profilnamn (frivilligt)
+                <input id="syncProfileNameInput" name="syncProfileName" type="text" autocomplete="name" placeholder="t.ex. Joakim" />
+              </label>
               <div class="button-row sync-actions">
                 <button class="secondary-button" id="saveSyncCodeButton" type="button">Spara synkkod</button>
                 <button class="secondary-button" id="syncNowButton" type="button">Synka nu</button>
@@ -618,6 +674,6 @@
       </main>
     </div>
 
-    <script src="app.js?v=200" type="module"></script>
+    <script src="app.js?v=201" type="module"></script>
   </body>
 </html>

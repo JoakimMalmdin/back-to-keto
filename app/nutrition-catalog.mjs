@@ -1,7 +1,7 @@
-import { SLV_CORE_RESOLVED, SLV_SOURCE } from "./nutrition-slv-core.mjs?v=200";
-import { fattyAcidProfileFor } from "./nutrition-slv-fatty-acids.mjs?v=200";
-import { slvSupplementFor } from "./nutrition-slv-supplements.mjs?v=200";
-import { USDA_SOURCE, usdaFattyAcidProfileFor } from "./nutrition-usda-fatty-acids.mjs?v=200";
+import { SLV_CORE_RESOLVED, SLV_SOURCE } from "./nutrition-slv-core.mjs?v=201";
+import { fattyAcidProfileFor } from "./nutrition-slv-fatty-acids.mjs?v=201";
+import { slvSupplementFor } from "./nutrition-slv-supplements.mjs?v=201";
+import { USDA_SOURCE, usdaFattyAcidProfileFor } from "./nutrition-usda-fatty-acids.mjs?v=201";
 
 export const SUPPORTED_LOCALES = Object.freeze(["sv-SE", "en-GB"]);
 export const DEFAULT_LOCALE = "sv-SE";
@@ -41,6 +41,7 @@ export const UNIT_DEFINITIONS = Object.freeze({
   glass: { labels: translations("glas", "glass"), aliases: { "sv-SE": ["glas"], "en-GB": ["glass", "glasses"] } },
   bottle: { labels: translations("flaska", "bottle"), aliases: { "sv-SE": ["flaska", "flaskor"], "en-GB": ["bottle", "bottles"] } },
   tablet: { labels: translations("tablett", "tablet"), aliases: { "sv-SE": ["tablett", "tabletter"], "en-GB": ["tablet", "tablets"] } },
+  capsule: { labels: translations("kapsel", "capsule"), aliases: { "sv-SE": ["kapsel", "kapslar"], "en-GB": ["capsule", "capsules"] } },
   scoop: { labels: translations("skopa", "scoop"), aliases: { "sv-SE": ["skopa", "skopor"], "en-GB": ["scoop", "scoops"] } },
   slice: { labels: translations("skiva", "slice"), aliases: { "sv-SE": ["skiva", "skivor"], "en-GB": ["slice", "slices"] } },
   cube: { labels: translations("tärning", "cube"), aliases: { "sv-SE": ["tärning", "tärningar"], "en-GB": ["cube", "cubes"] } },
@@ -515,6 +516,36 @@ export const NUTRITION_CATALOG = Object.freeze([
     macroSource: source(SOURCE_TYPES.unknown, "Tillskott utan energi", "2026-05-24", CONFIDENCE_LEVELS.estimated),
     electrolyteSource: source(SOURCE_TYPES.proxy, "Angiven dos: 200 mg per tablett", "2026-05-24", CONFIDENCE_LEVELS.proxy),
     tags: ["magnesium_source", "supplement"],
+  }),
+  defineFood({
+    id: "now-magnesiumcitrat",
+    names: translations("NOW Magnesiumcitrat", "NOW Magnesium Citrate"),
+    category: "supplements",
+    aliases: {
+      "sv-SE": ["now magnesiumcitrat", "magnesiumcitrat", "magnesiumcitrat kapsel", "magnesiumcitrat kapslar"],
+      "en-GB": ["now magnesium citrate", "magnesium citrate", "magnesium citrate capsule", "magnesium citrate capsules"],
+    },
+    nutrientsPer100g: { kcal: 0, fat: 0, protein: 0, carbs: 0, fiber: 0, omega3: 0, omega6: 0, sodiumMg: 0, potassiumMg: 0, magnesiumMg: 13333.3 },
+    measures: [measure("capsule", 1, 1)],
+    implicitUnit: "capsule",
+    macroSource: source(SOURCE_TYPES.productLabel, "NOW Magnesiumcitrat, fotograferad etikett", "2026-05-29", CONFIDENCE_LEVELS.label, "3 kapslar ger 400 mg magnesium."),
+    electrolyteSource: source(SOURCE_TYPES.productLabel, "NOW Magnesiumcitrat, fotograferad etikett", "2026-05-29", CONFIDENCE_LEVELS.label, "1 kapsel räknas som cirka 133 mg magnesium."),
+    tags: ["magnesium_source", "supplement"],
+  }),
+  defineFood({
+    id: "vitamin-d3-25ug",
+    names: translations("Vitamin D3 25 µg", "Vitamin D3 25 µg"),
+    category: "supplements",
+    aliases: {
+      "sv-SE": ["vitamin d3", "d3", "d-vitamin", "vitamin d", "d3 tablett"],
+      "en-GB": ["vitamin d3", "d3", "vitamin d", "d3 tablet"],
+    },
+    nutrientsPer100g: { kcal: 0, fat: 0, protein: 0, carbs: 0, fiber: 0, omega3: 0, omega6: 0, sodiumMg: 0, potassiumMg: 0, magnesiumMg: 0 },
+    measures: [measure("tablet", 1, 1)],
+    implicitUnit: "tablet",
+    macroSource: source(SOURCE_TYPES.productLabel, "Vitamin D3, fotograferad etikett", "2026-05-29", CONFIDENCE_LEVELS.label, "1 tablett ger 25 µg/1000 IE. Vitaminer visas inte i dagsstaplar ännu."),
+    electrolyteSource: source(SOURCE_TYPES.productLabel, "Vitamin D3, fotograferad etikett", "2026-05-29", CONFIDENCE_LEVELS.label, "Inga elektrolyter deklarerade."),
+    tags: ["supplement"],
   }),
   defineFood({
     id: "salt",

@@ -1,9 +1,10 @@
-import { parseNutritionText } from "./nutrition-parser.mjs?v=200";
-import { NUTRITION_CATALOG, NUTRITION_CATEGORIES, SOURCE_TYPES, categoryName, foodName } from "./nutrition-catalog.mjs?v=200";
+import { parseNutritionText } from "./nutrition-parser.mjs?v=201";
+import { NUTRITION_CATALOG, NUTRITION_CATEGORIES, SOURCE_TYPES, categoryName, foodName } from "./nutrition-catalog.mjs?v=201";
 
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
 const syncCodeKey = "btk.keto.syncCode.v1";
+const syncProfileNameKey = "btk.keto.syncProfileName.v1";
 const macroTargetsKey = "btk.keto.macroTargets.v1";
 const weeklyCheckinsKey = "btk.keto.weeklyCheckins.v1";
 const syncRecoveryKey = "btk.keto.syncRecovery.v1";
@@ -28,7 +29,7 @@ const legacyDefaultMacroTargets = {
   kcalTarget: 1900,
   kcalMax: 2000,
 };
-const appVersion = "200";
+const appVersion = "201";
 const appDisplayVersion = `v1.2 beta · build ${appVersion}`;
 const syncTimeoutMs = 10000;
 let activeDate = "";
@@ -127,6 +128,7 @@ const compassMealTargets = Object.freeze({
 });
 const compassMaxSingleProteinFatSourceGrams = 250;
 const compassWheyTablespoonLimit = 2;
+const compassLeanFishPoultryCapGrams = 200;
 
 const compassBreakfastCandidates = Object.freeze([
   "1 tsk Möllers Tran, 3 ägg, 60 g bacon, 50 g spenat, 1 glas buljong",
@@ -193,12 +195,14 @@ const macroTargetInputs = {
   kcalMax: document.querySelector("#maxKcalInput"),
 };
 const syncCodeInput = document.querySelector("#syncCodeInput");
+const syncProfileNameInput = document.querySelector("#syncProfileNameInput");
 const syncStatus = document.querySelector("#syncStatus");
 const quickSyncStatus = document.querySelector("#quickSyncStatus");
 const saveSyncCodeButton = document.querySelector("#saveSyncCodeButton");
 const clearSyncCodeButton = document.querySelector("#clearSyncCodeButton");
 const syncNowButton = document.querySelector("#syncNowButton");
 const quickSyncButton = document.querySelector("#quickSyncButton");
+const addManualProductButton = document.querySelector("#addManualProductButton");
 const reportButton = document.querySelector("#reportButton");
 const weekReportButton = document.querySelector("#weekReportButton");
 const weeklyCheckinButton = document.querySelector("#weeklyCheckinButton");
@@ -763,6 +767,7 @@ function masterAmountLabel(item) {
     glass: "glas",
     bottle: "flaska",
     tablet: "tablett",
+    capsule: "kapsel",
     scoop: "skopa",
     slice: "skiva",
     cube: "tärning",
@@ -772,22 +777,96 @@ function masterAmountLabel(item) {
   return `${decimal(item.amount)} ${labels[item.unit] || item.unit}${standard}`;
 }
 
+function parseNumericValue(value) {
+  const match = String(value ?? "").trim().match(/-?\d+(?:[,.]\d+)?/);
+  if (!match) return 0;
+  const number = Number(match[0].replace(",", "."));
+  return Number.isFinite(number) ? number : 0;
+}
+
+function valueFromManualPart(part, keys) {
+  const text = String(part || "").trim();
+  for (const key of keys) {
+    const match = text.match(new RegExp(`^(?:${key})\\s*[:=]?\\s*(-?\\d+(?:[,.]\\d+)?)$`, "iu"));
+    if (match) return parseNumericValue(match[1]);
+  }
+  return null;
+}
+
+function parseManualProductText(text = "") {
+  const products = [];
+  const pattern = /\[manuell produkt:([^\]]+)\]/giu;
+  for (const match of String(text || "").matchAll(pattern)) {
+    const parts = match[1].split(";").map((part) => part.trim()).filter(Boolean);
+    const name = parts.shift() || "Manuell produkt";
+    const amountPart = parts.find((part) => /\d+(?:[,.]\d+)?\s*g\b/i.test(part));
+    const grams = amountPart ? parseNumericValue(amountPart) : 0;
+    if (!grams) continue;
+    const item = {
+      foodId: "manual-product",
+      label: name,
+      count: 0,
+      amountLabel: `${decimal(grams)} g manuell`,
+      kcal: 0,
+      protein: 0,
+      fat: 0,
+      carbs: 0,
+      fiber: null,
+      omega3: 0,
+      omega6: 0,
+      omegaSource: "Manuell",
+      sodiumMg: 0,
+      potassiumMg: 0,
+      magnesiumMg: 0,
+      assumption: "manuell produkt",
+    };
+    for (const part of parts) {
+      const kcal = valueFromManualPart(part, ["kcal", "energi"]);
+      const fat = valueFromManualPart(part, ["f", "fett"]);
+      const protein = valueFromManualPart(part, ["p", "protein"]);
+      const carbs = valueFromManualPart(part, ["k", "kolh\\.?","kolhydrater"]);
+      const sodium = valueFromManualPart(part, ["na", "natrium"]);
+      const potassium = valueFromManualPart(part, ["ka", "kalium"]);
+      const magnesium = valueFromManualPart(part, ["mg", "magnesium"]);
+      const omega3 = valueFromManualPart(part, ["o3", "omega3", "omega-3"]);
+      const omega6 = valueFromManualPart(part, ["o6", "omega6", "omega-6"]);
+      if (kcal !== null) item.kcal = kcal;
+      if (fat !== null) item.fat = fat;
+      if (protein !== null) item.protein = protein;
+      if (carbs !== null) item.carbs = carbs;
+      if (sodium !== null) item.sodiumMg = sodium;
+      if (potassium !== null) item.potassiumMg = potassium;
+      if (magnesium !== null) item.magnesiumMg = magnesium;
+      if (omega3 !== null) item.omega3 = omega3;
+      if (omega6 !== null) item.omega6 = omega6;
+    }
+    products.push(item);
+  }
+  return products;
+}
+
+function stripManualProductText(text = "") {
+  return String(text || "").replace(/\[manuell produkt:[^\]]+\]/giu, " ");
+}
+
 function estimateMasterMacros(entry) {
-  const parsed = parseNutritionText(mealText(entry), {
+  const combinedMealText = mealText(entry);
+  const parsed = parseNutritionText(stripManualProductText(combinedMealText), {
     defaultFoodAliases: { "grädde": "vispgradde-40", gradde: "vispgradde-40" },
   });
+  const manualProducts = parseManualProductText(combinedMealText);
   const totals = {
-    kcal: parsed.totals.kcal || 0,
-    protein: parsed.totals.protein || 0,
-    fat: parsed.totals.fat || 0,
-    carbs: parsed.totals.carbs || 0,
+    kcal: (parsed.totals.kcal || 0) + manualProducts.reduce((sum, item) => sum + item.kcal, 0),
+    protein: (parsed.totals.protein || 0) + manualProducts.reduce((sum, item) => sum + item.protein, 0),
+    fat: (parsed.totals.fat || 0) + manualProducts.reduce((sum, item) => sum + item.fat, 0),
+    carbs: (parsed.totals.carbs || 0) + manualProducts.reduce((sum, item) => sum + item.carbs, 0),
     fiber: parsed.totals.fiber || 0,
-    omega3: parsed.totals.omega3 || 0,
-    omega6: parsed.totals.omega6 || 0,
+    omega3: (parsed.totals.omega3 || 0) + manualProducts.reduce((sum, item) => sum + item.omega3, 0),
+    omega6: (parsed.totals.omega6 || 0) + manualProducts.reduce((sum, item) => sum + item.omega6, 0),
     alcohol: parsed.totals.alcoholKcal || 0,
-    sodiumMg: parsed.totals.sodiumMg || 0,
-    potassiumMg: parsed.totals.potassiumMg || 0,
-    magnesiumMg: parsed.totals.magnesiumMg || 0,
+    sodiumMg: (parsed.totals.sodiumMg || 0) + manualProducts.reduce((sum, item) => sum + item.sodiumMg, 0),
+    potassiumMg: (parsed.totals.potassiumMg || 0) + manualProducts.reduce((sum, item) => sum + item.potassiumMg, 0),
+    magnesiumMg: (parsed.totals.magnesiumMg || 0) + manualProducts.reduce((sum, item) => sum + item.magnesiumMg, 0),
     score: 0,
   };
   const macroCalories = {
@@ -813,7 +892,7 @@ function estimateMasterMacros(entry) {
     potassiumMg: item.nutrients.potassiumMg || 0,
     magnesiumMg: item.nutrients.magnesiumMg || 0,
     assumption: item.assumption,
-  }));
+  })).concat(manualProducts);
   const coffeeCups = numberFromFreeText(entry.coffee);
   const coffeeParsed = coffeeCups > 0 ? parseNutritionText(`${decimal(coffeeCups)} kopp kaffe`) : null;
   const coffeeElectrolyteItem = coffeeParsed?.items?.[0]
@@ -1123,18 +1202,34 @@ function strengthenLunchProtein(entry, lunch, targetProtein) {
   const shortfall = targetProtein - fullProtein(macros);
   if (shortfall < 8) return lunch;
   const chickenProteinPerGram = 31 / 100;
-  const grams = Math.min(compassMaxSingleProteinFatSourceGrams, Math.max(50, roundUp(shortfall / chickenProteinPerGram, 25)));
+  const grams = Math.min(compassLeanFishPoultryCapGrams, Math.max(50, roundUp(shortfall / chickenProteinPerGram, 25)));
   const strengthened = `${lunch}, ${grams} g kycklingfilé utan skinn`;
   macros = mealProposalMacros(strengthened, entry.date);
-  return fullProtein(macros) >= targetProtein - 6 ? strengthened : lunch;
+  if (fullProtein(macros) >= targetProtein - 6) return strengthened;
+  const whey = wheyTextForShortfall(targetProtein - fullProtein(macros));
+  return whey ? `${strengthened}, ${whey}` : strengthened;
+}
+
+function compassProteinPortionCap(food) {
+  const normalized = String(food || "").toLocaleLowerCase("sv-SE");
+  return /kyckling|lax/.test(normalized) ? compassLeanFishPoultryCapGrams : compassMaxSingleProteinFatSourceGrams;
+}
+
+function wheyTablespoonsForShortfall(shortfall) {
+  if (shortfall < 8) return 0;
+  return Math.min(compassWheyTablespoonLimit, Math.max(1, Math.ceil((shortfall / 9) * 2) / 2));
+}
+
+function wheyTextForShortfall(shortfall) {
+  const tablespoons = wheyTablespoonsForShortfall(shortfall);
+  return tablespoons ? `${decimal(tablespoons)} msk vassleisolat i vatten` : "";
 }
 
 function addWheyForProteinIfUseful(items, entry, gaps, targetProtein) {
   const macros = proposalMacros(items, entry.date);
   const proteinShortfall = Math.max(0, Math.min(gaps.protein, targetProtein) - fullProtein(macros));
   if (proteinShortfall < 8) return macros;
-  const tablespoons = Math.min(compassWheyTablespoonLimit, Math.max(1, Math.ceil((proteinShortfall / 9) * 2) / 2));
-  const candidate = addProposalItemIfWithinEnergy(items, `${decimal(tablespoons)} msk vassleisolat`, entry, gaps);
+  const candidate = addProposalItemIfWithinEnergy(items, wheyTextForShortfall(proteinShortfall), entry, gaps);
   return candidate || macros;
 }
 
@@ -1173,7 +1268,7 @@ function buildDinnerProposal(entry, gaps, title, food, options = {}) {
     ? gaps.protein
     : Math.min(gaps.protein, Math.max(25, proteinTarget));
   const proteinGrams = Math.min(
-    compassMaxSingleProteinFatSourceGrams,
+    compassProteinPortionCap(food),
     Math.max(125, roundUp(Math.max(dinnerProteinTarget, 25) / proteinPerGram, 25)),
   );
   items.push(`${proteinGrams} g ${food}`);
@@ -1373,8 +1468,9 @@ function coach(entry, macros, kind) {
   if (entry.sleep === "-6 timmar") notes.push("Kort sömn kan öka hunger, så prioritera enkel mat och följ törst och dagsform.");
   const drinks = drinkEstimate(entry);
   if (drinks.total > 0) {
-    const status = isToday ? "registrerat hittills" : "registrerat";
-    notes.push(`Dryck ${status}: cirka ${decimal(drinks.total)} liter inklusive registrerat vatten, kaffe och buljong. Riktmärket för vanligt vatten är cirka ${decimal(hydrationGuideline.plainWaterLitres)} liter inklusive måltidsglas; fyll på med cirka 200 ml vid törst, värme eller svettig motion.`);
+    const status = isToday ? "hittills" : "registrerat";
+    const plainWater = drinks.legacyWater + drinks.mealWater;
+    notes.push(`Vätska ${status}: cirka ${decimal(drinks.total)} liter totalt, inklusive vanligt vatten, kaffe och buljong. Vanligt vatten: cirka ${decimal(plainWater)} liter. Sikta på cirka ${decimal(hydrationGuideline.plainWaterLitres)} liter vanligt vatten per dag, inklusive måltidsglas; lägg till cirka 200 ml vid törst, värme eller svettig motion.`);
   }
   if (entry.walk === "+60 min") notes.push("Stark promenadbonus idag: bra stöd för blodsocker, energi och fettförbränning.");
   if (entry.walk === "+30 min") notes.push("Promenad registrerad: snyggt stöd för rutinen utan att behöva krångla till maten.");
@@ -2322,7 +2418,7 @@ fields.date.addEventListener("change", () => {
 form.addEventListener("input", (event) => {
   if (event.target === goalInput) return;
   if (Object.values(macroTargetInputs).includes(event.target)) return;
-  if ([fields.breakfast, fields.lunch, fields.dinner].includes(event.target)) {
+  if ([fields.breakfast, fields.lunch, fields.dinner, fields.extras].includes(event.target)) {
     renderMealNutritionSummaries(formEntry());
   }
   if ([fields.breakfast, fields.lunch, fields.dinner, fields.extras, fields.coffee].includes(event.target)) {
@@ -2390,6 +2486,7 @@ function backupPayload(reason = "manual") {
     goalWeight: getGoalWeight(),
     macroTargets: getMacroTargets(),
     weeklyCheckins: getWeeklyCheckins(),
+    profileName: getSyncProfileName(),
   };
 }
 
@@ -2446,6 +2543,21 @@ function setSyncStatus(message, isError = false) {
 
 function getSyncCode() {
   return localStorage.getItem(syncCodeKey) || "";
+}
+
+function getSyncProfileName() {
+  return localStorage.getItem(syncProfileNameKey) || "";
+}
+
+function saveSyncProfileName(value = "") {
+  const profileName = String(value || "").trim();
+  if (profileName) {
+    localStorage.setItem(syncProfileNameKey, profileName);
+  } else {
+    localStorage.removeItem(syncProfileNameKey);
+  }
+  if (syncProfileNameInput) syncProfileNameInput.value = profileName;
+  return profileName;
 }
 
 function saveSyncCode(value) {
@@ -2595,6 +2707,7 @@ async function initSync() {
       anonKey: supabaseConfig.anonKey,
     };
     const savedCode = getSyncCode();
+    if (syncProfileNameInput) syncProfileNameInput.value = getSyncProfileName();
     if (savedCode) {
       if (syncCodeInput) syncCodeInput.value = savedCode;
       setSyncStatus("Synk är redo. Tryck Synka nu.");
@@ -2634,6 +2747,11 @@ saveSyncCodeButton?.addEventListener("click", () => {
   saveSyncCode(syncCodeInput?.value || "");
 });
 
+syncProfileNameInput?.addEventListener("change", () => {
+  const profileName = saveSyncProfileName(syncProfileNameInput.value);
+  setSyncStatus(profileName ? `Profilnamn sparat lokalt: ${profileName}` : "Profilnamn rensat lokalt.");
+});
+
 clearSyncCodeButton?.addEventListener("click", () => {
   localStorage.removeItem(syncCodeKey);
   if (syncCodeInput) syncCodeInput.value = "";
@@ -2642,6 +2760,66 @@ clearSyncCodeButton?.addEventListener("click", () => {
 
 syncNowButton?.addEventListener("click", syncNow);
 quickSyncButton?.addEventListener("click", syncNow);
+
+function manualProductInputValue(id) {
+  return document.querySelector(`#${id}`)?.value?.trim() || "";
+}
+
+function clearManualProductInputs() {
+  [
+    "manualProductNameInput",
+    "manualProductGramsInput",
+    "manualProductKcalInput",
+    "manualProductFatInput",
+    "manualProductProteinInput",
+    "manualProductCarbsInput",
+    "manualProductSodiumInput",
+    "manualProductPotassiumInput",
+    "manualProductMagnesiumInput",
+    "manualProductOmega3Input",
+    "manualProductOmega6Input",
+  ].forEach((id) => {
+    const input = document.querySelector(`#${id}`);
+    if (input) input.value = "";
+  });
+}
+
+function buildManualProductToken() {
+  const name = manualProductInputValue("manualProductNameInput");
+  const grams = parseNumericValue(manualProductInputValue("manualProductGramsInput"));
+  if (!name || !grams) return "";
+  const parts = [`manuell produkt: ${name}`, `${decimal(grams)} g`];
+  [
+    ["kcal", "manualProductKcalInput"],
+    ["F", "manualProductFatInput"],
+    ["P", "manualProductProteinInput"],
+    ["K", "manualProductCarbsInput"],
+    ["Na", "manualProductSodiumInput"],
+    ["Ka", "manualProductPotassiumInput"],
+    ["Mg", "manualProductMagnesiumInput"],
+    ["O3", "manualProductOmega3Input"],
+    ["O6", "manualProductOmega6Input"],
+  ].forEach(([label, id]) => {
+    const rawValue = manualProductInputValue(id);
+    if (rawValue) parts.push(`${label} ${decimal(parseNumericValue(rawValue))}`);
+  });
+  return `[${parts.join("; ")}]`;
+}
+
+addManualProductButton?.addEventListener("click", () => {
+  const token = buildManualProductToken();
+  if (!token) {
+    setSaveStatus("Fyll minst i namn och gram för manuell produkt.");
+    return;
+  }
+  const current = fields.extras.value.trim();
+  fields.extras.value = current ? `${current}, ${token}` : token;
+  clearManualProductInputs();
+  renderMealNutritionSummaries(formEntry());
+  renderHydrationEstimate(formEntry());
+  queueAutosave();
+  setSaveStatus("Manuell produkt tillagd i Övrig mat och dryck. Tryck Spara dag när dagens rad är klar.");
+});
 
 document.querySelector("#importButton").addEventListener("click", () => {
   const input = document.querySelector("#importInput");
@@ -2663,6 +2841,7 @@ document.querySelector("#importButton").addEventListener("click", () => {
       if (Object.prototype.hasOwnProperty.call(imported, "goalWeight")) saveGoalWeight(imported.goalWeight);
       if (imported.macroTargets) saveMacroTargets(imported.macroTargets);
       if (imported.weeklyCheckins) saveWeeklyCheckins(imported.weeklyCheckins);
+      if (Object.prototype.hasOwnProperty.call(imported, "profileName")) saveSyncProfileName(imported.profileName);
     } finally {
       applyingRemoteData = false;
     }
@@ -2680,6 +2859,7 @@ document.querySelector("#resetButton").addEventListener("click", () => {
   localStorage.removeItem(goalKey);
   localStorage.removeItem(macroTargetsKey);
   localStorage.removeItem(weeklyCheckinsKey);
+  localStorage.removeItem(syncProfileNameKey);
   fillForm(emptyEntry());
   render();
   document.querySelector("#toolsNote").textContent = "Lokal data rensad. Backupfilen finns bland dina hämtade filer.";
