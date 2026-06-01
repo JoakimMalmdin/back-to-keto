@@ -9,13 +9,13 @@
     <title>Back to Keto</title>
     <script>
       if (window.location.protocol === "file:") {
-        window.location.replace("https://joakimmalmdin.github.io/back-to-keto/app/?cache=201");
+        window.location.replace("https://joakimmalmdin.github.io/back-to-keto/app/?cache=202");
       }
     </script>
-    <link rel="manifest" href="manifest.webmanifest?v=201" />
+    <link rel="manifest" href="manifest.webmanifest?v=202" />
     <link rel="icon" href="icon.svg?v=146" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="apple-touch-icon.png?v=146" />
-    <link rel="stylesheet" href="styles.css?v=201" />
+    <link rel="stylesheet" href="styles.css?v=202" />
   </head>
   <body>
     <div class="app-shell">
@@ -24,7 +24,7 @@
           <p class="eyebrow">Back to Keto</p>
           <h1>Daglig keto-logg</h1>
           <div class="version-row">
-            <p class="version-pill">v1.2 beta · build 201</p>
+            <p class="version-pill">v1.2 beta · build 202</p>
             <span class="version-info">
               <button class="version-info-trigger" type="button" aria-label="Vad är nytt i v1.2 beta?" aria-describedby="versionInfoText">Info</button>
               <span class="version-info-text" id="versionInfoText" role="tooltip">
@@ -252,6 +252,7 @@
               <textarea id="extrasInput" name="extras" rows="2" placeholder="t.ex. ost, nötter, skinka, extra kaffe med grädde"></textarea>
               <p class="meal-nutrition-summary" id="extrasNutritionSummary">[Fett -- · Protein -- · Kolh. -- · kcal -- · Na -- · Ka -- · Mg -- · O6/O3 --]</p>
             </label>
+            <div class="manual-product-list" id="manualProductList" aria-live="polite"></div>
 
             <div class="activity-grid">
               <label>
@@ -379,6 +380,7 @@
               <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" /></svg>
               Spara dag
             </button>
+            <button class="secondary-button danger-button" id="deleteDayButton" type="button">Ta bort denna dag</button>
             <p id="saveStatus" class="save-status" role="status" aria-live="polite"></p>
             </form>
           </details>
@@ -674,6 +676,6 @@
       </main>
     </div>
 
-    <script src="app.js?v=201" type="module"></script>
+    <script src="app.js?v=202" type="module"></script>
   </body>
 </html>

@@ -1,5 +1,5 @@
-import { parseNutritionText } from "./nutrition-parser.mjs?v=201";
-import { NUTRITION_CATALOG, NUTRITION_CATEGORIES, SOURCE_TYPES, categoryName, foodName } from "./nutrition-catalog.mjs?v=201";
+import { parseNutritionText } from "./nutrition-parser.mjs?v=202";
+import { NUTRITION_CATALOG, NUTRITION_CATEGORIES, SOURCE_TYPES, categoryName, foodName } from "./nutrition-catalog.mjs?v=202";
 
 const storageKey = "btk.keto.entries.v1";
 const goalKey = "btk.keto.goal.v1";
@@ -29,13 +29,14 @@ const legacyDefaultMacroTargets = {
   kcalTarget: 1900,
   kcalMax: 2000,
 };
-const appVersion = "201";
+const appVersion = "202";
 const appDisplayVersion = `v1.2 beta · build ${appVersion}`;
 const syncTimeoutMs = 10000;
 let activeDate = "";
 let supabaseClient = null;
 let cloudSyncTimer = null;
 let applyingRemoteData = false;
+let editingManualProductIndex = null;
 
 const electrolyteTargetPhases = [
   { label: "Dag 1-14", days: 14, sodiumMg: [3000, 3000], potassiumMg: [3500, 3500], magnesiumMg: [350, 400] },
@@ -203,6 +204,8 @@ const clearSyncCodeButton = document.querySelector("#clearSyncCodeButton");
 const syncNowButton = document.querySelector("#syncNowButton");
 const quickSyncButton = document.querySelector("#quickSyncButton");
 const addManualProductButton = document.querySelector("#addManualProductButton");
+const deleteDayButton = document.querySelector("#deleteDayButton");
+const manualProductList = document.querySelector("#manualProductList");
 const reportButton = document.querySelector("#reportButton");
 const weekReportButton = document.querySelector("#weekReportButton");
 const weeklyCheckinButton = document.querySelector("#weeklyCheckinButton");
@@ -793,56 +796,68 @@ function valueFromManualPart(part, keys) {
   return null;
 }
 
-function parseManualProductText(text = "") {
-  const products = [];
+function manualProductTokens(text = "") {
   const pattern = /\[manuell produkt:([^\]]+)\]/giu;
-  for (const match of String(text || "").matchAll(pattern)) {
-    const parts = match[1].split(";").map((part) => part.trim()).filter(Boolean);
-    const name = parts.shift() || "Manuell produkt";
-    const amountPart = parts.find((part) => /\d+(?:[,.]\d+)?\s*g\b/i.test(part));
-    const grams = amountPart ? parseNumericValue(amountPart) : 0;
-    if (!grams) continue;
-    const item = {
-      foodId: "manual-product",
-      label: name,
-      count: 0,
-      amountLabel: `${decimal(grams)} g manuell`,
-      kcal: 0,
-      protein: 0,
-      fat: 0,
-      carbs: 0,
-      fiber: null,
-      omega3: 0,
-      omega6: 0,
-      omegaSource: "Manuell",
-      sodiumMg: 0,
-      potassiumMg: 0,
-      magnesiumMg: 0,
-      assumption: "manuell produkt",
-    };
-    for (const part of parts) {
-      const kcal = valueFromManualPart(part, ["kcal", "energi"]);
-      const fat = valueFromManualPart(part, ["f", "fett"]);
-      const protein = valueFromManualPart(part, ["p", "protein"]);
-      const carbs = valueFromManualPart(part, ["k", "kolh\\.?","kolhydrater"]);
-      const sodium = valueFromManualPart(part, ["na", "natrium"]);
-      const potassium = valueFromManualPart(part, ["ka", "kalium"]);
-      const magnesium = valueFromManualPart(part, ["mg", "magnesium"]);
-      const omega3 = valueFromManualPart(part, ["o3", "omega3", "omega-3"]);
-      const omega6 = valueFromManualPart(part, ["o6", "omega6", "omega-6"]);
-      if (kcal !== null) item.kcal = kcal;
-      if (fat !== null) item.fat = fat;
-      if (protein !== null) item.protein = protein;
-      if (carbs !== null) item.carbs = carbs;
-      if (sodium !== null) item.sodiumMg = sodium;
-      if (potassium !== null) item.potassiumMg = potassium;
-      if (magnesium !== null) item.magnesiumMg = magnesium;
-      if (omega3 !== null) item.omega3 = omega3;
-      if (omega6 !== null) item.omega6 = omega6;
-    }
-    products.push(item);
+  let index = 0;
+  return [...String(text || "").matchAll(pattern)].map((match) => ({
+    index: index++,
+    raw: match[0],
+    body: match[1],
+  }));
+}
+
+function parseManualProductToken(token) {
+  const parts = String(token?.body || "").split(";").map((part) => part.trim()).filter(Boolean);
+  const name = parts.shift() || "Manuell produkt";
+  const amountPart = parts.find((part) => /\d+(?:[,.]\d+)?\s*g\b/i.test(part));
+  const grams = amountPart ? parseNumericValue(amountPart) : 0;
+  if (!grams) return null;
+  const item = {
+    foodId: "manual-product",
+    label: name,
+    count: 0,
+    amountLabel: `${decimal(grams)} g manuell`,
+    manualIndex: token.index,
+    rawToken: token.raw,
+    grams,
+    kcal: 0,
+    protein: 0,
+    fat: 0,
+    carbs: 0,
+    fiber: null,
+    omega3: 0,
+    omega6: 0,
+    omegaSource: "Manuell",
+    sodiumMg: 0,
+    potassiumMg: 0,
+    magnesiumMg: 0,
+    assumption: "manuell produkt",
+  };
+  for (const part of parts) {
+    const kcal = valueFromManualPart(part, ["kcal", "energi"]);
+    const fat = valueFromManualPart(part, ["f", "fett"]);
+    const protein = valueFromManualPart(part, ["p", "protein"]);
+    const carbs = valueFromManualPart(part, ["k", "kolh\\.?","kolhydrater"]);
+    const sodium = valueFromManualPart(part, ["na", "natrium"]);
+    const potassium = valueFromManualPart(part, ["ka", "kalium"]);
+    const magnesium = valueFromManualPart(part, ["mg", "magnesium"]);
+    const omega3 = valueFromManualPart(part, ["o3", "omega3", "omega-3"]);
+    const omega6 = valueFromManualPart(part, ["o6", "omega6", "omega-6"]);
+    if (kcal !== null) item.kcal = kcal;
+    if (fat !== null) item.fat = fat;
+    if (protein !== null) item.protein = protein;
+    if (carbs !== null) item.carbs = carbs;
+    if (sodium !== null) item.sodiumMg = sodium;
+    if (potassium !== null) item.potassiumMg = potassium;
+    if (magnesium !== null) item.magnesiumMg = magnesium;
+    if (omega3 !== null) item.omega3 = omega3;
+    if (omega6 !== null) item.omega6 = omega6;
   }
-  return products;
+  return item;
+}
+
+function parseManualProductText(text = "") {
+  return manualProductTokens(text).map(parseManualProductToken).filter(Boolean);
 }
 
 function stripManualProductText(text = "") {
@@ -1885,12 +1900,13 @@ function renderEnergyOmegaChart(entries) {
 
 function render(selectedDate = activeDate) {
   const entries = getEntries().sort((a, b) => a.date.localeCompare(b.date));
-  const latest = entries.find((entry) => entry.date === selectedDate) || entries.at(-1) || emptyEntry();
+  const latest = entries.find((entry) => entry.date === selectedDate) || (selectedDate ? emptyEntry(selectedDate) : entries.at(-1) || emptyEntry());
   activeDate = latest.date;
   const hasContent = hasEntryContent(latest);
   const macros = estimateMacros(latest);
   renderMealNutritionSummaries(latest);
   renderHydrationEstimate(latest);
+  renderManualProductList(latest);
   const kind = hasContent ? classify(latest, macros) : "ny logg";
   const startWeight = baselineWeight(entries);
   const startDate = entries[0]?.date || latest.date || todayIso();
@@ -2048,6 +2064,8 @@ function fillForm(entry) {
   if (macroTargetInputs.carbsMax) macroTargetInputs.carbsMax.value = targets.carbsMax;
   if (macroTargetInputs.kcalTarget) macroTargetInputs.kcalTarget.value = targets.kcalTarget;
   if (macroTargetInputs.kcalMax) macroTargetInputs.kcalMax.value = targets.kcalMax;
+  clearManualProductInputs();
+  renderManualProductList(entry);
 }
 
 function setSaveStatus(message, isError = false) {
@@ -2079,12 +2097,30 @@ function queueAutosave() {
   }, 800);
 }
 
+function deleteSelectedDay() {
+  const date = fields.date?.value || activeDate || todayIso();
+  const existing = findEntry(date);
+  if (!existing || !hasEntryContent(existing)) {
+    setSaveStatus(`Ingen sparad registrering för ${date} att ta bort.`, true);
+    return;
+  }
+  const confirmed = window.confirm(`Vill du ta bort alla registreringar för ${date}? Detta påverkar inte andra dagar.`);
+  if (!confirmed) return;
+  window.clearTimeout(autosaveTimer);
+  saveEntries(getEntries().filter((entry) => entry.date !== date));
+  const blankEntry = emptyEntry(date);
+  fillForm(blankEntry);
+  render(date);
+  setSaveStatus(`Tog bort registreringar för ${date}.`);
+}
+
 form.addEventListener("submit", (event) => {
   event.preventDefault();
   saveCurrentEntry();
 });
 
 saveButton.addEventListener("click", saveCurrentEntry);
+deleteDayButton?.addEventListener("click", deleteSelectedDay);
 
 saveButton.addEventListener("pointerup", () => {
   window.clearTimeout(autosaveTimer);
@@ -2420,6 +2456,9 @@ form.addEventListener("input", (event) => {
   if (Object.values(macroTargetInputs).includes(event.target)) return;
   if ([fields.breakfast, fields.lunch, fields.dinner, fields.extras].includes(event.target)) {
     renderMealNutritionSummaries(formEntry());
+  }
+  if (event.target === fields.extras) {
+    renderManualProductList(formEntry());
   }
   if ([fields.breakfast, fields.lunch, fields.dinner, fields.extras, fields.coffee].includes(event.target)) {
     renderHydrationEstimate(formEntry());
@@ -2765,6 +2804,11 @@ function manualProductInputValue(id) {
   return document.querySelector(`#${id}`)?.value?.trim() || "";
 }
 
+function setManualProductInputValue(id, value) {
+  const input = document.querySelector(`#${id}`);
+  if (input) input.value = value ?? "";
+}
+
 function clearManualProductInputs() {
   [
     "manualProductNameInput",
@@ -2782,28 +2826,132 @@ function clearManualProductInputs() {
     const input = document.querySelector(`#${id}`);
     if (input) input.value = "";
   });
+  editingManualProductIndex = null;
+  if (addManualProductButton) addManualProductButton.textContent = "Lägg till i Övrig mat och dryck";
+}
+
+function sanitizeManualProductName(name) {
+  return String(name || "").replace(/[\[\];]/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function manualProductValuesFromInputs() {
+  const name = sanitizeManualProductName(manualProductInputValue("manualProductNameInput"));
+  const grams = parseNumericValue(manualProductInputValue("manualProductGramsInput"));
+  if (!name || !grams) return null;
+  return {
+    name,
+    grams,
+    kcal: parseNumericValue(manualProductInputValue("manualProductKcalInput")),
+    fat: parseNumericValue(manualProductInputValue("manualProductFatInput")),
+    protein: parseNumericValue(manualProductInputValue("manualProductProteinInput")),
+    carbs: parseNumericValue(manualProductInputValue("manualProductCarbsInput")),
+    sodiumMg: parseNumericValue(manualProductInputValue("manualProductSodiumInput")),
+    potassiumMg: parseNumericValue(manualProductInputValue("manualProductPotassiumInput")),
+    magnesiumMg: parseNumericValue(manualProductInputValue("manualProductMagnesiumInput")),
+    omega3: parseNumericValue(manualProductInputValue("manualProductOmega3Input")),
+    omega6: parseNumericValue(manualProductInputValue("manualProductOmega6Input")),
+  };
+}
+
+function manualProductTokenFromValues(values) {
+  const parts = [`manuell produkt: ${values.name}`, `${decimal(values.grams)} g`];
+  [
+    ["kcal", values.kcal],
+    ["F", values.fat],
+    ["P", values.protein],
+    ["K", values.carbs],
+    ["Na", values.sodiumMg],
+    ["Ka", values.potassiumMg],
+    ["Mg", values.magnesiumMg],
+    ["O3", values.omega3],
+    ["O6", values.omega6],
+  ].forEach(([label, value]) => {
+    if (Number.isFinite(value) && value !== 0) parts.push(`${label} ${decimal(value)}`);
+  });
+  return `[${parts.join("; ")}]`;
 }
 
 function buildManualProductToken() {
-  const name = manualProductInputValue("manualProductNameInput");
-  const grams = parseNumericValue(manualProductInputValue("manualProductGramsInput"));
-  if (!name || !grams) return "";
-  const parts = [`manuell produkt: ${name}`, `${decimal(grams)} g`];
-  [
-    ["kcal", "manualProductKcalInput"],
-    ["F", "manualProductFatInput"],
-    ["P", "manualProductProteinInput"],
-    ["K", "manualProductCarbsInput"],
-    ["Na", "manualProductSodiumInput"],
-    ["Ka", "manualProductPotassiumInput"],
-    ["Mg", "manualProductMagnesiumInput"],
-    ["O3", "manualProductOmega3Input"],
-    ["O6", "manualProductOmega6Input"],
-  ].forEach(([label, id]) => {
-    const rawValue = manualProductInputValue(id);
-    if (rawValue) parts.push(`${label} ${decimal(parseNumericValue(rawValue))}`);
+  const values = manualProductValuesFromInputs();
+  return values ? manualProductTokenFromValues(values) : "";
+}
+
+function setManualProductInputsFromItem(item) {
+  setManualProductInputValue("manualProductNameInput", item.label);
+  setManualProductInputValue("manualProductGramsInput", decimal(item.grams));
+  setManualProductInputValue("manualProductKcalInput", decimal(item.kcal));
+  setManualProductInputValue("manualProductFatInput", decimal(item.fat));
+  setManualProductInputValue("manualProductProteinInput", decimal(item.protein));
+  setManualProductInputValue("manualProductCarbsInput", decimal(item.carbs));
+  setManualProductInputValue("manualProductSodiumInput", item.sodiumMg ? Math.round(item.sodiumMg) : "");
+  setManualProductInputValue("manualProductPotassiumInput", item.potassiumMg ? Math.round(item.potassiumMg) : "");
+  setManualProductInputValue("manualProductMagnesiumInput", item.magnesiumMg ? Math.round(item.magnesiumMg) : "");
+  setManualProductInputValue("manualProductOmega3Input", item.omega3 ? decimal(item.omega3) : "");
+  setManualProductInputValue("manualProductOmega6Input", item.omega6 ? decimal(item.omega6) : "");
+}
+
+function replaceManualProductTokenAtIndex(text, index, replacement) {
+  let current = 0;
+  return String(text || "").replace(/\[manuell produkt:[^\]]+\]/giu, (match) => {
+    const shouldReplace = current === index;
+    current += 1;
+    return shouldReplace ? replacement : match;
   });
-  return `[${parts.join("; ")}]`;
+}
+
+function removeManualProductTokenAtIndex(text, index) {
+  return replaceManualProductTokenAtIndex(text, index, "")
+    .replace(/\s*,\s*,/g, ", ")
+    .replace(/^\s*,\s*|\s*,\s*$/g, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function refreshManualProductCalculations(message) {
+  const entry = formEntry();
+  renderMealNutritionSummaries(entry);
+  renderHydrationEstimate(entry);
+  renderManualProductList(entry);
+  queueAutosave();
+  if (message) setSaveStatus(message);
+}
+
+function renderManualProductList(entry = formEntry()) {
+  if (!manualProductList) return;
+  const products = parseManualProductText(entry.extras || "");
+  manualProductList.innerHTML = "";
+  if (!products.length) return;
+  for (const product of products) {
+    const row = document.createElement("div");
+    row.className = "manual-product-row";
+    const text = document.createElement("span");
+    const name = document.createElement("strong");
+    name.textContent = product.label;
+    text.append(name, `${product.amountLabel} · ${Math.round(product.kcal)} kcal · F ${decimal(product.fat)} · P ${decimal(product.protein)} · K ${decimal(product.carbs)}`);
+    const editButton = document.createElement("button");
+    editButton.type = "button";
+    editButton.className = "secondary-button";
+    editButton.textContent = "Redigera";
+    editButton.addEventListener("click", () => {
+      editingManualProductIndex = product.manualIndex;
+      setManualProductInputsFromItem(product);
+      if (addManualProductButton) addManualProductButton.textContent = "Uppdatera manuell produkt";
+      setSaveStatus(`Redigerar manuell produkt: ${product.label}.`);
+    });
+    const removeButton = document.createElement("button");
+    removeButton.type = "button";
+    removeButton.className = "secondary-button danger-button";
+    removeButton.textContent = "Ta bort";
+    removeButton.addEventListener("click", () => {
+      const confirmed = window.confirm(`Ta bort manuell produkt "${product.label}" från ${entry.date || fields.date.value || activeDate || todayIso()}?`);
+      if (!confirmed) return;
+      fields.extras.value = removeManualProductTokenAtIndex(fields.extras.value, product.manualIndex);
+      clearManualProductInputs();
+      refreshManualProductCalculations(`Tog bort manuell produkt: ${product.label}.`);
+    });
+    row.append(text, editButton, removeButton);
+    manualProductList.append(row);
+  }
 }
 
 addManualProductButton?.addEventListener("click", () => {
@@ -2812,13 +2960,16 @@ addManualProductButton?.addEventListener("click", () => {
     setSaveStatus("Fyll minst i namn och gram för manuell produkt.");
     return;
   }
+  if (editingManualProductIndex !== null) {
+    fields.extras.value = replaceManualProductTokenAtIndex(fields.extras.value, editingManualProductIndex, token);
+    clearManualProductInputs();
+    refreshManualProductCalculations("Manuell produkt uppdaterad i Övrig mat och dryck.");
+    return;
+  }
   const current = fields.extras.value.trim();
   fields.extras.value = current ? `${current}, ${token}` : token;
   clearManualProductInputs();
-  renderMealNutritionSummaries(formEntry());
-  renderHydrationEstimate(formEntry());
-  queueAutosave();
-  setSaveStatus("Manuell produkt tillagd i Övrig mat och dryck. Tryck Spara dag när dagens rad är klar.");
+  refreshManualProductCalculations("Manuell produkt tillagd i Övrig mat och dryck. Tryck Spara dag när dagens rad är klar.");
 });
 
 document.querySelector("#importButton").addEventListener("click", () => {

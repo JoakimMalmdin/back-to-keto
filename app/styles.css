@@ -851,6 +851,49 @@ textarea {
   margin-bottom: 12px;
 }
 
+.manual-product-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.manual-product-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 8px;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.manual-product-row strong,
+.manual-product-row span {
+  font-size: 0.84rem;
+  line-height: 1.25;
+}
+
+.manual-product-row strong {
+  display: block;
+  font-weight: 750;
+}
+
+.manual-product-row span {
+  color: var(--muted);
+}
+
+.manual-product-row button {
+  min-height: 34px;
+  padding: 7px 10px;
+  font-size: 0.78rem;
+}
+
+.danger-button {
+  color: #8f1f1f;
+  border-color: rgba(143, 31, 31, 0.32);
+}
+
 .mini-note {
   margin: 8px 0 12px;
   color: var(--muted);
