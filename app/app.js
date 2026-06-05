@@ -2064,7 +2064,10 @@ function fillForm(entry) {
   if (macroTargetInputs.carbsMax) macroTargetInputs.carbsMax.value = targets.carbsMax;
   if (macroTargetInputs.kcalTarget) macroTargetInputs.kcalTarget.value = targets.kcalTarget;
   if (macroTargetInputs.kcalMax) macroTargetInputs.kcalMax.value = targets.kcalMax;
-  clearManualProductInputs();
+  const isEditingManual = editingManualProductIndex !== null ||
+    manualProductInputValue("manualProductNameInput") !== "" ||
+    manualProductInputValue("manualProductGramsInput") !== "";
+  if (!isEditingManual) clearManualProductInputs();
   renderManualProductList(entry);
 }
 
@@ -2454,6 +2457,8 @@ fields.date.addEventListener("change", () => {
 form.addEventListener("input", (event) => {
   if (event.target === goalInput) return;
   if (Object.values(macroTargetInputs).includes(event.target)) return;
+  const manualInputIds = ["manualProductNameInput","manualProductGramsInput","manualProductKcalInput","manualProductFatInput","manualProductProteinInput","manualProductCarbsInput","manualProductSodiumInput","manualProductPotassiumInput","manualProductMagnesiumInput","manualProductOmega3Input","manualProductOmega6Input"];
+  if (manualInputIds.includes(event.target.id)) return;
   if ([fields.breakfast, fields.lunch, fields.dinner, fields.extras].includes(event.target)) {
     renderMealNutritionSummaries(formEntry());
   }
