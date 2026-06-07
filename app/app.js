@@ -2082,8 +2082,10 @@ function saveCurrentEntry(options = {}) {
   if (goalInput) saveGoalWeight(goalInput.value.trim());
   if (Object.values(macroTargetInputs).some(Boolean)) saveMacroTargets(currentMacroTargetInputs());
   activeDate = entry.date;
+  if (!hasEntryContent(entry) && entry.date > todayIso()) return;
   const entries = getEntries().filter((item) => item.date !== entry.date);
   entries.push(entry);
+
   saveEntries(entries);
   render(entry.date);
   fillForm(entry);
