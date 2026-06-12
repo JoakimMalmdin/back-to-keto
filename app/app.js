@@ -2668,7 +2668,15 @@ async function pullCloudData() {
     return true;
   }
   applyingRemoteData = true;
-  localStorage.setItem(storageKey, JSON.stringify(Array.isArray(row.entries) ? row.entries : [emptyEntry()]));
+  const remoteEntries = Array.isArray(row.entries) ? row.entries : [emptyEntry()];
+  const localEntries = getEntries();
+  const merged = new Map();
+  for (const entry of remoteEntries) merged.set(entry.date, entry);
+  for (const entry of localEntries) {
+    const remote = merged.get(entry.date);
+    if (!remote || hasEntryContent(entry)) merged.set(entry.date, entry);
+  }
+  localStorage.setItem(storageKey, JSON.stringify([...merged.values()].sort((a, b) => a.date.localeCompare(b.date))));
   if (row.goal_weight) {
     localStorage.setItem(goalKey, String(row.goal_weight));
   } else {
