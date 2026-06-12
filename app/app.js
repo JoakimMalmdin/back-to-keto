@@ -2458,6 +2458,7 @@ fields.date.addEventListener("change", () => {
 
 form.addEventListener("input", (event) => {
   if (event.target === goalInput) return;
+  if (event.target === fields.date) return;
   if (Object.values(macroTargetInputs).includes(event.target)) return;
   const manualInputIds = ["manualProductNameInput","manualProductGramsInput","manualProductKcalInput","manualProductFatInput","manualProductProteinInput","manualProductCarbsInput","manualProductSodiumInput","manualProductPotassiumInput","manualProductMagnesiumInput","manualProductOmega3Input","manualProductOmega6Input"];
   if (manualInputIds.includes(event.target.id)) return;
