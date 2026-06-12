@@ -3046,3 +3046,44 @@ updateTrendFilterState();
 render(initialEntry.date);
 initSync();
 checkForAppUpdate();
+
+document.querySelector("#showRecoveryButton")?.addEventListener("click", () => {
+  const panel = document.querySelector("#recoveryPanel");
+  if (!panel) return;
+  if (panel.style.display !== "none") { panel.style.display = "none"; return; }
+  const backups = JSON.parse(localStorage.getItem(syncRecoveryKey) || "[]");
+  if (!backups.length) {
+    panel.innerHTML = "<p class='note'>Inga automatiska backuppunkter hittades.</p>";
+    panel.style.display = "block";
+    return;
+  }
+  panel.innerHTML = backups.map((b, i) => {
+    const savedAt = b.metadata?.savedAt || "okänt datum";
+    const count = b.entries?.length || 0;
+    const latest = b.entries?.slice().sort((a, z) => a.date.localeCompare(z.date)).at(-1)?.date || "?";
+    const earliest = b.entries?.slice().sort((a, z) => a.date.localeCompare(z.date)).at(0)?.date || "?";
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid var(--color-border-tertiary);">
+      <span style="font-size:13px;color:var(--color-text-secondary);">${savedAt}<br>${earliest} → ${latest} &nbsp;·&nbsp; ${count} dagar</span>
+      <button class="secondary-button" style="font-size:12px;padding:4px 10px;" data-recovery-index="${i}">Återställ</button>
+    </div>`;
+  }).join("") + "<p class='note' style='margin-top:8px;'>Återställning ersätter nuvarande lokala data. En backup laddas ner automatiskt först.</p>";
+  panel.style.display = "block";
+  panel.querySelectorAll("[data-recovery-index]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const idx = Number(btn.dataset.recoveryIndex);
+      const point = backups[idx];
+      if (!point?.entries) return;
+      const filename = downloadBackupFile("fore-aterstallning");
+      if (!window.confirm(`Backupfilen ${filename} har laddats ner. Återställ data från denna punkt?`)) return;
+      localStorage.setItem(storageKey, JSON.stringify(point.entries));
+      if (point.goalWeight) localStorage.setItem(goalKey, String(point.goalWeight));
+      if (point.macroTargets) localStorage.setItem(macroTargetsKey, JSON.stringify(point.macroTargets));
+      if (point.weeklyCheckins) saveWeeklyCheckins(point.weeklyCheckins);
+      panel.style.display = "none";
+      const latest = getEntries().sort((a, b) => a.date.localeCompare(b.date)).at(-1) || emptyEntry();
+      fillForm(latest);
+      render(latest.date);
+      setSaveStatus("Data återställd från backup.");
+    });
+  });
+});
